@@ -6,7 +6,7 @@ A lightweight, full-stack web application that enables users to **store business
 
 ## 👥 Team Information
 
-**Group Name:** DataExpert
+**Group Name:** DataXpert
 
 - Patel Manav (24CS067)  
 - Patel Prince (24CS072)  
