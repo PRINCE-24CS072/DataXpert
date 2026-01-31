@@ -16,7 +16,7 @@
         <div>
             <a href="home.html">Home</a>
             <a href="dashboard.html">Dashboard</a>
-            <a href="upload.html">Upload</a>
+          <a href="analysis.html">AI Analysis</a>
             <a href="login.html">Sign In</a>
             <a href="register.html">Sign Up</a>
         </div>
@@ -24,9 +24,102 @@
 
     <div class="wrap">
         <div class="card">
-            <h1>Dashboard (placeholder)</h1>
-            <p>This is a basic dashboard placeholder. Integrate your charts and components here.</p>
+            <h1>Dashboard</h1>
+            <p>Recent charts and activity. You must be signed in to view this content.</p>
+
+            <div style="margin-top:20px;">
+                <h3>Recent Overview</h3>
+                <canvas id="recentChart" width="800" height="320"></canvas>
+            </div>
+
+            <div style="margin-top:24px; display:flex; gap:16px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:260px;">
+                    <h4>Key Metric</h4>
+                    <canvas id="metricChart" width="400" height="220"></canvas>
+                </div>
+
+                <div style="flex:1; min-width:260px;">
+                    <h4>Activity</h4>
+                    <div id="activityList">Loading recent activity...</div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/me', { credentials: 'include' });
+                if (!res.ok) throw new Error('unauthenticated');
+                return await res.json();
+            } catch (err) {
+                // Not authenticated — send to sign in page
+                window.location.href = '/login';
+            }
+        }
+
+        async function loadRecentCharts() {
+            // Recent overview
+            const ctx = document.getElementById('recentChart').getContext('2d');
+            try {
+                const res = await fetch('/api/recent-charts', { credentials: 'include' });
+                if (!res.ok) throw new Error('no-data');
+                const payload = await res.json();
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: payload.labels || [],
+                        datasets: [{
+                            label: payload.label || 'Recent',
+                            data: payload.values || [],
+                            borderColor: '#00e5ff',
+                            backgroundColor: 'rgba(0,229,255,0.08)'
+                        }]
+                    },
+                    options: { responsive: true }
+                });
+            } catch (err) {
+                // fallback sample data
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon','Tue','Wed','Thu','Fri'],
+                        datasets: [{ label: 'Sample', data: [12,19,8,14,22], borderColor: '#00e5ff', backgroundColor: 'rgba(0,229,255,0.08)' }]
+                    }
+                });
+            }
+
+            // Small metric
+            const mctx = document.getElementById('metricChart').getContext('2d');
+            new Chart(mctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Used','Free'],
+                    datasets: [{ data: [65,35], backgroundColor: ['#00e5ff', '#e0e0e0'] }]
+                },
+                options: { responsive: true }
+            });
+
+            // Activity list (simple fetch)
+            const activityEl = document.getElementById('activityList');
+            try {
+                const res = await fetch('/api/recent-activity', { credentials: 'include' });
+                if (res.ok) {
+                    const act = await res.json();
+                    activityEl.innerHTML = '<ul>' + (act.items || []).slice(0,6).map(i => '<li>'+ (i.text || JSON.stringify(i)) +'</li>').join('') + '</ul>';
+                } else {
+                    activityEl.textContent = 'No recent activity.';
+                }
+            } catch (e) {
+                activityEl.textContent = 'No recent activity.';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const me = await checkAuth();
+            if (me) await loadRecentCharts();
+        });
+    </script>
 </body>
 </html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Analysis | DataXpert</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin:0; color:#111; }
+        .navbar { padding: 20px 40px; display:flex; justify-content:space-between; align-items:center; background: rgba(0,0,0,0.05); }
+        .navbar a { margin-left: 18px; text-decoration:none; color:#0077aa; }
+        .wrap { padding: 40px; }
+        .card { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.06); }
+        .grid { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h2>DataXpert</h2>
+        <div>
+            <a href="home.html">Home</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="login.html">Sign In</a>
+            <a href="register.html">Sign Up</a>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <div class="card">
+            <h1>Analysis & Trends</h1>
+            <p>Recent trends and analysis. Sign in required.</p>
+
+            <div class="grid" style="margin-top:20px;">
+                <div>
+                    <h4>Trend Over Time</h4>
+                    <canvas id="trendChart" width="600" height="300"></canvas>
+                </div>
+
+                <div>
+                    <h4>Top Categories</h4>
+                    <canvas id="categoryChart" width="600" height="300"></canvas>
+                </div>
+            </div>
+
+            <div style="margin-top:18px;">
+                <h4>Quick Insights</h4>
+                <div id="insights">Loading insights...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/me', { credentials: 'include' });
+                if (!res.ok) throw new Error('unauthenticated');
+                return await res.json();
+            } catch (err) {
+                window.location.href = '/login';
+            }
+        }
+
+        async function loadAnalysis() {
+            // Trend chart
+            const tctx = document.getElementById('trendChart').getContext('2d');
+            try {
+                const res = await fetch('/api/analysis/trends', { credentials: 'include' });
+                if (res.ok) {
+                    const data = await res.json();
+                    new Chart(tctx, { type: 'line', data: { labels: data.labels || [], datasets:[{ label: data.label||'Trend', data: data.values||[], borderColor:'#0077cc', backgroundColor:'rgba(0,119,204,0.06)'}] } });
+                } else throw new Error('no-trends');
+            } catch (e) {
+                new Chart(tctx, { type: 'line', data: { labels:['W1','W2','W3','W4'], datasets:[{ label:'Sample', data:[5,9,7,11], borderColor:'#0077cc' }] } });
+            }
+
+            // Category chart
+            const cctx = document.getElementById('categoryChart').getContext('2d');
+            try {
+                const res = await fetch('/api/analysis/top-categories', { credentials: 'include' });
+                if (res.ok) {
+                    const d = await res.json();
+                    new Chart(cctx, { type: 'bar', data: { labels: d.labels||[], datasets:[{ label: d.label||'Top', data: d.values||[], backgroundColor:'#00cc88' }] } });
+                } else throw new Error('no-cats');
+            } catch (e) {
+                new Chart(cctx, { type: 'bar', data: { labels:['A','B','C'], datasets:[{ label:'Sample', data:[10,7,4], backgroundColor:'#00cc88' }] } });
+            }
+
+            // Insights
+            const insEl = document.getElementById('insights');
+            try {
+                const res = await fetch('/api/analysis/insights', { credentials: 'include' });
+                if (res.ok) {
+                    const json = await res.json();
+                    insEl.innerHTML = '<ul>' + (json.items||[]).map(i => '<li>'+ (i.text||JSON.stringify(i)) +'</li>').join('') + '</ul>';
+                } else insEl.textContent = 'No insights available.';
+            } catch (err) {
+                insEl.textContent = 'No insights available.';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const me = await checkAuth();
+            if (me) await loadAnalysis();
+        });
+    </script>
+</body>
+</html>
