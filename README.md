@@ -333,29 +333,23 @@ Contributions are welcome! Please:
 4. Push to the branch
 5. Open a Pull Request
 
-## 📄 License
-
-This project is licensed under the MIT License.
-
 ## 👥 About SGP Group
 
-SGP Group is a technology company focused on developing innovative solutions for business intelligence and data analytics. Our mission is to make data-driven decision-making accessible to businesses of all sizes.
+24CS067 - ManavPatel
+24CS072 - Prince Patel
+24CS076 - Srujal Patel
 
 ## 📞 Contact
 
-- **Support**: support@dataxpert.com
-- **Business**: business@sgpgroup.com
-- **Development**: dev@dataxpert.com
+Have a question, an idea, or just want to say hi?  
+I’m always open to connecting!
 
-## 🙏 Acknowledgments
+- 📧 **Email:** 24CS067@charusat.edu.in &  24CS072@charusat.edu.in & 24CS076@charusat.edu.in 
+- 🐙 **GitHub:** [DataXpert]([https://github.com/yourusername](https://github.com/PRINCE-24CS072/DataXpert)) 
 
-- Chart.js for beautiful visualizations
-- Supabase for backend services
-- Font Awesome for icons
-- Google for OAuth services
+Feel free to reach out — I’d love to hear from you! 😊
 
----
-
+--
 **Made with ❤️ by SGP Group**
 
 *Last Updated: February 2024*
