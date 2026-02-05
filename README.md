@@ -345,7 +345,7 @@ Have a question, an idea, or just want to say hi?
 I’m always open to connecting!
 
 - 📧 **Email:** 24CS067@charusat.edu.in &  24CS072@charusat.edu.in & 24CS076@charusat.edu.in 
-- 🐙 **GitHub:** [https://github.com/yourusername](https://github.com/PRINCE-24CS072/DataXpert)
+- 🐙 **GitHub:** [DataXpert](https://github.com/PRINCE-24CS072/DataXpert)
 
 Feel free to reach out — I’d love to hear from you! 😊
 
