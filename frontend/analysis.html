@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Analysis - DataXpert</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/analysis.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dashboard-page">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>DataXpert</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="analysis.html" class="nav-item active">
+                <i class="fas fa-robot"></i>
+                <span>AI Analysis</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Teams</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <a href="../documentation/index.html" class="nav-item">
+                <i class="fas fa-book"></i>
+                <span>Documentation</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn btn-secondary btn-full" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>AI Analysis</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Analysis Container -->
+        <div class="analysis-container">
+            <!-- Suggestions -->
+            <div class="suggestions">
+                <h3>💡 Try asking:</h3>
+                <div class="suggestion-chips">
+                    <button class="chip" data-question="What are my total sales?">What are my total sales?</button>
+                    <button class="chip" data-question="Show me profit analysis">Show me profit analysis</button>
+                    <button class="chip" data-question="Analyze my expenses">Analyze my expenses</button>
+                    <button class="chip" data-question="What are the trends?">What are the trends?</button>
+                    <button class="chip" data-question="Detect any anomalies">Detect any anomalies</button>
+                    <button class="chip" data-question="Give me business overview">Give me business overview</button>
+                </div>
+            </div>
+
+            <!-- Chat Container -->
+            <div class="chat-container" id="chatContainer">
+                <div class="welcome-message">
+                    <i class="fas fa-robot"></i>
+                    <h2>Hello! I'm your AI Business Analyst</h2>
+                    <p>I can help you analyze your business data, identify trends, and provide actionable insights.</p>
+                    <p>Ask me anything about your sales, profits, expenses, or business performance!</p>
+                </div>
+            </div>
+
+            <!-- Analysis Results -->
+            <div class="analysis-results" id="analysisResults" style="display: none;">
+                <div class="results-header">
+                    <h3><i class="fas fa-chart-bar"></i> Analysis Results</h3>
+                    <button class="btn btn-secondary btn-small" id="closeResults">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="results-content" id="resultsContent"></div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <form id="chatForm">
+                    <div class="input-wrapper">
+                        <textarea id="messageInput" 
+                                  placeholder="Ask me anything about your business data..." 
+                                  rows="1"></textarea>
+                        <button type="submit" class="send-btn" id="sendBtn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/analysis.js"></script>
+</body>
+</html>

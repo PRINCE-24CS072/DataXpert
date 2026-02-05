@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Guide - DataXpert Documentation</title>
+    <link rel="stylesheet" href="css/docs.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="docs-nav">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>DataXpert Docs</span>
+            </div>
+            <a href="../frontend/index.html" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back to App
+            </a>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-section">
+                <h3>Getting Started</h3>
+                <ul>
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="setup.html" class="active">Setup Guide</a></li>
+                    <li><a href="workflow.html">Workflow</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <h1><i class="fas fa-cog"></i> Complete Setup Guide</h1>
+            <p class="lead">Step-by-step instructions to get DataXpert running on your system</p>
+
+            <section class="doc-section">
+                <h2>Prerequisites</h2>
+                <ul>
+                    <li>Python 3.8 or higher</li>
+                    <li>pip (Python package manager)</li>
+                    <li>Supabase account (free tier available)</li>
+                    <li>Google OAuth credentials (optional)</li>
+                    <li>Modern web browser (Chrome, Firefox, Edge, Safari)</li>
+                    <li>Code editor (VS Code recommended)</li>
+                </ul>
+            </section>
+
+            <section class="doc-section">
+                <h2>Step 1: Clone Repository</h2>
+                <div class="code-block">
+                    <pre><code>git clone https://github.com/yourusername/DataXpert.git
+cd DataXpert</code></pre>
+                </div>
+            </section>
+
+            <section class="doc-section">
+                <h2>Step 2: Backend Setup</h2>
+                
+                <h3>Install Python Dependencies</h3>
+                <div class="code-block">
+                    <pre><code>cd backend
+pip install -r requirements.txt</code></pre>
+                </div>
+
+                <h3>Create Environment File</h3>
+                <div class="code-block">
+                    <pre><code>cp .env.example .env</code></pre>
+                </div>
+
+                <h3>Configure Environment Variables</h3>
+                <p>Edit the <code>.env</code> file with your credentials:</p>
+                <div class="code-block">
+                    <pre><code># Flask Configuration
+SECRET_KEY=your-super-secret-key-change-this
+JWT_SECRET_KEY=your-jwt-secret-key-change-this
+FLASK_ENV=development
+FLASK_DEBUG=True
+
+# Supabase Configuration
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-supabase-anon-key
+
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID=your-google-oauth-client-id
+GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
+
+# Server Configuration
+HOST=0.0.0.0
+PORT=5000</code></pre>
+                </div>
+            </section>
+
+            <section class="doc-section">
+                <h2>Step 3: Supabase Setup</h2>
+
+                <h3>Create Supabase Project</h3>
+                <ol>
+                    <li>Go to <a href="https://supabase.com" target="_blank">supabase.com</a></li>
+                    <li>Sign up or login</li>
+                    <li>Click "New Project"</li>
+                    <li>Fill in project details</li>
+                    <li>Wait for project to be provisioned</li>
+                </ol>
+
+                <h3>Get API Credentials</h3>
+                <ol>
+                    <li>Go to Project Settings → API</li>
+                    <li>Copy <strong>Project URL</strong> (SUPABASE_URL)</li>
+                    <li>Copy <strong>anon/public key</strong> (SUPABASE_KEY)</li>
+                    <li>Add these to your <code>.env</code> file</li>
+                </ol>
+
+                <h3>Create Database Tables</h3>
+                <p>Go to SQL Editor in Supabase and run these commands:</p>
+
+                <div class="code-block">
+                    <h4>Users Table</h4>
+                    <pre><code>CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255),
+    google_id VARCHAR(255) UNIQUE,
+    role VARCHAR(50) DEFAULT 'user',
+    created_at TIMESTAMP DEFAULT NOW()
+);</code></pre>
+                </div>
+
+                <div class="code-block">
+                    <h4>Teams Table</h4>
+                    <pre><code>CREATE TABLE teams (
+    id SERIAL PRIMARY KEY,
+    team_name VARCHAR(255) NOT NULL,
+    owner_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT NOW()
+);</code></pre>
+                </div>
+
+                <div class="code-block">
+                    <h4>Team Members Table</h4>
+                    <pre><code>CREATE TABLE team_members (
+    id SERIAL PRIMARY KEY,
+    team_id INTEGER REFERENCES teams(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    role VARCHAR(50) DEFAULT 'member',
+    joined_at TIMESTAMP DEFAULT NOW()
+);</code></pre>
+                </div>
+
+                <div class="code-block">
+                    <h4>Business Data Table</h4>
+                    <pre><code>CREATE TABLE business_data (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    record_date DATE NOT NULL,
+    sales FLOAT NOT NULL,
+    expenses FLOAT NOT NULL,
+    profit FLOAT NOT NULL,
+    category VARCHAR(100)
+);</code></pre>
+                </div>
+
+                <div class="code-block">
+                    <h4>Chats Table</h4>
+                    <pre><code>CREATE TABLE chats (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    message TEXT NOT NULL,
+    response TEXT,
+    timestamp TIMESTAMP DEFAULT NOW()
+);</code></pre>
+                </div>
+
+                <div class="code-block">
+                    <h4>Analysis Results Table</h4>
+                    <pre><code>CREATE TABLE analysis_results (
+    id SERIAL PRIMARY KEY,
+    chat_id INTEGER REFERENCES chats(id) ON DELETE CASCADE,
+    summary TEXT NOT NULL,
+    anomaly_score FLOAT DEFAULT 0.0,
+    insight_level VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);</code></pre>
+                </div>
+            </section>
+
+            <section class="doc-section">
+                <h2>Step 4: Google OAuth Setup (Optional)</h2>
+
+                <h3>Create Google Cloud Project</h3>
+                <ol>
+                    <li>Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
+                    <li>Create a new project or select existing</li>
+                    <li>Enable "Google+ API"</li>
+                </ol>
+
+                <h3>Create OAuth Credentials</h3>
+                <ol>
+                    <li>Go to "APIs & Services" → "Credentials"</li>
+                    <li>Click "Create Credentials" → "OAuth client ID"</li>
+                    <li>Select "Web application"</li>
+                    <li>Add Authorized JavaScript origins:
+                        <ul>
+                            <li><code>http://localhost:5500</code></li>
+                            <li><code>http://127.0.0.1:5500</code></li>
+                        </ul>
+                    </li>
+                    <li>Add Authorized redirect URIs:
+                        <ul>
+                            <li><code>http://localhost:5500</code></li>
+                            <li><code>http://127.0.0.1:5500</code></li>
+                        </ul>
+                    </li>
+                    <li>Click "Create"</li>
+                    <li>Copy the Client ID and Client Secret</li>
+                </ol>
+
+                <h3>Configure OAuth in Application</h3>
+                <ol>
+                    <li>Add Client ID and Secret to <code>backend/.env</code></li>
+                    <li>Edit <code>frontend/js/config.js</code></li>
+                    <li>Update <code>GOOGLE_CLIENT_ID</code> constant</li>
+                </ol>
+            </section>
+
+            <section class="doc-section">
+                <h2>Step 5: Start Backend Server</h2>
+                <div class="code-block">
+                    <pre><code>cd backend
+python app.py</code></pre>
+                </div>
+                <p>You should see:</p>
+                <div class="code-block">
+                    <pre><code> * Running on http://0.0.0.0:5000
+ * Debug mode: on</code></pre>
+                </div>
+            </section>
+
+            <section class="doc-section">
+                <h2>Step 6: Setup Frontend</h2>
+
+                <h3>Configure API Endpoint</h3>
+                <p>Edit <code>frontend/js/config.js</code>:</p>
+                <div class="code-block">
+                    <pre><code>// API Configuration
+const API_BASE_URL = 'http://localhost:5000/api';
+
+// Google OAuth Configuration
+const GOOGLE_CLIENT_ID = 'your-google-client-id-here';</code></pre>
+                </div>
+
+                <h3>Start Frontend Server</h3>
+                <p><strong>Option 1: Python HTTP Server</strong></p>
+                <div class="code-block">
+                    <pre><code>cd frontend
+python -m http.server 5500</code></pre>
+                </div>
+
+                <p><strong>Option 2: VS Code Live Server</strong></p>
+                <ol>
+                    <li>Install "Live Server" extension in VS Code</li>
+                    <li>Right-click <code>index.html</code></li>
+                    <li>Select "Open with Live Server"</li>
+                </ol>
+
+                <p><strong>Option 3: Direct Browser Open</strong></p>
+                <p>Simply double-click <code>index.html</code> (may have CORS issues)</p>
+            </section>
+
+            <section class="doc-section">
+                <h2>Step 7: Verify Installation</h2>
+
+                <h3>Check Backend</h3>
+                <p>Visit <code>http://localhost:5000</code> in browser. You should see:</p>
+                <div class="code-block">
+                    <pre><code>{
+  "message": "Welcome to DataXpert API",
+  "version": "1.0.0",
+  "endpoints": {...}
+}</code></pre>
+                </div>
+
+                <h3>Check Frontend</h3>
+                <p>Visit <code>http://localhost:5500</code> in browser. You should see the DataXpert homepage.</p>
+
+                <h3>Test Authentication</h3>
+                <ol>
+                    <li>Click "Sign Up" on homepage</li>
+                    <li>Create a test account</li>
+                    <li>Verify you're redirected to dashboard</li>
+                    <li>Check browser console for errors</li>
+                </ol>
+            </section>
+
+            <section class="doc-section">
+                <h2>Troubleshooting</h2>
+
+                <h3>Backend Issues</h3>
+                <div class="alert alert-info">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <p><strong>Error: ModuleNotFoundError</strong></p>
+                        <p>Solution: Run <code>pip install -r requirements.txt</code></p>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <p><strong>Error: Supabase connection failed</strong></p>
+                        <p>Solution: Check SUPABASE_URL and SUPABASE_KEY in .env</p>
+                    </div>
+                </div>
+
+                <h3>Frontend Issues</h3>
+                <div class="alert alert-info">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <p><strong>Error: CORS policy blocked</strong></p>
+                        <p>Solution: Use Python HTTP Server or Live Server, not direct file opening</p>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <p><strong>Error: Google Sign-In not loading</strong></p>
+                        <p>Solution: Verify GOOGLE_CLIENT_ID is correct in config.js</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="doc-section">
+                <h2>Next Steps</h2>
+                <ul>
+                    <li>Read the <a href="workflow.html">Workflow Guide</a> to understand how the app works</li>
+                    <li>Check the <a href="er-diagram.html">ER Diagram</a> to understand database structure</li>
+                    <li>Explore the <a href="folder-structure.html">Folder Structure</a> to navigate the codebase</li>
+                    <li>Start adding business data and testing AI analysis</li>
+                </ul>
+            </section>
+
+            <footer class="docs-footer">
+                <p>&copy; 2024 DataXpert by SGP Group. All rights reserved.</p>
+            </footer>
+        </main>
+    </div>
+
+    <script src="js/docs.js"></script>
+</body>
+</html>

@@ -1,0 +1,363 @@
+/* Analysis Page Styles */
+
+.analysis-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Suggestions */
+.suggestions {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+}
+
+.suggestions h3 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.suggestion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.chip {
+    padding: 0.6rem 1.2rem;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.chip:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+/* Chat Container */
+.chat-container {
+    flex: 1;
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    overflow-y: auto;
+    max-height: 500px;
+    min-height: 400px;
+}
+
+.welcome-message {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+}
+
+.welcome-message i {
+    font-size: 4rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.welcome-message h2 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.welcome-message p {
+    margin-bottom: 0.5rem;
+    font-size: 1.05rem;
+}
+
+/* Messages */
+.message {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.user-message {
+    flex-direction: row-reverse;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.user-message .message-avatar {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+.assistant-message .message-avatar {
+    background: var(--gradient-secondary);
+    color: white;
+}
+
+.message-content {
+    flex: 1;
+    background: var(--bg-secondary);
+    padding: 1rem 1.2rem;
+    border-radius: 12px;
+    max-width: 70%;
+}
+
+.user-message .message-content {
+    background: var(--primary-color);
+    color: white;
+}
+
+.assistant-message .message-content {
+    background: var(--bg-secondary);
+}
+
+.message-content p {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.message-text {
+    line-height: 1.6;
+}
+
+/* Typing Indicator */
+.typing-dots {
+    display: flex;
+    gap: 5px;
+    padding: 0.5rem 0;
+}
+
+.typing-dots span {
+    width: 8px;
+    height: 8px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    animation: bounce 1.4s infinite;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+    0%, 60%, 100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Analysis Results */
+.analysis-results {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.results-header {
+    background: var(--gradient-primary);
+    color: white;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.results-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+.results-content {
+    padding: 1.5rem;
+}
+
+.result-section {
+    margin-bottom: 1.5rem;
+}
+
+.result-section:last-child {
+    margin-bottom: 0;
+}
+
+.result-section h4 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.result-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.result-section ul li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.result-section ul li::before {
+    content: '▪';
+    position: absolute;
+    left: 0;
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+/* Input Area */
+.input-area {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    padding: 1.5rem;
+}
+
+.input-wrapper {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.input-wrapper textarea {
+    flex: 1;
+    padding: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: none;
+    min-height: 50px;
+    max-height: 150px;
+    transition: border-color 0.3s ease;
+}
+
+.input-wrapper textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.send-btn {
+    width: 50px;
+    height: 50px;
+    background: var(--primary-color);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.send-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.send-btn:disabled {
+    background: var(--text-light);
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+    .analysis-container {
+        padding: 1rem;
+    }
+
+    .message-content {
+        max-width: 80%;
+    }
+
+    .suggestions h3 {
+        font-size: 1rem;
+    }
+
+    .chip {
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .chat-container {
+        min-height: 300px;
+        max-height: 400px;
+    }
+
+    .message-content {
+        max-width: 85%;
+    }
+
+    .welcome-message {
+        padding: 2rem 1rem;
+    }
+
+    .welcome-message i {
+        font-size: 3rem;
+    }
+
+    .welcome-message h2 {
+        font-size: 1.5rem;
+    }
+
+    .welcome-message p {
+        font-size: 0.95rem;
+    }
+
+    .suggestion-chips {
+        gap: 0.5rem;
+    }
+
+    .chip {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.8rem;
+    }
+}

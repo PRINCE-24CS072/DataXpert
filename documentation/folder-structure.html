@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folder Structure - DataXpert Documentation</title>
+    <link rel="stylesheet" href="css/docs.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="docs-nav">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>DataXpert Docs</span>
+            </div>
+            <a href="../frontend/index.html" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back to App
+            </a>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-section">
+                <h3>Architecture</h3>
+                <ul>
+                    <li><a href="architecture.html">System Architecture</a></li>
+                    <li><a href="er-diagram.html">ER Diagram</a></li>
+                    <li><a href="folder-structure.html" class="active">Folder Structure</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <h1><i class="fas fa-folder-tree"></i> Folder Structure</h1>
+            <p class="lead">Complete project organization and file structure</p>
+
+            <section class="doc-section">
+                <h2>Project Structure</h2>
+                <div class="code-block">
+                    <pre><code>DataXpert/
+│
+├── backend/                    # Backend application
+│   ├── ai/                     # AI and analysis modules
+│   │   ├── __init__.py
+│   │   ├── analysis_engine.py  # Main analysis engine
+│   │   ├── nlp_processor.py    # NLP processing
+│   │   └── anomaly_detector.py # Anomaly detection
+│   │
+│   ├── auth/                   # Authentication module
+│   │   ├── __init__.py
+│   │   └── auth_service.py     # Auth logic & Google OAuth
+│   │
+│   ├── database/               # Database module
+│   │   ├── __init__.py
+│   │   └── supabase_client.py  # Supabase operations
+│   │
+│   ├── app.py                  # Main Flask application
+│   ├── requirements.txt        # Python dependencies
+│   └── .env.example            # Environment variables template
+│
+├── frontend/                   # Frontend application
+│   ├── css/                    # Stylesheets
+│   │   ├── style.css           # Main styles
+│   │   ├── dashboard.css       # Dashboard styles
+│   │   └── analysis.css        # Analysis page styles
+│   │
+│   ├── js/                     # JavaScript files
+│   │   ├── config.js           # Configuration & API endpoints
+│   │   ├── auth.js             # Authentication logic
+│   │   ├── main.js             # Homepage logic
+│   │   ├── dashboard.js        # Dashboard logic
+│   │   └── analysis.js         # AI analysis logic
+│   │
+│   ├── index.html              # Homepage
+│   ├── dashboard.html          # Dashboard page
+│   └── analysis.html           # AI analysis page
+│
+└── documentation/              # Documentation website
+    ├── css/                    # Documentation styles
+    │   └── docs.css
+    │
+    ├── js/                     # Documentation scripts
+    │   └── docs.js
+    │
+    ├── images/                 # Documentation images
+    │   ├── er-diagram.png
+    │   └── flow-diagram.png
+    │
+    ├── index.html              # Documentation home
+    ├── workflow.html           # Workflow documentation
+    ├── er-diagram.html         # Database schema
+    ├── folder-structure.html   # This file
+    ├── architecture.html       # System architecture
+    └── setup.html              # Setup guide</code></pre>
+                </div>
+            </section>
+
+            <section class="doc-section">
+                <h2>Backend Structure Details</h2>
+
+                <h3>AI Module (<code>backend/ai/</code>)</h3>
+                <ul>
+                    <li><code>analysis_engine.py</code> - Core analysis logic, performs statistical analysis, generates insights</li>
+                    <li><code>nlp_processor.py</code> - Natural language processing, intent extraction, entity recognition</li>
+                    <li><code>anomaly_detector.py</code> - Anomaly detection using Z-scores and IQR methods</li>
+                </ul>
+
+                <h3>Auth Module (<code>backend/auth/</code>)</h3>
+                <ul>
+                    <li><code>auth_service.py</code> - Handles user authentication, password hashing, Google OAuth</li>
+                </ul>
+
+                <h3>Database Module (<code>backend/database/</code>)</h3>
+                <ul>
+                    <li><code>supabase_client.py</code> - All database operations, CRUD for all tables</li>
+                </ul>
+
+                <h3>Main Application (<code>backend/app.py</code>)</h3>
+                <ul>
+                    <li>Flask application setup</li>
+                    <li>API endpoints definition</li>
+                    <li>Middleware configuration</li>
+                    <li>CORS setup</li>
+                </ul>
+            </section>
+
+            <section class="doc-section">
+                <h2>Frontend Structure Details</h2>
+
+                <h3>HTML Pages</h3>
+                <ul>
+                    <li><code>index.html</code> - Landing page with login/signup modals</li>
+                    <li><code>dashboard.html</code> - Main dashboard with charts and stats</li>
+                    <li><code>analysis.html</code> - AI chat interface for data analysis</li>
+                </ul>
+
+                <h3>CSS Files</h3>
+                <ul>
+                    <li><code>style.css</code> - Global styles, components, utilities</li>
+                    <li><code>dashboard.css</code> - Dashboard-specific styles</li>
+                    <li><code>analysis.css</code> - AI analysis page styles</li>
+                </ul>
+
+                <h3>JavaScript Files</h3>
+                <ul>
+                    <li><code>config.js</code> - API configuration, endpoints, helpers</li>
+                    <li><code>auth.js</code> - Authentication logic, Google OAuth integration</li>
+                    <li><code>main.js</code> - Homepage interactivity, modal management</li>
+                    <li><code>dashboard.js</code> - Dashboard data loading, chart rendering</li>
+                    <li><code>analysis.js</code> - AI chat functionality, analysis display</li>
+                </ul>
+            </section>
+
+            <section class="doc-section">
+                <h2>Documentation Structure</h2>
+                <p>The documentation website is completely separate from the main application and provides comprehensive guides:</p>
+                <ul>
+                    <li><strong>Getting Started:</strong> Overview, setup guide, workflow</li>
+                    <li><strong>Architecture:</strong> System design, database schema, folder structure</li>
+                    <li><strong>Features:</strong> Detailed feature documentation</li>
+                    <li><strong>About:</strong> SGP Group info, contact details</li>
+                </ul>
+            </section>
+
+            <section class="doc-section">
+                <h2>Key Files Explained</h2>
+
+                <div class="file-explanation">
+                    <h4><code>backend/app.py</code></h4>
+                    <p>The main Flask application file. Contains all API endpoints:</p>
+                    <ul>
+                        <li>Authentication endpoints (<code>/api/auth/*</code>)</li>
+                        <li>User management (<code>/api/user/*</code>)</li>
+                        <li>Team operations (<code>/api/teams/*</code>)</li>
+                        <li>Business data (<code>/api/business/*</code>)</li>
+                        <li>AI analysis (<code>/api/ai/*</code>)</li>
+                        <li>Dashboard (<code>/api/dashboard/*</code>)</li>
+                    </ul>
+                </div>
+
+                <div class="file-explanation">
+                    <h4><code>frontend/js/config.js</code></h4>
+                    <p>Central configuration file containing:</p>
+                    <ul>
+                        <li>API base URL</li>
+                        <li>Google Client ID</li>
+                        <li>All API endpoints</li>
+                        <li>Helper functions (auth headers, logout, etc.)</li>
+                    </ul>
+                </div>
+
+                <div class="file-explanation">
+                    <h4><code>backend/ai/analysis_engine.py</code></h4>
+                    <p>Core AI analysis engine that:</p>
+                    <ul>
+                        <li>Analyzes sales, profit, expenses</li>
+                        <li>Detects trends and patterns</li>
+                        <li>Generates insights and recommendations</li>
+                        <li>Prepares data for visualizations</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="doc-section">
+                <h2>Configuration Files</h2>
+
+                <div class="config-file">
+                    <h4><code>backend/requirements.txt</code></h4>
+                    <p>Python dependencies:</p>
+                    <ul>
+                        <li>Flask - Web framework</li>
+                        <li>Flask-CORS - Cross-origin requests</li>
+                        <li>PyJWT - JWT token handling</li>
+                        <li>pandas, numpy - Data analysis</li>
+                        <li>supabase - Database client</li>
+                        <li>google-auth - Google OAuth</li>
+                    </ul>
+                </div>
+
+                <div class="config-file">
+                    <h4><code>backend/.env</code></h4>
+                    <p>Environment variables (create from .env.example):</p>
+                    <ul>
+                        <li>SECRET_KEY - Flask secret key</li>
+                        <li>JWT_SECRET_KEY - JWT signing key</li>
+                        <li>SUPABASE_URL - Supabase project URL</li>
+                        <li>SUPABASE_KEY - Supabase API key</li>
+                        <li>GOOGLE_CLIENT_ID - Google OAuth client ID</li>
+                    </ul>
+                </div>
+            </section>
+
+            <footer class="docs-footer">
+                <p>&copy; 2024 DataXpert by SGP Group. All rights reserved.</p>
+            </footer>
+        </main>
+    </div>
+
+    <script src="js/docs.js"></script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataXpert - AI-Powered Business Analytics</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>DataXpert</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#home" class="active">Home</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" id="loginBtn">Login</button>
+                <button class="btn btn-primary" id="signupBtn">Sign Up</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">Transform Your Business Data Into <span class="gradient-text">Actionable Insights</span></h1>
+                <p class="hero-subtitle">AI-powered analytics platform that helps you make data-driven decisions with confidence</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-large btn-primary" id="getStartedBtn">Get Started Free</button>
+                    <button class="btn btn-large btn-secondary" id="demoBtnHero">Try Demo</button>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="floating-card">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Real-time Analytics</span>
+                </div>
+                <div class="floating-card" style="animation-delay: 0.5s;">
+                    <i class="fas fa-brain"></i>
+                    <span>AI Insights</span>
+                </div>
+                <div class="floating-card" style="animation-delay: 1s;">
+                    <i class="fas fa-users"></i>
+                    <span>Team Collaboration</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Powerful Features</h2>
+            <p class="section-subtitle">Everything you need to manage and analyze your business data</p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>AI-Powered Analysis</h3>
+                    <p>Chat with AI to get instant insights about your sales, profits, and business trends</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Interactive Dashboards</h3>
+                    <p>Visualize your business data with beautiful, interactive charts and graphs</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users-cog"></i>
+                    </div>
+                    <h3>Team Management</h3>
+                    <p>Create teams, collaborate with members, and share insights across your organization</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <h3>Anomaly Detection</h3>
+                    <p>Automatically detect unusual patterns and receive alerts for important changes</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-export"></i>
+                    </div>
+                    <h3>Data Export</h3>
+                    <p>Export your data and reports in multiple formats for presentations and meetings</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Secure & Reliable</h3>
+                    <p>Enterprise-grade security with encrypted data storage and backup</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <h2 class="section-title">About DataXpert</h2>
+            <div class="about-content">
+                <div class="about-text">
+                    <p>DataXpert is an advanced AI-assisted business analytics platform designed to help businesses of all sizes make better decisions through data. Our platform combines cutting-edge machine learning algorithms with an intuitive interface to provide actionable insights.</p>
+                    <p>Whether you're tracking sales, monitoring expenses, or analyzing customer behavior, DataXpert gives you the tools you need to succeed.</p>
+                </div>
+                <div class="about-stats">
+                    <div class="stat-card">
+                        <h3>10K+</h3>
+                        <p>Active Users</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>50M+</h3>
+                        <p>Data Points Analyzed</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>99.9%</h3>
+                        <p>Uptime</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <h2>Ready to Transform Your Business?</h2>
+            <p>Join thousands of businesses using DataXpert to make smarter decisions</p>
+            <button class="btn btn-large btn-white" id="ctaSignupBtn">Start Free Trial</button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact" class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3><i class="fas fa-chart-line"></i> DataXpert</h3>
+                    <p>AI-powered business analytics for modern businesses</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="dashboard.html">Dashboard</a></li>
+                        <li><a href="analysis.html">AI Analysis</a></li>
+                        <li><a href="../documentation/index.html">Documentation</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="#about">About Us</a></li>
+                        <li><a href="../documentation/index.html#sgp-group">SGP Group</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="../documentation/index.html">Documentation</a></li>
+                        <li><a href="../documentation/workflow.html">Workflow</a></li>
+                        <li><a href="../documentation/er-diagram.html">ER Diagram</a></li>
+                        <li><a href="../documentation/architecture.html">Architecture</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 DataXpert. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                    <a href="#"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-modal="loginModal">&times;</span>
+            <h2>Welcome Back</h2>
+            <p>Login to access your dashboard</p>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Login</button>
+            </form>
+
+            <div class="divider">OR</div>
+
+            <div id="googleLoginBtn" class="btn-google">
+                <i class="fab fa-google"></i>
+                Continue with Google
+            </div>
+
+            <p class="modal-footer">Don't have an account? <a href="#" id="switchToSignup">Sign up</a></p>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-modal="signupModal">&times;</span>
+            <h2>Create Account</h2>
+            <p>Start your journey with DataXpert</p>
+            
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="signupUsername">Username</label>
+                    <input type="text" id="signupUsername" required placeholder="johndoe">
+                </div>
+                <div class="form-group">
+                    <label for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" required placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Sign Up</button>
+            </form>
+
+            <div class="divider">OR</div>
+
+            <div id="googleSignupBtn" class="btn-google">
+                <i class="fab fa-google"></i>
+                Continue with Google
+            </div>
+
+            <p class="modal-footer">Already have an account? <a href="#" id="switchToLogin">Login</a></p>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

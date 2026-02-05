@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ER Diagram - DataXpert Documentation</title>
+    <link rel="stylesheet" href="css/docs.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="docs-nav">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>DataXpert Docs</span>
+            </div>
+            <a href="../frontend/index.html" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back to App
+            </a>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-section">
+                <h3>Architecture</h3>
+                <ul>
+                    <li><a href="architecture.html">System Architecture</a></li>
+                    <li><a href="er-diagram.html" class="active">ER Diagram</a></li>
+                    <li><a href="folder-structure.html">Folder Structure</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <h1><i class="fas fa-database"></i> Entity-Relationship Diagram</h1>
+            <p class="lead">Database schema and relationships for DataXpert</p>
+
+            <section class="doc-section">
+                <h2>Database Structure</h2>
+                <div class="diagram-box">
+                    <img src="../images/er-diagram.png" alt="ER Diagram" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <p class="diagram-caption">Complete database schema showing all tables and relationships</p>
+                </div>
+            </section>
+
+            <section class="doc-section">
+                <h2>Database Tables</h2>
+
+                <div class="table-doc">
+                    <h3>1. USERS</h3>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Type</th>
+                                <th>Constraints</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>int</td>
+                                <td>PK, AUTO_INCREMENT</td>
+                                <td>Unique user identifier</td>
+                            </tr>
+                            <tr>
+                                <td><code>name</code></td>
+                                <td>string</td>
+                                <td>NOT NULL</td>
+                                <td>User's full name</td>
+                            </tr>
+                            <tr>
+                                <td><code>email</code></td>
+                                <td>string</td>
+                                <td>UNIQUE, NOT NULL</td>
+                                <td>User's email address</td>
+                            </tr>
+                            <tr>
+                                <td><code>password</code></td>
+                                <td>string</td>
+                                <td>NULLABLE</td>
+                                <td>Hashed password (null for OAuth users)</td>
+                            </tr>
+                            <tr>
+                                <td><code>google_id</code></td>
+                                <td>string</td>
+                                <td>NULLABLE, UNIQUE</td>
+                                <td>Google OAuth identifier</td>
+                            </tr>
+                            <tr>
+                                <td><code>role</code></td>
+                                <td>string</td>
+                                <td>DEFAULT 'user'</td>
+                                <td>User role (user/admin)</td>
+                            </tr>
+                            <tr>
+                                <td><code>created_at</code></td>
+                                <td>datetime</td>
+                                <td>DEFAULT NOW()</td>
+                                <td>Account creation timestamp</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-doc">
+                    <h3>2. TEAMS</h3>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Type</th>
+                                <th>Constraints</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>int</td>
+                                <td>PK, AUTO_INCREMENT</td>
+                                <td>Unique team identifier</td>
+                            </tr>
+                            <tr>
+                                <td><code>team_name</code></td>
+                                <td>string</td>
+                                <td>NOT NULL</td>
+                                <td>Name of the team</td>
+                            </tr>
+                            <tr>
+                                <td><code>owner_id</code></td>
+                                <td>int</td>
+                                <td>FK (users.id)</td>
+                                <td>Team owner reference</td>
+                            </tr>
+                            <tr>
+                                <td><code>created_at</code></td>
+                                <td>datetime</td>
+                                <td>DEFAULT NOW()</td>
+                                <td>Team creation timestamp</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-doc">
+                    <h3>3. TEAM_MEMBERS</h3>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Type</th>
+                                <th>Constraints</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>int</td>
+                                <td>PK, AUTO_INCREMENT</td>
+                                <td>Unique membership identifier</td>
+                            </tr>
+                            <tr>
+                                <td><code>team_id</code></td>
+                                <td>int</td>
+                                <td>FK (teams.id)</td>
+                                <td>Team reference</td>
+                            </tr>
+                            <tr>
+                                <td><code>user_id</code></td>
+                                <td>int</td>
+                                <td>FK (users.id)</td>
+                                <td>User reference</td>
+                            </tr>
+                            <tr>
+                                <td><code>role</code></td>
+                                <td>string</td>
+                                <td>DEFAULT 'member'</td>
+                                <td>Member role (owner/admin/member)</td>
+                            </tr>
+                            <tr>
+                                <td><code>joined_at</code></td>
+                                <td>datetime</td>
+                                <td>DEFAULT NOW()</td>
+                                <td>Join timestamp</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-doc">
+                    <h3>4. BUSINESS_DATA</h3>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Type</th>
+                                <th>Constraints</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>int</td>
+                                <td>PK, AUTO_INCREMENT</td>
+                                <td>Unique data entry identifier</td>
+                            </tr>
+                            <tr>
+                                <td><code>user_id</code></td>
+                                <td>int</td>
+                                <td>FK (users.id)</td>
+                                <td>Data owner reference</td>
+                            </tr>
+                            <tr>
+                                <td><code>record_date</code></td>
+                                <td>date</td>
+                                <td>NOT NULL</td>
+                                <td>Date of business record</td>
+                            </tr>
+                            <tr>
+                                <td><code>sales</code></td>
+                                <td>float</td>
+                                <td>NOT NULL</td>
+                                <td>Sales amount</td>
+                            </tr>
+                            <tr>
+                                <td><code>expenses</code></td>
+                                <td>float</td>
+                                <td>NOT NULL</td>
+                                <td>Expenses amount</td>
+                            </tr>
+                            <tr>
+                                <td><code>profit</code></td>
+                                <td>float</td>
+                                <td>COMPUTED</td>
+                                <td>Profit (sales - expenses)</td>
+                            </tr>
+                            <tr>
+                                <td><code>category</code></td>
+                                <td>string</td>
+                                <td>NULLABLE</td>
+                                <td>Business category</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-doc">
+                    <h3>5. CHATS</h3>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Type</th>
+                                <th>Constraints</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>int</td>
+                                <td>PK, AUTO_INCREMENT</td>
+                                <td>Unique chat identifier</td>
+                            </tr>
+                            <tr>
+                                <td><code>user_id</code></td>
+                                <td>int</td>
+                                <td>FK (users.id)</td>
+                                <td>Chat owner reference</td>
+                            </tr>
+                            <tr>
+                                <td><code>message</code></td>
+                                <td>string</td>
+                                <td>NOT NULL</td>
+                                <td>User message</td>
+                            </tr>
+                            <tr>
+                                <td><code>response</code></td>
+                                <td>string</td>
+                                <td>NULLABLE</td>
+                                <td>AI response</td>
+                            </tr>
+                            <tr>
+                                <td><code>timestamp</code></td>
+                                <td>datetime</td>
+                                <td>DEFAULT NOW()</td>
+                                <td>Message timestamp</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-doc">
+                    <h3>6. ANALYSIS_RESULTS</h3>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Type</th>
+                                <th>Constraints</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>int</td>
+                                <td>PK, AUTO_INCREMENT</td>
+                                <td>Unique result identifier</td>
+                            </tr>
+                            <tr>
+                                <td><code>chat_id</code></td>
+                                <td>int</td>
+                                <td>FK (chats.id)</td>
+                                <td>Related chat reference</td>
+                            </tr>
+                            <tr>
+                                <td><code>summary</code></td>
+                                <td>string</td>
+                                <td>NOT NULL</td>
+                                <td>Analysis summary</td>
+                            </tr>
+                            <tr>
+                                <td><code>anomaly_score</code></td>
+                                <td>float</td>
+                                <td>DEFAULT 0.0</td>
+                                <td>Anomaly detection score</td>
+                            </tr>
+                            <tr>
+                                <td><code>insight_level</code></td>
+                                <td>string</td>
+                                <td>NOT NULL</td>
+                                <td>Insight quality (low/medium/high)</td>
+                            </tr>
+                            <tr>
+                                <td><code>created_at</code></td>
+                                <td>datetime</td>
+                                <td>DEFAULT NOW()</td>
+                                <td>Analysis timestamp</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="doc-section">
+                <h2>Relationships</h2>
+                <ul>
+                    <li><strong>Users → Teams:</strong> One-to-Many (A user can create multiple teams)</li>
+                    <li><strong>Users → Team_Members:</strong> One-to-Many (A user can be in multiple teams)</li>
+                    <li><strong>Teams → Team_Members:</strong> One-to-Many (A team has multiple members)</li>
+                    <li><strong>Users → Business_Data:</strong> One-to-Many (A user has multiple data entries)</li>
+                    <li><strong>Users → Chats:</strong> One-to-Many (A user has multiple chat sessions)</li>
+                    <li><strong>Chats → Analysis_Results:</strong> One-to-Many (A chat can have multiple analysis results)</li>
+                </ul>
+            </section>
+
+            <footer class="docs-footer">
+                <p>&copy; 2024 DataXpert by SGP Group. All rights reserved.</p>
+            </footer>
+        </main>
+    </div>
+
+    <script src="js/docs.js"></script>
+</body>
+</html>

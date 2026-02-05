@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow - DataXpert Documentation</title>
+    <link rel="stylesheet" href="css/docs.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="docs-nav">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>DataXpert Docs</span>
+            </div>
+            <a href="../frontend/index.html" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back to App
+            </a>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-section">
+                <h3>Getting Started</h3>
+                <ul>
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="setup.html">Setup Guide</a></li>
+                    <li><a href="workflow.html" class="active">Workflow</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <h3>Architecture</h3>
+                <ul>
+                    <li><a href="architecture.html">System Architecture</a></li>
+                    <li><a href="er-diagram.html">ER Diagram</a></li>
+                    <li><a href="folder-structure.html">Folder Structure</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <h1><i class="fas fa-project-diagram"></i> Application Workflow</h1>
+            <p class="lead">Understanding how DataXpert processes data and user interactions</p>
+
+            <section class="doc-section">
+                <h2>System Workflow Overview</h2>
+                <p>DataXpert follows a multi-layered architecture that processes user requests through several stages:</p>
+
+                <div class="workflow-diagram">
+                    <div class="workflow-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>User Authentication</h3>
+                            <p>User logs in via email/password or Google OAuth</p>
+                            <ul>
+                                <li>JWT token generation</li>
+                                <li>Session management</li>
+                                <li>Google OAuth flow</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="workflow-arrow">↓</div>
+
+                    <div class="workflow-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Dashboard Access</h3>
+                            <p>User accesses dashboard with business data</p>
+                            <ul>
+                                <li>Load business statistics</li>
+                                <li>Render charts and visualizations</li>
+                                <li>Display recent activity</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="workflow-arrow">↓</div>
+
+                    <div class="workflow-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Data Input</h3>
+                            <p>User enters business data or uploads CSV</p>
+                            <ul>
+                                <li>Sales data entry</li>
+                                <li>Expense tracking</li>
+                                <li>Profit calculation</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="workflow-arrow">↓</div>
+
+                    <div class="workflow-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3>AI Analysis</h3>
+                            <p>User queries AI for insights</p>
+                            <ul>
+                                <li>NLP processing</li>
+                                <li>Intent extraction</li>
+                                <li>Entity recognition</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="workflow-arrow">↓</div>
+
+                    <div class="workflow-step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h3>Data Analysis</h3>
+                            <p>AI engine analyzes business data</p>
+                            <ul>
+                                <li>Statistical analysis</li>
+                                <li>Trend detection</li>
+                                <li>Anomaly detection</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="workflow-arrow">↓</div>
+
+                    <div class="workflow-step">
+                        <div class="step-number">6</div>
+                        <div class="step-content">
+                            <h3>Results & Insights</h3>
+                            <p>AI generates insights and recommendations</p>
+                            <ul>
+                                <li>Natural language response</li>
+                                <li>Visualizations</li>
+                                <li>Actionable recommendations</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="workflow-arrow">↓</div>
+
+                    <div class="workflow-step">
+                        <div class="step-number">7</div>
+                        <div class="step-content">
+                            <h3>Team Collaboration</h3>
+                            <p>Share insights with team members</p>
+                            <ul>
+                                <li>Create teams</li>
+                                <li>Add members</li>
+                                <li>Share reports</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="doc-section">
+                <h2>AI Analysis Workflow</h2>
+                <p>Detailed flow of how AI processes user queries:</p>
+
+                <div class="code-block">
+                    <h4>Analysis Pipeline</h4>
+                    <pre><code>User Query
+    ↓
+[NLP Processor]
+    • Tokenization
+    • Intent Extraction
+    • Entity Recognition
+    ↓
+[Analysis Engine]
+    • Determine Analysis Type
+    • Fetch Relevant Data
+    • Perform Calculations
+    ↓
+[Anomaly Detector]
+    • Z-Score Analysis
+    • IQR Method
+    • Trend Changes
+    ↓
+[Response Generator]
+    • Format Insights
+    • Generate Recommendations
+    • Create Visualizations
+    ↓
+User Response</code></pre>
+                </div>
+            </section>
+
+            <section class="doc-section">
+                <h2>Data Flow Diagram</h2>
+                <div class="diagram-box">
+                    <img src="../images/flow-diagram.png" alt="Data Flow Diagram" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <p class="diagram-caption">Complete data flow from user input to AI-generated insights</p>
+                </div>
+            </section>
+
+            <section class="doc-section">
+                <h2>User Journey</h2>
+                
+                <div class="journey-step">
+                    <h3>1. First Time User</h3>
+                    <ol>
+                        <li>Visit homepage</li>
+                        <li>Click "Sign Up"</li>
+                        <li>Choose email signup or Google OAuth</li>
+                        <li>Complete registration</li>
+                        <li>Redirected to dashboard</li>
+                        <li>View empty state with "Add Data" prompt</li>
+                    </ol>
+                </div>
+
+                <div class="journey-step">
+                    <h3>2. Adding Business Data</h3>
+                    <ol>
+                        <li>Click "Add Data" button</li>
+                        <li>Fill in the form (date, category, sales, expenses)</li>
+                        <li>Profit auto-calculated</li>
+                        <li>Submit data</li>
+                        <li>Dashboard updates with new charts</li>
+                    </ol>
+                </div>
+
+                <div class="journey-step">
+                    <h3>3. AI Analysis</h3>
+                    <ol>
+                        <li>Navigate to "AI Analysis" page</li>
+                        <li>Type question or click suggestion chip</li>
+                        <li>AI processes query</li>
+                        <li>Receive insights with charts</li>
+                        <li>Ask follow-up questions</li>
+                    </ol>
+                </div>
+
+                <div class="journey-step">
+                    <h3>4. Team Management</h3>
+                    <ol>
+                        <li>Go to "Teams" section</li>
+                        <li>Click "Create Team"</li>
+                        <li>Enter team name</li>
+                        <li>Invite members (future feature)</li>
+                        <li>Collaborate on insights</li>
+                    </ol>
+                </div>
+            </section>
+
+            <footer class="docs-footer">
+                <p>&copy; 2024 DataXpert by SGP Group. All rights reserved.</p>
+            </footer>
+        </main>
+    </div>
+
+    <script src="js/docs.js"></script>
+</body>
+</html>

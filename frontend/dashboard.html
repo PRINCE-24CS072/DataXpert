@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - DataXpert</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dashboard-page">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>DataXpert</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item active">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="analysis.html" class="nav-item">
+                <i class="fas fa-robot"></i>
+                <span>AI Analysis</span>
+            </a>
+            <a href="#" class="nav-item" id="teamsSidebarBtn">
+                <i class="fas fa-users"></i>
+                <span>Teams</span>
+            </a>
+            <a href="#" class="nav-item" id="profileSidebarBtn">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <a href="../documentation/index.html" class="nav-item">
+                <i class="fas fa-book"></i>
+                <span>Documentation</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn btn-secondary btn-full" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>Dashboard</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-container">
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card-dash">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-details">
+                        <span class="stat-label">Total Sales</span>
+                        <span class="stat-value" id="totalSales">$0</span>
+                        <span class="stat-change positive" id="salesChange">+0%</span>
+                    </div>
+                </div>
+
+                <div class="stat-card-dash">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-details">
+                        <span class="stat-label">Total Profit</span>
+                        <span class="stat-value" id="totalProfit">$0</span>
+                        <span class="stat-change positive" id="profitChange">+0%</span>
+                    </div>
+                </div>
+
+                <div class="stat-card-dash">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="stat-details">
+                        <span class="stat-label">Total Expenses</span>
+                        <span class="stat-value" id="totalExpenses">$0</span>
+                        <span class="stat-change negative" id="expenseChange">+0%</span>
+                    </div>
+                </div>
+
+                <div class="stat-card-dash">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="stat-details">
+                        <span class="stat-label">Data Entries</span>
+                        <span class="stat-value" id="dataCount">0</span>
+                        <span class="stat-change neutral">Total</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Sales Overview</h3>
+                        <button class="btn btn-secondary btn-small" id="addDataBtn">
+                            <i class="fas fa-plus"></i> Add Data
+                        </button>
+                    </div>
+                    <canvas id="salesChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Profit vs Expenses</h3>
+                    </div>
+                    <canvas id="profitExpenseChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Category Breakdown</h3>
+                    </div>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Recent Activity</h3>
+                    </div>
+                    <div class="recent-data" id="recentData">
+                        <p class="no-data">No recent activity</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teams Section -->
+            <div class="teams-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-users"></i> Your Teams</h2>
+                    <button class="btn btn-primary" id="createTeamBtn">
+                        <i class="fas fa-plus"></i> Create Team
+                    </button>
+                </div>
+                <div class="teams-grid" id="teamsGrid">
+                    <p class="no-data">No teams yet. Create your first team!</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Data Modal -->
+    <div id="addDataModal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-modal="addDataModal">&times;</span>
+            <h2>Add Business Data</h2>
+            <p>Enter your business data for analysis</p>
+            
+            <form id="addDataForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="recordDate">Date</label>
+                        <input type="date" id="recordDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <select id="category" required>
+                            <option value="">Select Category</option>
+                            <option value="Retail">Retail</option>
+                            <option value="Services">Services</option>
+                            <option value="Manufacturing">Manufacturing</option>
+                            <option value="E-commerce">E-commerce</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="sales">Sales ($)</label>
+                        <input type="number" id="sales" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="expenses">Expenses ($)</label>
+                        <input type="number" id="expenses" step="0.01" required placeholder="0.00">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="profit">Profit ($)</label>
+                    <input type="number" id="profit" step="0.01" required placeholder="0.00" readonly>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Add Data</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Team Modal -->
+    <div id="createTeamModal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-modal="createTeamModal">&times;</span>
+            <h2>Create New Team</h2>
+            <p>Create a team to collaborate with your colleagues</p>
+            
+            <form id="createTeamForm">
+                <div class="form-group">
+                    <label for="teamName">Team Name</label>
+                    <input type="text" id="teamName" required placeholder="Enter team name">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Create Team</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
