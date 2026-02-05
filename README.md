@@ -1,6 +1,8 @@
-# DataXpert - AI-Assisted Business Data Analytics & Management System
-
-![DataXpert Logo](documentation/images/logo.png)
+<div align="center">
+  <img src="assets/logo.png" alt="DataXpert Logo" width="300"/>
+  <h1>DataXpert</h1>
+  <p><strong>AI-Assisted Business Data Analytics & Management System</strong></p>
+</div>
 
 ## 📋 Overview
 
