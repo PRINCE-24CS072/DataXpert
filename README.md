@@ -162,6 +162,7 @@
 
 ```
 DataXpert/
+├──assets
 ├── backend/              # Flask backend
 │   ├── ai/              # AI analysis modules
 │   ├── auth/            # Authentication
