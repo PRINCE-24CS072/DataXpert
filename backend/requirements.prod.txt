@@ -43,7 +43,7 @@ websockets==12.0
 urllib3==1.26.20
 
 # Optional: Add AI packages only when needed
-# pandas==2.1.4
+pandas==2.1.4
 # numpy==1.26.2
 # scikit-learn==1.3.0
 # scipy==1.11.4
