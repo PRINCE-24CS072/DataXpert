@@ -19,8 +19,9 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-here')
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-here')
 
-# Enable CORS
-CORS(app, supports_credentials=True, origins=['http://localhost:3000', 'http://127.0.0.1:5500'])
+# Enable CORS - Read from environment variable
+cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:5500,http://127.0.0.1:5500').split(',')
+CORS(app, supports_credentials=True, origins=cors_origins, resources={r"/api/*": {"origins": cors_origins}})
 
 # Initialize services
 auth_service = AuthService()
