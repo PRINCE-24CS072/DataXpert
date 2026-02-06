@@ -2,7 +2,7 @@
 const API_BASE_URL = 'http://localhost:5000/api';
 
 // Google OAuth Configuration
-const GOOGLE_CLIENT_ID = '72842356502-gfq4rk82nmivklusv8odapj450kmvh5p.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = '72842356502-l4np4rfm963i89r17f8dlk7v7bmtrg6a.apps.googleusercontent.com';
 
 // Local Storage Keys
 const STORAGE_KEYS = {

@@ -101,7 +101,7 @@ CREATE INDEX IF NOT EXISTS idx_analysis_results_chat ON analysis_results(chat_id
 
 SELECT table_name 
 FROM information_schema.tables 
-WHERE table_schema = 'public' 
+WHERE table_schema = 'public' a
 AND table_type = 'BASE TABLE'
 ORDER BY table_name;
 
