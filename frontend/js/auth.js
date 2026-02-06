@@ -2,16 +2,75 @@
 
 // Initialize Google Sign-In
 function initGoogleAuth() {
+    console.log('Initializing Google Auth...');
+    
     if (typeof google !== 'undefined' && google.accounts) {
-        google.accounts.id.initialize({
-            client_id: GOOGLE_CLIENT_ID,
-            callback: handleGoogleCallback
-        });
+        try {
+            google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: handleGoogleCallback,
+                auto_select: false,
+                cancel_on_tap_outside: true
+            });
+            
+            // Render Google buttons
+            renderGoogleButtons();
+            console.log('Google Auth initialized successfully');
+        } catch (error) {
+            console.error('Google Auth initialization error:', error);
+        }
+    } else {
+        console.error('Google Sign-In library not loaded');
+        setTimeout(initGoogleAuth, 500); // Retry after 500ms
+    }
+}
+
+// Render Google Sign-In Buttons
+function renderGoogleButtons() {
+    const googleLoginBtn = document.getElementById('googleLoginBtn');
+    const googleSignupBtn = document.getElementById('googleSignupBtn');
+
+    if (googleLoginBtn && typeof google !== 'undefined' && google.accounts) {
+        try {
+            google.accounts.id.renderButton(
+                googleLoginBtn,
+                {
+                    theme: 'outline',
+                    size: 'large',
+                    width: '100%',
+                    text: 'signin_with',
+                    shape: 'rectangular'
+                }
+            );
+            console.log('Login button rendered');
+        } catch (error) {
+            console.error('Error rendering login button:', error);
+        }
+    }
+
+    if (googleSignupBtn && typeof google !== 'undefined' && google.accounts) {
+        try {
+            google.accounts.id.renderButton(
+                googleSignupBtn,
+                {
+                    theme: 'outline',
+                    size: 'large',
+                    width: '100%',
+                    text: 'signup_with',
+                    shape: 'rectangular'
+                }
+            );
+            console.log('Signup button rendered');
+        } catch (error) {
+            console.error('Error rendering signup button:', error);
+        }
     }
 }
 
 // Handle Google OAuth Callback
 async function handleGoogleCallback(response) {
+    console.log('Google callback received');
+    
     try {
         const result = await fetch(API_ENDPOINTS.GOOGLE_AUTH, {
             method: 'POST',
@@ -24,6 +83,7 @@ async function handleGoogleCallback(response) {
         });
 
         const data = await result.json();
+        console.log('Backend response:', data);
 
         if (data.success) {
             localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
@@ -42,30 +102,11 @@ async function handleGoogleCallback(response) {
     }
 }
 
-// Google Login Button Handler
+// Google Login Button Handler (Backup - if rendering fails)
 function setupGoogleButtons() {
-    const googleLoginBtn = document.getElementById('googleLoginBtn');
-    const googleSignupBtn = document.getElementById('googleSignupBtn');
-
-    if (googleLoginBtn) {
-        googleLoginBtn.addEventListener('click', () => {
-            if (typeof google !== 'undefined' && google.accounts) {
-                google.accounts.id.prompt();
-            } else {
-                showMessage('Google Sign-In not loaded', 'error');
-            }
-        });
-    }
-
-    if (googleSignupBtn) {
-        googleSignupBtn.addEventListener('click', () => {
-            if (typeof google !== 'undefined' && google.accounts) {
-                google.accounts.id.prompt();
-            } else {
-                showMessage('Google Sign-In not loaded', 'error');
-            }
-        });
-    }
+    // This is now handled by renderGoogleButtons()
+    // Keeping for backwards compatibility
+    console.log('Google buttons setup complete');
 }
 
 // Email/Password Signup
@@ -204,6 +245,8 @@ function showMessage(message, type = 'info') {
 
 // Initialize auth when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, setting up auth...');
+    
     // Setup form handlers
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
@@ -216,7 +259,22 @@ document.addEventListener('DOMContentLoaded', () => {
         signupForm.addEventListener('submit', handleSignup);
     }
 
-    // Setup Google buttons
-    setupGoogleButtons();
+    // Initialize Google Auth (with retry mechanism)
     initGoogleAuth();
+    
+    // Also try to initialize when modal opens (in case library loads late)
+    const loginBtn = document.getElementById('loginBtn');
+    const signupBtn = document.getElementById('signupBtn');
+    
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => {
+            setTimeout(renderGoogleButtons, 100);
+        });
+    }
+    
+    if (signupBtn) {
+        signupBtn.addEventListener('click', () => {
+            setTimeout(renderGoogleButtons, 100);
+        });
+    }
 });

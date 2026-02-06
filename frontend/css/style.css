@@ -607,6 +607,22 @@ body {
     right: 0;
 }
 
+/* Google Sign-In Button Container */
+#googleLoginBtn,
+#googleSignupBtn {
+    width: 100%;
+    margin: 1rem 0;
+    display: flex;
+    justify-content: center;
+    min-height: 44px;
+}
+
+/* Ensure Google button iframe takes full width */
+#googleLoginBtn iframe,
+#googleSignupBtn iframe {
+    width: 100% !important;
+}
+
 .btn-google {
     width: 100%;
     padding: 0.8rem;
