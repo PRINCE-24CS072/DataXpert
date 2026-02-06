@@ -137,7 +137,15 @@ async function handleSignup(event) {
             })
         });
 
-        const data = await response.json();
+        // Parse JSON response regardless of status code
+        let data;
+        try {
+            data = await response.json();
+        } catch (e) {
+            console.error('Failed to parse response:', e);
+            showMessage('Server error. Please try again.', 'error');
+            return;
+        }
 
         if (data.success) {
             localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
@@ -148,11 +156,17 @@ async function handleSignup(event) {
                 window.location.href = 'dashboard.html';
             }, 1000);
         } else {
+            // Show the specific error message from backend
             showMessage(data.message || 'Signup failed', 'error');
         }
     } catch (error) {
         console.error('Signup error:', error);
-        showMessage('Signup error. Please try again.', 'error');
+        // Check if it's a network error
+        if (error.message === 'Failed to fetch' || !navigator.onLine) {
+            showMessage('Cannot connect to server. Please make sure the backend is running.', 'error');
+        } else {
+            showMessage('Signup error. Please try again.', 'error');
+        }
     }
 }
 

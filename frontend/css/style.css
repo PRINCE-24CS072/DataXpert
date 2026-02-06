@@ -515,20 +515,29 @@ body {
 
 .modal-content {
     background-color: white;
-    margin: 5% auto;
-    padding: 2.5rem;
+    padding: 2rem;
     border-radius: 16px;
     width: 90%;
-    max-width: 450px;
-    position: relative;
+    max-width: 420px;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
     box-shadow: var(--shadow-xl);
-    transform: scale(0.9);
     opacity: 0;
     transition: all 0.3s ease;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.modal-content::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
 }
 
 .modal-content.show {
-    transform: scale(1);
+    transform: translate(-50%, -50%) scale(1);
     opacity: 1;
 }
 
@@ -550,31 +559,34 @@ body {
 .modal-content h2 {
     margin-bottom: 0.5rem;
     color: var(--text-primary);
+    font-size: 1.5rem;
 }
 
 .modal-content > p {
     color: var(--text-secondary);
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
 }
 
 .form-group {
     margin-bottom: 1.5rem;
+}2rem;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
     font-weight: 600;
     color: var(--text-primary);
+    font-size: 0.9rem;
 }
 
 .form-group input {
     width: 100%;
-    padding: 0.8rem;
+    padding: 0.7rem;
     border: 2px solid var(--border-color);
     border-radius: 8px;
-    font-size: 1rem;
-    transition: border-color 0.3s ease;
+    font-size: 0.95border-color 0.3s ease;
 }
 
 .form-group input:focus {
@@ -584,7 +596,7 @@ body {
 
 .divider {
     text-align: center;
-    margin: 1.5rem 0;
+    margin: 1rem 0;
     position: relative;
     color: var(--text-secondary);
 }
@@ -611,7 +623,7 @@ body {
 #googleLoginBtn,
 #googleSignupBtn {
     width: 100%;
-    margin: 1rem 0;
+    margin: 0.8rem 0;
     display: flex;
     justify-content: center;
     min-height: 44px;
@@ -651,7 +663,8 @@ body {
 
 .modal-footer {
     text-align: center;
-    margin-top: 1.5rem;
+    margin-top: 1rem;
+    padding-top: 0.5rem;
     color: var(--text-secondary);
 }
 
