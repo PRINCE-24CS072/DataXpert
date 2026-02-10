@@ -21,7 +21,11 @@ app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-here'
 
 # Enable CORS - Read from environment variable
 cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:5500,http://127.0.0.1:5500').split(',')
-CORS(app, supports_credentials=True, origins=cors_origins, resources={r"/api/*": {"origins": cors_origins}})
+CORS(app, 
+     supports_credentials=True, 
+     origins=cors_origins,
+     allow_headers=['Content-Type', 'Authorization'],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
 
 # Initialize services
 auth_service = AuthService()
