@@ -17,6 +17,7 @@ const API_ENDPOINTS = {
     LOGIN: `${API_BASE_URL}/auth/login`,
     GOOGLE_AUTH: `${API_BASE_URL}/auth/google`,
     VERIFY: `${API_BASE_URL}/auth/verify`,
+    COMPLETE_PROFILE: `${API_BASE_URL}/auth/complete-profile`,
     
     // User
     PROFILE: `${API_BASE_URL}/user/profile`,

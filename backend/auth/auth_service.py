@@ -25,7 +25,7 @@ class AuthService:
         except:
             return False
     
-    def signup(self, username, email, password):
+    def signup(self, username, email, password, business_name=None):
         """Register new user"""
         try:
             # Check if user already exists
@@ -41,7 +41,9 @@ class AuthService:
                 'name': username,
                 'email': email,
                 'password': hashed_password,
-                'role': 'user'
+                'business_name': business_name,
+                'role': 'user',
+                'profile_completed': True
             }
             
             user = self.db_client.create_user(user_data)
@@ -69,8 +71,17 @@ class AuthService:
             if not user:
                 return {'message': 'Invalid email or password', 'success': False}
             
+            # Check if profile is completed
+            if not user.get('profile_completed', False):
+                return {
+                    'message': 'Please complete your profile first',
+                    'success': False,
+                    'profile_incomplete': True,
+                    'user_id': user['id']
+                }
+            
             # Verify password
-            if not self.verify_password(user['password'], password):
+            if not user.get('password') or not self.verify_password(user['password'], password):
                 return {'message': 'Invalid email or password', 'success': False}
             
             # Remove password from response
@@ -115,30 +126,86 @@ class AuthService:
                 if not user.get('google_id'):
                     self.db_client.update_user_google_id(user['id'], google_id)
                     user['google_id'] = google_id
+                
+                # Remove password from response
+                user.pop('password', None)
+                
+                # Check if profile is completed
+                if not user.get('profile_completed', False):
+                    return {
+                        'message': 'Please complete your profile',
+                        'success': True,
+                        'profile_incomplete': True,
+                        'user': user
+                    }
+                
+                return {
+                    'message': 'Google authentication successful',
+                    'success': True,
+                    'user': user
+                }
             else:
-                # Create new user
+                # Create new user with incomplete profile
                 user_data = {
                     'name': name,
                     'email': email,
                     'google_id': google_id,
-                    'role': 'user'
+                    'role': 'user',
+                    'profile_completed': False
                 }
                 
                 user = self.db_client.create_user(user_data)
                 
                 if not user:
                     return {'message': 'Failed to create user', 'success': False}
-            
-            # Remove password from response
-            user.pop('password', None)
-            
-            return {
-                'message': 'Google authentication successful',
-                'success': True,
-                'user': user
-            }
+                
+                # Remove password from response
+                user.pop('password', None)
+                
+                return {
+                    'message': 'Please complete your profile',
+                    'success': True,
+                    'profile_incomplete': True,
+                    'user': user
+                }
             
         except ValueError as e:
             return {'message': f'Invalid Google token: {str(e)}', 'success': False}
         except Exception as e:
             return {'message': f'Google auth error: {str(e)}', 'success': False}
+    
+    def complete_profile(self, user_id, business_name, password):
+        """Complete user profile after Google OAuth"""
+        try:
+            # Get user
+            user = self.db_client.get_user_by_id(user_id)
+            
+            if not user:
+                return {'message': 'User not found', 'success': False}
+            
+            # Hash password
+            hashed_password = self.hash_password(password)
+            
+            # Update user profile
+            updated_user = self.db_client.update_user_profile(
+                user_id,
+                {
+                    'business_name': business_name,
+                    'password': hashed_password,
+                    'profile_completed': True
+                }
+            )
+            
+            if updated_user:
+                # Remove password from response
+                updated_user.pop('password', None)
+                return {
+                    'message': 'Profile completed successfully',
+                    'success': True,
+                    'user': updated_user
+                }
+            else:
+                return {'message': 'Failed to update profile', 'success': False}
+                
+        except Exception as e:
+            return {'message': f'Profile completion error: {str(e)}', 'success': False}

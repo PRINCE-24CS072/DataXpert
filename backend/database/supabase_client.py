@@ -68,18 +68,17 @@ class SupabaseClient:
     def update_user_profile(self, user_id, data):
         """Update user profile"""
         try:
-            allowed_fields = ['name', 'email']
+            allowed_fields = ['name', 'email', 'business_name', 'password', 'profile_completed']
             update_data = {k: v for k, v in data.items() if k in allowed_fields}
             
             response = self.supabase.table('users').update(update_data).eq('id', user_id).execute()
             
             if response.data:
-                user = response.data[0]
-                user.pop('password', None)
-                return {'success': True, 'user': user}
-            return {'success': False, 'message': 'Update failed'}
+                return response.data[0]
+            return None
         except Exception as e:
-            return {'success': False, 'message': f'Error updating profile: {str(e)}'}
+            print(f'Error updating profile: {str(e)}')
+            return None
     
     # ==================== TEAM OPERATIONS ====================
     

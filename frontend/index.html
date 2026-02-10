@@ -236,6 +236,10 @@
                     <input type="text" id="signupUsername" required placeholder="johndoe">
                 </div>
                 <div class="form-group">
+                    <label for="signupBusinessName">Business Name</label>
+                    <input type="text" id="signupBusinessName" required placeholder="Your Company Ltd">
+                </div>
+                <div class="form-group">
                     <label for="signupEmail">Email</label>
                     <input type="email" id="signupEmail" required placeholder="your@email.com">
                 </div>
@@ -255,6 +259,30 @@
             <div id="googleSignupBtn"></div>
 
             <p class="modal-footer">Already have an account? <a href="#" id="switchToLogin">Login</a></p>
+        </div>
+    </div>
+
+    <!-- Google Profile Completion Modal -->
+    <div id="googleProfileModal" class="modal">
+        <div class="modal-content">
+            <h2>Complete Your Profile</h2>
+            <p>Please provide additional information to complete your registration</p>
+            
+            <form id="googleProfileForm">
+                <div class="form-group">
+                    <label for="googleBusinessName">Business Name</label>
+                    <input type="text" id="googleBusinessName" required placeholder="Your Company Ltd">
+                </div>
+                <div class="form-group">
+                    <label for="googlePassword">Create Password</label>
+                    <input type="password" id="googlePassword" required placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label for="googleConfirmPassword">Confirm Password</label>
+                    <input type="password" id="googleConfirmPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Complete Registration</button>
+            </form>
         </div>
     </div>
 

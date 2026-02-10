@@ -75,6 +75,7 @@ def signup():
         email = data.get('email')
         password = data.get('password')
         confirm_password = data.get('confirmPassword')
+        business_name = data.get('businessName')
         
         if not all([username, email, password, confirm_password]):
             return jsonify({'message': 'All fields are required', 'success': False}), 400
@@ -82,7 +83,7 @@ def signup():
         if password != confirm_password:
             return jsonify({'message': 'Passwords do not match', 'success': False}), 400
         
-        result = auth_service.signup(username, email, password)
+        result = auth_service.signup(username, email, password, business_name)
         
         if result['success']:
             # Generate JWT token
@@ -174,6 +175,43 @@ def verify_token(current_user):
         'success': True,
         'user': current_user
     }), 200
+
+@app.route('/api/auth/complete-profile', methods=['POST'])
+def complete_profile():
+    """Complete Google OAuth user profile"""
+    try:
+        data = request.get_json()
+        user_id = data.get('userId')
+        business_name = data.get('businessName')
+        password = data.get('password')
+        confirm_password = data.get('confirmPassword')
+        
+        if not all([user_id, business_name, password, confirm_password]):
+            return jsonify({'message': 'All fields are required', 'success': False}), 400
+        
+        if password != confirm_password:
+            return jsonify({'message': 'Passwords do not match', 'success': False}), 400
+        
+        result = auth_service.complete_profile(user_id, business_name, password)
+        
+        if result['success']:
+            # Generate JWT token
+            token = jwt.encode({
+                'user_id': result['user']['id'],
+                'exp': datetime.utcnow() + timedelta(days=7)
+            }, app.config['JWT_SECRET_KEY'], algorithm="HS256")
+            
+            return jsonify({
+                'message': 'Profile completed successfully',
+                'success': True,
+                'token': token,
+                'user': result['user']
+            }), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        return jsonify({'message': f'Profile completion error: {str(e)}', 'success': False}), 500
 
 # ==================== USER ROUTES ====================
 

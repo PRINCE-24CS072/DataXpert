@@ -97,17 +97,33 @@ async function handleGoogleCallback(response) {
         console.log('Backend response:', data);
 
         if (data.success) {
-            localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
-            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
-            
-            showMessage('Login successful! Redirecting...', 'success');
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 1000);
+            // Check if profile needs completion
+            if (data.profile_incomplete) {
+                // Store user data temporarily
+                sessionStorage.setItem('incomplete_user', JSON.stringify(data.user));
+                // Close other modals
+                closeAllModals();
+                // Show profile completion modal
+                document.getElementById('googleProfileModal').style.display = 'block';
+                showMessage('Please complete your profile to continue', 'info');
+            } else {
+                // Profile complete, proceed with login
+                localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
+                localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
+                
+                showMessage('Login successful! Redirecting...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
+            }
         } else {
             showMessage(data.message || 'Google authentication failed', 'error');
         }
     } catch (error) {
+        console.error('Google auth error:', error);
+        showMessage('Authentication error. Please try again.', 'error');
+    }
+}
         console.error('Google auth error:', error);
         showMessage('Authentication error. Please try again.', 'error');
     }
@@ -125,6 +141,7 @@ async function handleSignup(event) {
     event.preventDefault();
     
     const username = document.getElementById('signupUsername').value;
+    const businessName = document.getElementById('signupBusinessName').value;
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
@@ -142,6 +159,7 @@ async function handleSignup(event) {
             },
             body: JSON.stringify({
                 username,
+                businessName,
                 email,
                 password,
                 confirmPassword
@@ -211,7 +229,12 @@ async function handleLogin(event) {
                 window.location.href = 'dashboard.html';
             }, 1000);
         } else {
-            showMessage(data.message || 'Login failed', 'error');
+            // Check if user needs to complete signup
+            if (data.profile_incomplete) {
+                showMessage('Please complete your signup first', 'error');
+            } else {
+                showMessage(data.message || 'Login failed', 'error');
+            }
         }
     } catch (error) {
         console.error('Login error:', error);
@@ -268,6 +291,74 @@ function showMessage(message, type = 'info') {
     }, 3000);
 }
 
+// Google Profile Completion Handler
+async function handleGoogleProfileCompletion(event) {
+    event.preventDefault();
+    
+    const businessName = document.getElementById('googleBusinessName').value;
+    const password = document.getElementById('googlePassword').value;
+    const confirmPassword = document.getElementById('googleConfirmPassword').value;
+    
+    if (password !== confirmPassword) {
+        showMessage('Passwords do not match', 'error');
+        return;
+    }
+    
+    // Get user data from session storage
+    const incompleteUserData = sessionStorage.getItem('incomplete_user');
+    if (!incompleteUserData) {
+        showMessage('Session expired. Please try again.', 'error');
+        document.getElementById('googleProfileModal').style.display = 'none';
+        return;
+    }
+    
+    const user = JSON.parse(incompleteUserData);
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/complete-profile`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId: user.id,
+                businessName,
+                password,
+                confirmPassword
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Clear session storage
+            sessionStorage.removeItem('incomplete_user');
+            
+            // Store tokens
+            localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
+            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
+            
+            showMessage('Profile completed! Redirecting...', 'success');
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1000);
+        } else {
+            showMessage(data.message || 'Failed to complete profile', 'error');
+        }
+    } catch (error) {
+        console.error('Profile completion error:', error);
+        showMessage('Error completing profile. Please try again.', 'error');
+    }
+}
+
+// Close all modals utility
+function closeAllModals() {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+}
+
 // Initialize auth when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, setting up auth...');
@@ -275,6 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup form handlers
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
+    const googleProfileForm = document.getElementById('googleProfileForm');
 
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
@@ -282,6 +374,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (signupForm) {
         signupForm.addEventListener('submit', handleSignup);
+    }
+
+    if (googleProfileForm) {
+        googleProfileForm.addEventListener('submit', handleGoogleProfileCompletion);
     }
 
     // Initialize Google Auth (with retry mechanism)
