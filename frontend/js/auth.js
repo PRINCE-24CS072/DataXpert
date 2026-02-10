@@ -1,8 +1,15 @@
 // Authentication Module
 
+// Google Auth retry counter
+let googleAuthRetries = 0;
+const MAX_GOOGLE_AUTH_RETRIES = 10;
+
 // Initialize Google Sign-In
 function initGoogleAuth() {
-    console.log('Initializing Google Auth...');
+    if (googleAuthRetries >= MAX_GOOGLE_AUTH_RETRIES) {
+        console.warn('Google Sign-In library failed to load after multiple attempts. Using email/password auth only.');
+        return;
+    }
     
     if (typeof google !== 'undefined' && google.accounts) {
         try {
@@ -15,13 +22,17 @@ function initGoogleAuth() {
             
             // Render Google buttons
             renderGoogleButtons();
-            console.log('Google Auth initialized successfully');
+            console.log('✅ Google Auth initialized successfully');
         } catch (error) {
             console.error('Google Auth initialization error:', error);
         }
     } else {
-        console.error('Google Sign-In library not loaded');
-        setTimeout(initGoogleAuth, 500); // Retry after 500ms
+        googleAuthRetries++;
+        if (googleAuthRetries < MAX_GOOGLE_AUTH_RETRIES) {
+            setTimeout(initGoogleAuth, 500); // Retry after 500ms
+        } else {
+            console.warn('Google Sign-In not available. Email/password authentication is still working.');
+        }
     }
 }
 
