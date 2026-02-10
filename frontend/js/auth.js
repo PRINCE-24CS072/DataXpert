@@ -124,10 +124,6 @@ async function handleGoogleCallback(response) {
         showMessage('Authentication error. Please try again.', 'error');
     }
 }
-        console.error('Google auth error:', error);
-        showMessage('Authentication error. Please try again.', 'error');
-    }
-}
 
 // Google Login Button Handler (Backup - if rendering fails)
 function setupGoogleButtons() {
