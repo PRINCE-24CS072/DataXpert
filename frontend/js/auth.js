@@ -53,10 +53,13 @@ function renderGoogleButtons() {
                     shape: 'rectangular'
                 }
             );
-            console.log('Login button rendered');
+            console.log('✅ Login button rendered');
         } catch (error) {
             console.error('Error rendering login button:', error);
+            showFallbackButton(googleLoginBtn, 'Login');
         }
+    } else if (googleLoginBtn) {
+        showFallbackButton(googleLoginBtn, 'Login');
     }
 
     if (googleSignupBtn && typeof google !== 'undefined' && google.accounts) {
@@ -71,11 +74,23 @@ function renderGoogleButtons() {
                     shape: 'rectangular'
                 }
             );
-            console.log('Signup button rendered');
+            console.log('✅ Signup button rendered');
         } catch (error) {
             console.error('Error rendering signup button:', error);
+            showFallbackButton(googleSignupBtn, 'Sign Up');
         }
+    } else if (googleSignupBtn) {
+        showFallbackButton(googleSignupBtn, 'Sign Up');
     }
+}
+
+// Show fallback button when Google isn't available
+function showFallbackButton(container, action) {
+    container.innerHTML = `
+        <button class="btn btn-secondary btn-full" style="opacity: 0.5; cursor: not-allowed;" disabled>
+            <i class="fab fa-google"></i> ${action} with Google (Coming Soon)
+        </button>
+    `;
 }
 
 // Handle Google OAuth Callback
