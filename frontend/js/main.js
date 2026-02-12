@@ -129,10 +129,27 @@ function setupNavbarScroll() {
 
 // Active Navigation Link
 function setupActiveNav() {
-    const sections = document.querySelectorAll('section[id]');
+    const sections = document.querySelectorAll('section[id], footer[id]');
     const navLinks = document.querySelectorAll('.nav-links a');
+    let isScrolling = false;
+    let scrollTimeout;
+
+    // Handle direct link clicks
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            isScrolling = true;
+            navLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                isScrolling = false;
+            }, 1000);
+        });
+    });
 
     window.addEventListener('scroll', () => {
+        if (isScrolling) return;
+        
         let current = '';
         
         sections.forEach(section => {

@@ -408,9 +408,12 @@ body {
 
 .about-content {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr;
     gap: 3rem;
     align-items: center;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
 }
 
 .about-text p {
@@ -419,6 +422,7 @@ body {
     font-size: 1.15rem;
     line-height: 1.8;
     font-weight: 500;
+    text-align: center;
 }
 
 .about-stats {
@@ -609,7 +613,8 @@ body {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
     z-index: 1;
-}
+    flex-wrap: wrap;
+    gap: 2rem;
 }
 
 .social-links {
