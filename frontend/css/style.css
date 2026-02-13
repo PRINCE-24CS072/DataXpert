@@ -531,7 +531,7 @@ body {
 .footer {
     background: #1f2937;
     color: white;
-    padding: 80px 0 20px;
+    padding: 60px 0 15px;
     position: relative;
     overflow: hidden;
 }
@@ -551,8 +551,8 @@ body {
     flex-direction: row;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 3rem;
-    margin-bottom: 3rem;
+    gap: 2rem;
+    margin-bottom: 2rem;
     position: relative;
     z-index: 1;
     flex-wrap: wrap;
@@ -564,25 +564,25 @@ body {
 }
 
 .footer-section h3 {
-    margin-bottom: 1.2rem;
+    margin-bottom: 1rem;
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     font-weight: 800;
 }
 
 .footer-section h4 {
-    margin-bottom: 1.2rem;
+    margin-bottom: 1rem;
     color: white;
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 700;
 }
 
 .footer-section p {
     opacity: 0.85;
-    font-size: 0.95rem;
-    line-height: 1.6;
+    font-size: 0.9rem;
+    line-height: 1.5;
 }
 
 .footer-section ul {
@@ -590,7 +590,7 @@ body {
 }
 
 .footer-section ul li {
-    margin-bottom: 0.7rem;
+    margin-bottom: 0.6rem;
 }
 
 .footer-section ul li a {
@@ -609,12 +609,12 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 2rem;
+    padding-top: 1.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
     z-index: 1;
     flex-wrap: wrap;
-    gap: 2rem;
+    gap: 1.5rem;
 }
 
 .social-links {
