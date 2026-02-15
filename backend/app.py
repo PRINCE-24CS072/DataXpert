@@ -77,11 +77,24 @@ def signup():
         confirm_password = data.get('confirmPassword')
         business_name = data.get('businessName')
         
-        if not all([username, email, password, confirm_password]):
-            return jsonify({'message': 'All fields are required', 'success': False}), 400
+        # Validate all required fields
+        if not username or not username.strip():
+            return jsonify({'message': 'Username is required', 'success': False}), 400
+            
+        if not email or not email.strip():
+            return jsonify({'message': 'Email is required', 'success': False}), 400
+            
+        if not password or not password.strip():
+            return jsonify({'message': 'Password is required', 'success': False}), 400
+            
+        if not confirm_password or not confirm_password.strip():
+            return jsonify({'message': 'Please confirm your password', 'success': False}), 400
         
         if password != confirm_password:
             return jsonify({'message': 'Passwords do not match', 'success': False}), 400
+        
+        if len(password) < 6:
+            return jsonify({'message': 'Password must be at least 6 characters long', 'success': False}), 400
         
         result = auth_service.signup(username, email, password, business_name)
         
@@ -102,6 +115,7 @@ def signup():
             return jsonify(result), 400
             
     except Exception as e:
+        print(f"Signup error: {str(e)}")  # Log to console
         return jsonify({'message': f'Signup error: {str(e)}', 'success': False}), 500
 
 @app.route('/api/auth/login', methods=['POST'])
@@ -142,25 +156,30 @@ def google_auth():
     try:
         data = request.get_json()
         google_token = data.get('token')
+        action = data.get('action', 'login')  # 'login' or 'signup'
         
         if not google_token:
             return jsonify({'message': 'Google token is required', 'success': False}), 400
         
-        result = auth_service.google_auth(google_token)
+        result = auth_service.google_auth(google_token, action)
         
         if result['success']:
-            # Generate JWT token
-            token = jwt.encode({
-                'user_id': result['user']['id'],
-                'exp': datetime.utcnow() + timedelta(days=7)
-            }, app.config['JWT_SECRET_KEY'], algorithm="HS256")
-            
-            return jsonify({
-                'message': 'Google authentication successful',
-                'success': True,
-                'token': token,
-                'user': result['user']
-            }), 200
+            # Generate JWT token only if profile is complete
+            if not result.get('profile_incomplete'):
+                token = jwt.encode({
+                    'user_id': result['user']['id'],
+                    'exp': datetime.utcnow() + timedelta(days=7)
+                }, app.config['JWT_SECRET_KEY'], algorithm="HS256")
+                
+                return jsonify({
+                    'message': 'Google authentication successful',
+                    'success': True,
+                    'token': token,
+                    'user': result['user']
+                }), 200
+            else:
+                # Profile incomplete - no token yet
+                return jsonify(result), 200
         else:
             return jsonify(result), 401
             
@@ -185,6 +204,7 @@ def complete_profile():
         business_name = data.get('businessName')
         password = data.get('password')
         confirm_password = data.get('confirmPassword')
+        profile_image = data.get('profileImage')  # Optional
         
         if not all([user_id, business_name, password, confirm_password]):
             return jsonify({'message': 'All fields are required', 'success': False}), 400
@@ -192,7 +212,10 @@ def complete_profile():
         if password != confirm_password:
             return jsonify({'message': 'Passwords do not match', 'success': False}), 400
         
-        result = auth_service.complete_profile(user_id, business_name, password)
+        if len(password) < 6:
+            return jsonify({'message': 'Password must be at least 6 characters long', 'success': False}), 400
+        
+        result = auth_service.complete_profile(user_id, business_name, password, profile_image)
         
         if result['success']:
             # Generate JWT token
@@ -438,12 +461,25 @@ def get_chart_data(current_user):
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    """Health check endpoint"""
-    return jsonify({
-        'status': 'healthy',
-        'service': 'DataXpert API',
-        'timestamp': datetime.utcnow().isoformat()
-    }), 200
+    """Health check endpoint to verify API and database connection"""
+    try:
+        # Test database connection
+        test_response = db_client.supabase.table('users').select('id').limit(1).execute()
+        
+        return jsonify({
+            'status': 'healthy',
+            'service': 'DataXpert API',
+            'database': 'connected',
+            'timestamp': datetime.utcnow().isoformat()
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'service': 'DataXpert API',
+            'database': 'disconnected',
+            'error': str(e),
+            'timestamp': datetime.utcnow().isoformat()
+        }), 500
 
 @app.route('/', methods=['GET'])
 def index():
