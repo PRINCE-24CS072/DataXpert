@@ -77,11 +77,24 @@ def signup():
         confirm_password = data.get('confirmPassword')
         business_name = data.get('businessName')
         
-        if not all([username, email, password, confirm_password]):
-            return jsonify({'message': 'All fields are required', 'success': False}), 400
+        # Validate all required fields
+        if not username or not username.strip():
+            return jsonify({'message': 'Username is required', 'success': False}), 400
+            
+        if not email or not email.strip():
+            return jsonify({'message': 'Email is required', 'success': False}), 400
+            
+        if not password or not password.strip():
+            return jsonify({'message': 'Password is required', 'success': False}), 400
+            
+        if not confirm_password or not confirm_password.strip():
+            return jsonify({'message': 'Please confirm your password', 'success': False}), 400
         
         if password != confirm_password:
             return jsonify({'message': 'Passwords do not match', 'success': False}), 400
+        
+        if len(password) < 6:
+            return jsonify({'message': 'Password must be at least 6 characters long', 'success': False}), 400
         
         result = auth_service.signup(username, email, password, business_name)
         
@@ -102,6 +115,7 @@ def signup():
             return jsonify(result), 400
             
     except Exception as e:
+        print(f"Signup error: {str(e)}")  # Log to console
         return jsonify({'message': f'Signup error: {str(e)}', 'success': False}), 500
 
 @app.route('/api/auth/login', methods=['POST'])
@@ -443,12 +457,25 @@ def get_chart_data(current_user):
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    """Health check endpoint"""
-    return jsonify({
-        'status': 'healthy',
-        'service': 'DataXpert API',
-        'timestamp': datetime.utcnow().isoformat()
-    }), 200
+    """Health check endpoint to verify API and database connection"""
+    try:
+        # Test database connection
+        test_response = db_client.supabase.table('users').select('id').limit(1).execute()
+        
+        return jsonify({
+            'status': 'healthy',
+            'service': 'DataXpert API',
+            'database': 'connected',
+            'timestamp': datetime.utcnow().isoformat()
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'service': 'DataXpert API',
+            'database': 'disconnected',
+            'error': str(e),
+            'timestamp': datetime.utcnow().isoformat()
+        }), 500
 
 @app.route('/', methods=['GET'])
 def index():

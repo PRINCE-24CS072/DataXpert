@@ -46,9 +46,10 @@ class AuthService:
                 'profile_completed': True
             }
             
-            user = self.db_client.create_user(user_data)
+            result = self.db_client.create_user(user_data)
             
-            if user:
+            if result.get('success'):
+                user = result['data']
                 # Remove password from response
                 user.pop('password', None)
                 return {
@@ -57,7 +58,11 @@ class AuthService:
                     'user': user
                 }
             else:
-                return {'message': 'Failed to create user', 'success': False}
+                error_msg = result.get('error', 'Unknown database error')
+                return {
+                    'message': f'Failed to create user: {error_msg}',
+                    'success': False
+                }
                 
         except Exception as e:
             return {'message': f'Signup error: {str(e)}', 'success': False}
@@ -177,11 +182,16 @@ class AuthService:
                     'profile_completed': False
                 }
                 
-                user = self.db_client.create_user(user_data)
+                result = self.db_client.create_user(user_data)
                 
-                if not user:
-                    return {'message': 'Failed to create user', 'success': False}
+                if not result.get('success'):
+                    error_msg = result.get('error', 'Unknown database error')
+                    return {
+                        'message': f'Failed to create user: {error_msg}',
+                        'success': False
+                    }
                 
+                user = result['data']
                 # Remove password from response
                 user.pop('password', None)
                 
