@@ -4,6 +4,9 @@
 let googleAuthRetries = 0;
 const MAX_GOOGLE_AUTH_RETRIES = 10;
 
+// Track current Google action (login or signup)
+let currentGoogleAction = 'login';
+
 // Initialize Google Sign-In
 function initGoogleAuth() {
     if (googleAuthRetries >= MAX_GOOGLE_AUTH_RETRIES) {
@@ -43,6 +46,11 @@ function renderGoogleButtons() {
 
     if (googleLoginBtn && typeof google !== 'undefined' && google.accounts) {
         try {
+            // Clear previous content
+            googleLoginBtn.innerHTML = '';
+            // Set action to login when this button is used
+            googleLoginBtn.onclick = () => { currentGoogleAction = 'login'; };
+            
             google.accounts.id.renderButton(
                 googleLoginBtn,
                 {
@@ -64,6 +72,11 @@ function renderGoogleButtons() {
 
     if (googleSignupBtn && typeof google !== 'undefined' && google.accounts) {
         try {
+            // Clear previous content
+            googleSignupBtn.innerHTML = '';
+            // Set action to signup when this button is used
+            googleSignupBtn.onclick = () => { currentGoogleAction = 'signup'; };
+            
             google.accounts.id.renderButton(
                 googleSignupBtn,
                 {
@@ -95,7 +108,7 @@ function showFallbackButton(container, action) {
 
 // Handle Google OAuth Callback
 async function handleGoogleCallback(response) {
-    console.log('Google callback received');
+    console.log('Google callback received, action:', currentGoogleAction);
     
     try {
         const result = await fetch(API_ENDPOINTS.GOOGLE_AUTH, {
@@ -104,7 +117,8 @@ async function handleGoogleCallback(response) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                token: response.credential
+                token: response.credential,
+                action: currentGoogleAction  // Pass 'login' or 'signup'
             })
         });
 
@@ -116,6 +130,18 @@ async function handleGoogleCallback(response) {
             if (data.profile_incomplete) {
                 // Store user data temporarily
                 sessionStorage.setItem('incomplete_user', JSON.stringify(data.user));
+                
+                // Populate user info in the profile completion form
+                const usernameField = document.getElementById('googleUsername');
+                const emailField = document.getElementById('googleEmail');
+                
+                if (usernameField && data.user.name) {
+                    usernameField.value = data.user.name;
+                }
+                if (emailField && data.user.email) {
+                    emailField.value = data.user.email;
+                }
+                
                 // Close other modals
                 closeAllModals();
                 // Show profile completion modal
@@ -132,7 +158,26 @@ async function handleGoogleCallback(response) {
                 }, 1000);
             }
         } else {
-            showMessage(data.message || 'Google authentication failed', 'error');
+            // Handle different error scenarios
+            if (data.need_signup) {
+                // User tried to login but doesn't exist
+                showMessage('No account found with this email. Please sign up first', 'error');
+                // Switch to signup modal after 2 seconds
+                setTimeout(() => {
+                    document.getElementById('loginModal').style.display = 'none';
+                    document.getElementById('signupModal').style.display = 'block';
+                }, 2000);
+            } else if (data.already_exists) {
+                // User tried to signup but already exists
+                showMessage('An account with this email already exists. Please login instead', 'error');
+                // Switch to login modal after 2 seconds
+                setTimeout(() => {
+                    document.getElementById('signupModal').style.display = 'none';
+                    document.getElementById('loginModal').style.display = 'block';
+                }, 2000);
+            } else {
+                showMessage(data.message || 'Google authentication failed', 'error');
+            }
         }
     } catch (error) {
         console.error('Google auth error:', error);
@@ -240,8 +285,15 @@ async function handleLogin(event) {
                 window.location.href = 'dashboard.html';
             }, 1000);
         } else {
-            // Check if user needs to complete signup
-            if (data.profile_incomplete) {
+            // Check if user needs to sign up first
+            if (data.need_signup) {
+                showMessage('No account found with this email. Please sign up first', 'error');
+                // Optionally switch to signup modal after 2 seconds
+                setTimeout(() => {
+                    document.getElementById('loginModal').style.display = 'none';
+                    document.getElementById('signupModal').style.display = 'block';
+                }, 2000);
+            } else if (data.profile_incomplete) {
                 showMessage('Please complete your signup first', 'error');
             } else {
                 showMessage(data.message || 'Login failed', 'error');

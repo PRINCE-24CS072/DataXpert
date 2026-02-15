@@ -69,7 +69,11 @@ class AuthService:
             user = self.db_client.get_user_by_email(email)
             
             if not user:
-                return {'message': 'Invalid email or password', 'success': False}
+                return {
+                    'message': 'No account found with this email. Please sign up first',
+                    'success': False,
+                    'need_signup': True
+                }
             
             # Check if profile is completed
             if not user.get('profile_completed', False):
@@ -82,7 +86,7 @@ class AuthService:
             
             # Verify password
             if not user.get('password') or not self.verify_password(user['password'], password):
-                return {'message': 'Invalid email or password', 'success': False}
+                return {'message': 'Invalid password. Please try again', 'success': False}
             
             # Remove password from response
             user.pop('password', None)
@@ -96,7 +100,7 @@ class AuthService:
         except Exception as e:
             return {'message': f'Login error: {str(e)}', 'success': False}
     
-    def google_auth(self, token):
+    def google_auth(self, token, action='login'):
         """Authenticate user with Google OAuth"""
         try:
             # Verify Google token
@@ -122,6 +126,16 @@ class AuthService:
                 user = self.db_client.get_user_by_google_id(google_id)
             
             if user:
+                # User exists
+                if action == 'signup':
+                    # Trying to signup but user already exists
+                    return {
+                        'message': 'An account with this email already exists. Please login instead',
+                        'success': False,
+                        'already_exists': True
+                    }
+                
+                # Login action - proceed with login
                 # Update google_id if not set
                 if not user.get('google_id'):
                     self.db_client.update_user_google_id(user['id'], google_id)
@@ -145,7 +159,16 @@ class AuthService:
                     'user': user
                 }
             else:
-                # Create new user with incomplete profile
+                # User doesn't exist
+                if action == 'login':
+                    # Trying to login but user doesn't exist
+                    return {
+                        'message': 'No account found with this email. Please sign up first',
+                        'success': False,
+                        'need_signup': True
+                    }
+                
+                # Signup action - create new user with incomplete profile
                 user_data = {
                     'name': name,
                     'email': email,

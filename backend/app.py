@@ -142,25 +142,30 @@ def google_auth():
     try:
         data = request.get_json()
         google_token = data.get('token')
+        action = data.get('action', 'login')  # 'login' or 'signup'
         
         if not google_token:
             return jsonify({'message': 'Google token is required', 'success': False}), 400
         
-        result = auth_service.google_auth(google_token)
+        result = auth_service.google_auth(google_token, action)
         
         if result['success']:
-            # Generate JWT token
-            token = jwt.encode({
-                'user_id': result['user']['id'],
-                'exp': datetime.utcnow() + timedelta(days=7)
-            }, app.config['JWT_SECRET_KEY'], algorithm="HS256")
-            
-            return jsonify({
-                'message': 'Google authentication successful',
-                'success': True,
-                'token': token,
-                'user': result['user']
-            }), 200
+            # Generate JWT token only if profile is complete
+            if not result.get('profile_incomplete'):
+                token = jwt.encode({
+                    'user_id': result['user']['id'],
+                    'exp': datetime.utcnow() + timedelta(days=7)
+                }, app.config['JWT_SECRET_KEY'], algorithm="HS256")
+                
+                return jsonify({
+                    'message': 'Google authentication successful',
+                    'success': True,
+                    'token': token,
+                    'user': result['user']
+                }), 200
+            else:
+                # Profile incomplete - no token yet
+                return jsonify(result), 200
         else:
             return jsonify(result), 401
             

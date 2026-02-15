@@ -232,12 +232,23 @@
             
             <form id="googleProfileForm">
                 <div class="form-group">
+                    <label for="googleUsername">Username</label>
+                    <input type="text" id="googleUsername" readonly placeholder="From Google Account" style="background-color: #f0f0f0;">
+                    <small style="color: #666;">Automatically retrieved from your Google account</small>
+                </div>
+                <div class="form-group">
+                    <label for="googleEmail">Email</label>
+                    <input type="email" id="googleEmail" readonly placeholder="From Google Account" style="background-color: #f0f0f0;">
+                    <small style="color: #666;">Automatically retrieved from your Google account</small>
+                </div>
+                <div class="form-group">
                     <label for="googleBusinessName">Business Name</label>
                     <input type="text" id="googleBusinessName" required placeholder="Your Company Ltd">
                 </div>
                 <div class="form-group">
                     <label for="googlePassword">Create Password</label>
                     <input type="password" id="googlePassword" required placeholder="••••••••">
+                    <small style="color: #666;">Create a password for your account</small>
                 </div>
                 <div class="form-group">
                     <label for="googleConfirmPassword">Confirm Password</label>
