@@ -2,9 +2,21 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+# Machine Learning for advanced detection
+try:
+    from sklearn.ensemble import IsolationForest
+    from sklearn.preprocessing import StandardScaler
+    ML_AVAILABLE = True
+except ImportError:
+    ML_AVAILABLE = False
+    print("[WARN] scikit-learn not installed. Using statistical anomaly detection only.")
+
 class AnomalyDetector:
-    def __init__(self):
+    def __init__(self, use_ml=True):
         self.threshold = 3  # Z-score threshold
+        self.use_ml = use_ml and ML_AVAILABLE
+        self.scaler = StandardScaler() if ML_AVAILABLE else None
+        print(f"[ANOMALY DETECTOR] ML mode: {'enabled' if self.use_ml else 'disabled'}")
     
     def detect_anomalies(self, business_data):
         """Detect anomalies in business data"""
