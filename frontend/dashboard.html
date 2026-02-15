@@ -123,9 +123,14 @@
                 <div class="chart-card">
                     <div class="chart-header">
                         <h3>Sales Overview</h3>
-                        <button class="btn btn-secondary btn-small" id="addDataBtn">
-                            <i class="fas fa-plus"></i> Add Data
-                        </button>
+                        <div class="chart-actions">
+                            <button class="btn btn-primary btn-small" id="addDataBtn" title="Add data manually">
+                                <i class="fas fa-plus"></i> Add Data
+                            </button>
+                            <button class="btn btn-success btn-small" id="uploadDataBtn" title="Upload Excel/CSV file">
+                                <i class="fas fa-file-upload"></i> Upload File
+                            </button>
+                        </div>
                     </div>
                     <canvas id="salesChart"></canvas>
                 </div>
@@ -227,6 +232,110 @@
                 </div>
                 <button type="submit" class="btn btn-primary btn-full">Create Team</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-modal="profileModal">&times;</span>
+            <h2>My Profile</h2>
+            
+            <div class="profile-section">
+                <div class="profile-image-container">
+                    <img id="profileImagePreview" src="" alt="Profile" class="profile-image-large">
+                    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('profileImageInput').click()">
+                        <i class="fas fa-camera"></i> Change Photo
+                    </button>
+                    <input type="file" id="profileImageInput" accept="image/*" style="display:none;">
+                </div>
+                
+                <form id="updateProfileForm">
+                    <div class="form-group">
+                        <label for="profileName">Name</label>
+                        <input type="text" id="profileName" required placeholder="Your Name">
+                    </div>
+                    <div class="form-group">
+                        <label for="profileEmail">Email</label>
+                        <input type="email" id="profileEmail" readonly style="background-color: #f0f0f0;">
+                    </div>
+                    <div class="form-group">
+                        <label for="profileBusinessName">Business Name</label>
+                        <input type="text" id="profileBusinessName" placeholder="Your Business">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Update Profile</button>
+                </form>
+                
+                <hr style="margin: 20px 0;">
+                
+                <h3>Change Password</h3>
+                <form id="changePasswordForm">
+                    <div class="form-group">
+                        <label for="currentPassword">Current Password</label>
+                        <input type="password" id="currentPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmNewPassword">Confirm New Password</label>
+                        <input type="password" id="confirmNewPassword" required minlength="6">
+                    </div>
+                    <button type="submit" class="btn btn-secondary btn-full">Change Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teams Management Modal -->
+    <div id="teamsModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close" data-modal="teamsModal">&times;</span>
+            <h2>My Teams</h2>
+            
+            <div class="teams-header">
+                <button class="btn btn-primary" onclick="openModal('createTeamModal')">
+                    <i class="fas fa-plus"></i> Create New Team
+                </button>
+            </div>
+            
+            <div id="teamsListContainer" class="teams-list">
+                <p class="loading-text">Loading teams...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Data Modal -->
+    <div id="uploadDataModal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-modal="uploadDataModal">&times;</span>
+            <h2>Upload Business Data</h2>
+            <p>Upload your business data from Excel or CSV file</p>
+            
+            <div class="upload-options">
+                <div class="upload-info">
+                    <i class="fas fa-file-excel" style="font-size: 48px; color: #10b981;"></i>
+                    <p><strong>Supported formats:</strong> Excel (.xlsx, .xls) and CSV (.csv)</p>
+                    <p><strong>Required columns:</strong> record_date, sales, expenses, profit, category (optional)</p>
+                </div>
+                
+                <div class="upload-zone" id="uploadZone">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drag & drop your file here or click to browse</p>
+                    <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
+                    <button class="btn btn-primary" onclick="document.getElementById('excelFileInput').click()">
+                        Choose File
+                    </button>
+                </div>
+                
+                <div id="uploadProgress" class="upload-progress" style="display:none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p id="uploadStatus">Uploading...</p>
+                </div>
+            </div>
         </div>
     </div>
 

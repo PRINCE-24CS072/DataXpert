@@ -258,6 +258,109 @@ def update_profile(current_user):
     except Exception as e:
         return jsonify({'message': f'Update error: {str(e)}', 'success': False}), 500
 
+@app.route('/api/users/update-profile', methods=['POST'])
+@token_required
+def update_user_profile(current_user):
+    """Update user profile (name and business name)"""
+    try:
+        data = request.get_json()
+        name = data.get('name')
+        business_name = data.get('business_name')
+        
+        update_data = {}
+        if name:
+            update_data['name'] = name
+        if business_name:
+            update_data['business_name'] = business_name
+        
+        if not update_data:
+            return jsonify({'message': 'No data to update', 'success': False}), 400
+        
+        result = db_client.update_user_fields(current_user['id'], update_data)
+        
+        if result['success']:
+            # Get updated user data
+            updated_user = db_client.get_user_by_id(current_user['id'])
+            return jsonify({
+                'success': True,
+                'message': 'Profile updated successfully',
+                'user': updated_user
+            }), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        return jsonify({'message': f'Update profile error: {str(e)}', 'success': False}), 500
+
+@app.route('/api/users/change-password', methods=['POST'])
+@token_required
+def change_password(current_user):
+    """Change user password"""
+    try:
+        data = request.get_json()
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+        
+        if not current_password or not new_password:
+            return jsonify({'message': 'Current password and new password are required', 'success': False}), 400
+        
+        if len(new_password) < 6:
+            return jsonify({'message': 'New password must be at least 6 characters long', 'success': False}), 400
+        
+        result = auth_service.change_password(current_user['id'], current_password, new_password)
+        return jsonify(result), 200 if result['success'] else 400
+        
+    except Exception as e:
+        return jsonify({'message': f'Change password error: {str(e)}', 'success': False}), 500
+
+@app.route('/api/users/upload-profile-image', methods=['POST'])
+@token_required
+def upload_profile_image(current_user):
+    """Upload user profile image"""
+    try:
+        if 'profile_image' not in request.files:
+            return jsonify({'message': 'No file uploaded', 'success': False}), 400
+        
+        file = request.files['profile_image']
+        
+        if file.filename == '':
+            return jsonify({'message': 'No file selected', 'success': False}), 400
+        
+        # Validate file type
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+        file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+        
+        if file_ext not in allowed_extensions:
+            return jsonify({'message': 'Invalid file type. Allowed: png, jpg, jpeg, gif, webp', 'success': False}), 400
+        
+        # For now, convert image to base64 data URL and store in database
+        # In production, you'd upload to cloud storage (S3, Supabase Storage, etc.)
+        import base64
+        file_data = file.read()
+        file_size = len(file_data)
+        
+        # Check file size (max 5MB)
+        if file_size > 5 * 1024 * 1024:
+            return jsonify({'message': 'File size must be less than 5MB', 'success': False}), 400
+        
+        base64_image = base64.b64encode(file_data).decode('utf-8')
+        image_url = f"data:image/{file_ext};base64,{base64_image}"
+        
+        # Update user profile with new image
+        result = db_client.update_user_fields(current_user['id'], {'profile_image': image_url})
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'message': 'Profile image uploaded successfully',
+                'profile_image': image_url
+            }), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        return jsonify({'message': f'Upload error: {str(e)}', 'success': False}), 500
+
 # ==================== TEAM ROUTES ====================
 
 @app.route('/api/teams', methods=['GET'])
@@ -343,6 +446,84 @@ def get_business_summary(current_user):
         }), 200
     except Exception as e:
         return jsonify({'message': f'Error fetching summary: {str(e)}', 'success': False}), 500
+
+@app.route('/api/business-data/upload', methods=['POST'])
+@token_required
+def upload_business_data(current_user):
+    """Upload business data from Excel or CSV file"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'message': 'No file uploaded', 'success': False}), 400
+        
+        file = request.files['file']
+        
+        if file.filename == '':
+            return jsonify({'message': 'No file selected', 'success': False}), 400
+        
+        # Validate file extension
+        allowed_extensions = {'xlsx', 'xls', 'csv'}
+        file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+        
+        if file_ext not in allowed_extensions:
+            return jsonify({'message': 'Invalid file type. Allowed: xlsx, xls, csv', 'success': False}), 400
+        
+        # Parse file based on type
+        import pandas as pd
+        from io import BytesIO
+        
+        try:
+            if file_ext == 'csv':
+                df = pd.read_csv(BytesIO(file.read()))
+            else:
+                df = pd.read_excel(BytesIO(file.read()))
+        except Exception as e:
+            return jsonify({'message': f'Error reading file: {str(e)}', 'success': False}), 400
+        
+        # Validate required columns (adjust based on your business_data table structure)
+        # Expected columns: date, category, amount, description
+        required_columns = ['date', 'category', 'amount']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        
+        if missing_columns:
+            return jsonify({
+                'message': f'Missing required columns: {", ".join(missing_columns)}',
+                'success': False,
+                'expected_columns': required_columns
+            }), 400
+        
+        # Process and insert data
+        records_added = 0
+        errors = []
+        
+        for index, row in df.iterrows():
+            try:
+                data = {
+                    'user_id': current_user['id'],
+                    'date': str(row['date']),
+                    'category': str(row['category']),
+                    'amount': float(row['amount']),
+                    'description': str(row.get('description', ''))
+                }
+                
+                result = db_client.add_business_data(data)
+                if result['success']:
+                    records_added += 1
+                else:
+                    errors.append(f"Row {index + 1}: {result.get('message', 'Unknown error')}")
+                    
+            except Exception as e:
+                errors.append(f"Row {index + 1}: {str(e)}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully uploaded {records_added} records',
+            'records_added': records_added,
+            'total_rows': len(df),
+            'errors': errors if errors else None
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'message': f'Upload error: {str(e)}', 'success': False}), 500
 
 # ==================== AI ANALYSIS ROUTES ====================
 

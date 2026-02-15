@@ -274,3 +274,46 @@ class AuthService:
                 
         except Exception as e:
             return {'message': f'Profile completion error: {str(e)}', 'success': False}
+    
+    def change_password(self, user_id, current_password, new_password):
+        """Change user password"""
+        try:
+            # Get user
+            user = self.db_client.get_user_by_id(user_id)
+            
+            if not user:
+                return {'message': 'User not found', 'success': False}
+            
+            # Check if user has a password (might be Google-only account)
+            if not user.get('password'):
+                return {
+                    'message': 'This account uses Google authentication. Please set a password first',
+                    'success': False
+                }
+            
+            # Verify current password
+            if not self.verify_password(user['password'], current_password):
+                return {
+                    'message': 'Current password is incorrect',
+                    'success': False
+                }
+            
+            # Hash new password
+            hashed_password = self.hash_password(new_password)
+            
+            # Update password
+            result = self.db_client.update_user_fields(user_id, {'password': hashed_password})
+            
+            if result.get('success'):
+                return {
+                    'message': 'Password changed successfully',
+                    'success': True
+                }
+            else:
+                return {
+                    'message': 'Failed to change password',
+                    'success': False
+                }
+                
+        except Exception as e:
+            return {'message': f'Change password error: {str(e)}', 'success': False}

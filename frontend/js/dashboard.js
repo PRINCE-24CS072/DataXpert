@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadUserInfo();
     loadDashboardData();
     setupEventListeners();
+    setupProfileHandlers();
+    setupTeamsHandlers();
+    setupExcelUploadHandlers();
 });
 
 // Load user information
@@ -355,4 +358,375 @@ function closeModal(modalId) {
             modal.style.display = 'none';
         }, 300);
     }
+}
+
+// ==================== PROFILE MANAGEMENT ====================
+
+function setupProfileHandlers() {
+    // Profile button click
+    const profileBtn = document.getElementById('profileSidebarBtn');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadProfileData();
+            openModal('profileModal');
+        });
+    }
+
+    // Profile image upload
+    const profileImageInput = document.getElementById('profileImageInput');
+    if (profileImageInput) {
+        profileImageInput.addEventListener('change', handleProfileImageUpload);
+    }
+
+    // Update profile form
+    const updateProfileForm = document.getElementById('updateProfileForm');
+    if (updateProfileForm) {
+        updateProfileForm.addEventListener('submit', handleUpdateProfile);
+   }
+
+    // Change password form
+    const changePasswordForm = document.getElementById('changePasswordForm');
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', handleChangePassword);
+    }
+}
+
+async function loadProfileData() {
+    const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+    if (!userStr) return;
+
+    const user = JSON.parse(userStr);
+    
+    document.getElementById('profileName').value = user.name || '';
+    document.getElementById('profileEmail').value = user.email || '';
+    document.getElementById('profileBusinessName').value = user.business_name || '';
+    
+    const profileImage = document.getElementById('profileImagePreview');
+    if (profileImage) {
+        profileImage.src = user.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=6366f1&color=fff&size=200`;
+    }
+}
+
+async function handleProfileImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        showMessage('Please select an image file', 'error');
+        return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showMessage('Image size must be less than 5MB', 'error');
+        return;
+    }
+
+    try {
+        // Show preview immediately
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('profileImagePreview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        // Upload to server
+        const formData = new FormData();
+        formData.append('profile_image', file);
+
+        const response = await fetch(`${API_BASE_URL}/users/upload-profile-image`, {
+            method: 'POST',
+            headers: getAuthHeadersForFormData(),
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Update local storage
+            const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                user.profile_image = result.profile_image;
+                localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+            }
+            showMessage('Profile image updated successfully!', 'success');
+        } else {
+            showMessage(result.message || 'Failed to upload image', 'error');
+        }
+    } catch (error) {
+        console.error('Error uploading profile image:', error);
+        showMessage('Error uploading image', 'error');
+    }
+}
+
+async function handleUpdateProfile(event) {
+    event.preventDefault();
+
+    const name = document.getElementById('profileName').value;
+    const businessName = document.getElementById('profileBusinessName').value;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/users/update-profile`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+                name,
+                business_name: businessName
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Update local storage
+            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(result.user));
+            showMessage('Profile updated successfully!', 'success');
+            loadUserInfo();
+        } else {
+            showMessage(result.message || 'Failed to update profile', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        showMessage('Error updating profile', 'error');
+    }
+}
+
+async function handleChangePassword(event) {
+    event.preventDefault();
+
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+    if (newPassword !== confirmNewPassword) {
+        showMessage('New passwords do not match', 'error');
+        return;
+    }
+
+    if (newPassword.length < 6) {
+        showMessage('Password must be at least 6 characters', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/users/change-password`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+                current_password: currentPassword,
+                new_password: newPassword
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showMessage('Password changed successfully!', 'success');
+            document.getElementById('changePasswordForm').reset();
+        } else {
+            showMessage(result.message || 'Failed to change password', 'error');
+        }
+    } catch (error) {
+        console.error('Error changing password:', error);
+        showMessage('Error changing password', 'error');
+    }
+}
+
+// ==================== TEAMS MANAGEMENT ====================
+
+function setupTeamsHandlers() {
+    // Teams button click
+    const teamsBtn = document.getElementById('teamsSidebarBtn');
+    if (teamsBtn) {
+        teamsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadTeamsModal();
+            openModal('teamsModal');
+        });
+    }
+}
+
+async function loadTeamsModal() {
+    const container = document.getElementById('teamsListContainer');
+    container.innerHTML = '<p class="loading-text">Loading teams...</p>';
+
+    try {
+        const response = await fetch(API_ENDPOINTS.TEAMS, {
+            headers: getAuthHeaders()
+        });
+
+        const result = await response.json();
+
+        if (result.success && result.teams) {
+            if (result.teams.length === 0) {
+                container.innerHTML = '<p class="no-data">No teams yet. Create your first team!</p>';
+            } else {
+                container.innerHTML = result.teams.map(team => `
+                    <div class="team-item">
+                        <div class="team-info">
+                            <h3>${team.team_name}</h3>
+                            <p>Created: ${formatDate(team.created_at)}</p>
+                            <p>Members: ${team.member_count || 0}</p>
+                        </div>
+                        <div class="team-actions">
+                            <button class="btn btn-primary btn-sm" onclick="viewTeamDetails(${team.id})">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            ${team.owner_id ? `<button class="btn btn-secondary btn-sm" onclick="manageTeam(${team.id})">
+                                <i class="fas fa-cog"></i> Manage
+                            </button>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } else {
+            container.innerHTML = '<p class="no-data">Error loading teams</p>';
+        }
+    } catch (error) {
+        console.error('Error loading teams:', error);
+        container.innerHTML = '<p class="no-data">Error loading teams</p>';
+    }
+}
+
+async function viewTeamDetails(teamId) {
+    showMessage('Team details feature coming soon!', 'info');
+}
+
+async function manageTeam(teamId) {
+    showMessage('Team management feature coming soon!', 'info');
+}
+
+// ==================== EXCEL/CSV UPLOAD ====================
+
+function setupExcelUploadHandlers() {
+    // Upload button click
+    const uploadBtn = document.getElementById('uploadDataBtn');
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', () => {
+            openModal('uploadDataModal');
+        });
+    }
+
+    // File input change
+    const fileInput = document.getElementById('excelFileInput');
+    if (fileInput) {
+        fileInput.addEventListener('change', handleExcelFileSelect);
+    }
+
+    // Drag and drop
+    const uploadZone = document.getElementById('uploadZone');
+    if (uploadZone) {
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleExcelFileUpload(files[0]);
+            }
+        });
+    }
+}
+
+async function handleExcelFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        await handleExcelFileUpload(file);
+    }
+}
+
+async function handleExcelFileUpload(file) {
+    // Validate file type
+    const validTypes = [
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/csv'
+    ];
+    
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    const validExtensions = ['xlsx', 'xls', 'csv'];
+
+    if (!validExtensions.includes(fileExtension)) {
+        showMessage('Please select a valid Excel or CSV file', 'error');
+        return;
+    }
+
+    // Show progress
+    const progressDiv = document.getElementById('uploadProgress');
+    const progressFill = document.getElementById('progressFill');
+    const uploadStatus = document.getElementById('uploadStatus');
+    
+    progressDiv.style.display = 'block';
+    progressFill.style.width = '0%';
+    uploadStatus.textContent = 'Uploading...';
+
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Simulate progress (since we can't get real progress from fetch)
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += 10;
+            if (progress <= 90) {
+                progressFill.style.width = progress + '%';
+            }
+        }, 200);
+
+        const response = await fetch(`${API_BASE_URL}/business-data/upload`, {
+            method: 'POST',
+            headers: getAuthHeadersForFormData(),
+            body: formData
+        });
+
+        clearInterval(progressInterval);
+        progressFill.style.width = '100%';
+
+        const result = await response.json();
+
+        if (result.success) {
+            uploadStatus.textContent = `Success! ${result.records_added || 0} records added.`;
+            showMessage(`Successfully uploaded ${result.records_added} records!`, 'success');
+            
+            setTimeout(() => {
+                closeModal('uploadDataModal');
+                progressDiv.style.display = 'none';
+                document.getElementById('excelFileInput').value = '';
+                loadDashboardData(); // Reload dashboard
+            }, 2000);
+        } else {
+            uploadStatus.textContent = 'Upload failed';
+            showMessage(result.message || 'Failed to upload file', 'error');
+            setTimeout(() => {
+                progressDiv.style.display = 'none';
+            }, 3000);
+        }
+    } catch (error) {
+        console.error('Error uploading file:', error);
+        uploadStatus.textContent = 'Upload error';
+        showMessage('Error uploading file', 'error');
+        setTimeout(() => {
+            progressDiv.style.display = 'none';
+        }, 3000);
+    }
+}
+
+// Helper function for FormData auth headers
+function getAuthHeadersForFormData() {
+    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+    return {
+        'Authorization': `Bearer ${token}`
+        // Don't set Content-Type for FormData - browser will set it with boundary
+    };
 }
