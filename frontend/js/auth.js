@@ -343,15 +343,31 @@ function showMessage(message, type = 'info') {
     // Create new message
     const messageDiv = document.createElement('div');
     messageDiv.className = `message-toast message-${type}`;
-    messageDiv.textContent = message;
+    
+    // Create message content
+    const messageText = document.createElement('span');
+    messageText.textContent = message;
+    messageText.style.flex = '1';
+    
+    messageDiv.appendChild(messageText);
     
     document.body.appendChild(messageDiv);
 
-    // Auto remove after 3 seconds
-    setTimeout(() => {
+    // Auto remove after duration based on message type
+    const duration = type === 'error' ? 5000 : type === 'success' ? 3000 : 4000;
+    
+    const timeoutId = setTimeout(() => {
         messageDiv.classList.add('fade-out');
         setTimeout(() => messageDiv.remove(), 300);
-    }, 3000);
+    }, duration);
+    
+    // Allow manual dismiss by clicking
+    messageDiv.style.cursor = 'pointer';
+    messageDiv.addEventListener('click', () => {
+        clearTimeout(timeoutId);
+        messageDiv.classList.add('fade-out');
+        setTimeout(() => messageDiv.remove(), 300);
+    });
 }
 
 // Google Profile Completion Handler
