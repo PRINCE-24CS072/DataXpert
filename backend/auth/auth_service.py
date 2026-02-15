@@ -28,10 +28,15 @@ class AuthService:
     def signup(self, username, email, password, business_name=None):
         """Register new user"""
         try:
+            print(f"[AUTH] Signup attempt for email: {email}")
+            
             # Check if user already exists
             existing_user = self.db_client.get_user_by_email(email)
             if existing_user:
+                print(f"[AUTH] User already exists: {email}")
                 return {'message': 'User with this email already exists', 'success': False}
+            
+            print(f"[AUTH] No existing user found, creating new user")
             
             # Hash password
             hashed_password = self.hash_password(password)
@@ -46,12 +51,15 @@ class AuthService:
                 'profile_completed': True
             }
             
+            print(f"[AUTH] Calling database to create user")
             result = self.db_client.create_user(user_data)
+            print(f"[AUTH] Database result: {result}")
             
             if result.get('success'):
                 user = result['data']
                 # Remove password from response
                 user.pop('password', None)
+                print(f"[AUTH] User created successfully: {user.get('id')}")
                 return {
                     'message': 'User created successfully',
                     'success': True,
@@ -59,12 +67,14 @@ class AuthService:
                 }
             else:
                 error_msg = result.get('error', 'Unknown database error')
+                print(f"[AUTH ERROR] Failed to create user: {error_msg}")
                 return {
                     'message': f'Failed to create user: {error_msg}',
                     'success': False
                 }
                 
         except Exception as e:
+            print(f"[AUTH ERROR] Exception in signup: {str(e)}")
             return {'message': f'Signup error: {str(e)}', 'success': False}
     
     def login(self, email, password):

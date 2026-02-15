@@ -20,12 +20,14 @@ class SupabaseClient:
     def create_user(self, user_data):
         """Create a new user"""
         try:
+            print(f"[DB] Attempting to create user with email: {user_data.get('email')}")
             user_data['created_at'] = datetime.utcnow().isoformat()
             response = self.supabase.table('users').insert(user_data).execute()
+            print(f"[DB] Insert response: {response.data}")
             return {'success': True, 'data': response.data[0]} if response.data else {'success': False, 'error': 'No data returned from database'}
         except Exception as e:
             error_message = str(e)
-            print(f"Error creating user: {error_message}")
+            print(f"[DB ERROR] Error creating user: {error_message}")
             return {'success': False, 'error': error_message}
     
     def get_user_by_id(self, user_id):

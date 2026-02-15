@@ -207,6 +207,8 @@ async function handleSignup(event) {
         return;
     }
 
+    console.log('Attempting signup...');
+    
     try {
         const response = await fetch(API_ENDPOINTS.SIGNUP, {
             method: 'POST',
@@ -222,10 +224,13 @@ async function handleSignup(event) {
             })
         });
 
+        console.log('Response status:', response.status);
+        
         // Parse JSON response regardless of status code
         let data;
         try {
             data = await response.json();
+            console.log('Response data:', data);
         } catch (e) {
             console.error('Failed to parse response:', e);
             showMessage('Server error. Please try again.', 'error');
@@ -242,6 +247,7 @@ async function handleSignup(event) {
             }, 1000);
         } else {
             // Show the specific error message from backend
+            console.error('Signup failed:', data.message);
             showMessage(data.message || 'Signup failed', 'error');
         }
     } catch (error) {
