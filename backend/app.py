@@ -204,6 +204,7 @@ def complete_profile():
         business_name = data.get('businessName')
         password = data.get('password')
         confirm_password = data.get('confirmPassword')
+        profile_image = data.get('profileImage')  # Optional
         
         if not all([user_id, business_name, password, confirm_password]):
             return jsonify({'message': 'All fields are required', 'success': False}), 400
@@ -211,7 +212,10 @@ def complete_profile():
         if password != confirm_password:
             return jsonify({'message': 'Passwords do not match', 'success': False}), 400
         
-        result = auth_service.complete_profile(user_id, business_name, password)
+        if len(password) < 6:
+            return jsonify({'message': 'Password must be at least 6 characters long', 'success': False}), 400
+        
+        result = auth_service.complete_profile(user_id, business_name, password, profile_image)
         
         if result['success']:
             # Generate JWT token

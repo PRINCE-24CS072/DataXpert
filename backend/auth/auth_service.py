@@ -41,12 +41,16 @@ class AuthService:
             # Hash password
             hashed_password = self.hash_password(password)
             
+            # Generate default profile image
+            default_profile_image = f'https://ui-avatars.com/api/?name={username.replace(" ", "+")}&background=6366f1&color=fff&size=200'
+            
             # Create user
             user_data = {
                 'name': username,
                 'email': email,
                 'password': hashed_password,
                 'business_name': business_name,
+                'profile_image': default_profile_image,
                 'role': 'user',
                 'profile_completed': True
             }
@@ -132,6 +136,7 @@ class AuthService:
             google_id = idinfo['sub']
             email = idinfo['email']
             name = idinfo.get('name', email.split('@')[0])
+            profile_image = idinfo.get('picture', None)
             
             # Check if user exists
             user = self.db_client.get_user_by_email(email)
@@ -142,19 +147,28 @@ class AuthService:
             
             if user:
                 # User exists
-                if action == 'signup':
-                    # Trying to signup but user already exists
+                if action == 'signup' and user.get('google_id'):
+                    # Trying to signup but user with Google already exists
                     return {
                         'message': 'An account with this email already exists. Please login instead',
                         'success': False,
                         'already_exists': True
                     }
                 
-                # Login action - proceed with login
-                # Update google_id if not set
+                # Login action OR linking Google to manual account
+                # Update google_id and profile_image if not set
+                updates = {}
                 if not user.get('google_id'):
-                    self.db_client.update_user_google_id(user['id'], google_id)
+                    updates['google_id'] = google_id
                     user['google_id'] = google_id
+                
+                # Update profile image with Google profile pic if user doesn't have one
+                if profile_image and (not user.get('profile_image') or 'ui-avatars.com' in user.get('profile_image', '')):
+                    updates['profile_image'] = profile_image
+                    user['profile_image'] = profile_image
+                
+                if updates:
+                    self.db_client.update_user_fields(user['id'], updates)
                 
                 # Remove password from response
                 user.pop('password', None)
@@ -188,6 +202,7 @@ class AuthService:
                     'name': name,
                     'email': email,
                     'google_id': google_id,
+                    'profile_image': profile_image if profile_image else f'https://ui-avatars.com/api/?name={name.replace(" ", "+")}&background=6366f1&color=fff&size=200',
                     'role': 'user',
                     'profile_completed': False
                 }
@@ -217,7 +232,7 @@ class AuthService:
         except Exception as e:
             return {'message': f'Google auth error: {str(e)}', 'success': False}
     
-    def complete_profile(self, user_id, business_name, password):
+    def complete_profile(self, user_id, business_name, password, profile_image=None):
         """Complete user profile after Google OAuth"""
         try:
             # Get user
@@ -229,14 +244,21 @@ class AuthService:
             # Hash password
             hashed_password = self.hash_password(password)
             
+            # Prepare update data
+            update_data = {
+                'business_name': business_name,
+                'password': hashed_password,
+                'profile_completed': True
+            }
+            
+            # Update profile image if provided, otherwise keep existing
+            if profile_image:
+                update_data['profile_image'] = profile_image
+            
             # Update user profile
             updated_user = self.db_client.update_user_profile(
                 user_id,
-                {
-                    'business_name': business_name,
-                    'password': hashed_password,
-                    'profile_completed': True
-                }
+                update_data
             )
             
             if updated_user:

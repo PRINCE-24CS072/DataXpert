@@ -134,12 +134,21 @@ async function handleGoogleCallback(response) {
                 // Populate user info in the profile completion form
                 const usernameField = document.getElementById('googleUsername');
                 const emailField = document.getElementById('googleEmail');
+                const profileImageField = document.getElementById('googleProfileImage');
                 
                 if (usernameField && data.user.name) {
                     usernameField.value = data.user.name;
                 }
                 if (emailField && data.user.email) {
                     emailField.value = data.user.email;
+                }
+                if (profileImageField && data.user.profile_image) {
+                    profileImageField.src = data.user.profile_image;
+                    profileImageField.style.display = 'block';
+                } else if (profileImageField) {
+                    // Set default avatar if no profile image
+                    profileImageField.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user.name)}&background=6366f1&color=fff&size=200`;
+                    profileImageField.style.display = 'block';
                 }
                 
                 // Close other modals

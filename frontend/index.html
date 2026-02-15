@@ -231,6 +231,12 @@
             <p>Please provide additional information to complete your registration</p>
             
             <form id="googleProfileForm">
+                <!-- Profile Image Preview -->
+                <div class="form-group" style="text-align: center; margin-bottom: 20px;">
+                    <img id="googleProfileImage" src="" alt="Profile" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #6366f1;">
+                    <p style="font-size: 12px; color: #666; margin-top: 8px;">Your Google profile picture</p>
+                </div>
+                
                 <div class="form-group">
                     <label for="googleUsername">Username</label>
                     <input type="text" id="googleUsername" readonly placeholder="From Google Account" style="background-color: #f0f0f0;">
@@ -247,12 +253,12 @@
                 </div>
                 <div class="form-group">
                     <label for="googlePassword">Create Password</label>
-                    <input type="password" id="googlePassword" required placeholder="••••••••">
-                    <small style="color: #666;">Create a password for your account</small>
+                    <input type="password" id="googlePassword" required placeholder="••••••••" minlength="6">
+                    <small style="color: #666;">Create a password for your account (minimum 6 characters)</small>
                 </div>
                 <div class="form-group">
                     <label for="googleConfirmPassword">Confirm Password</label>
-                    <input type="password" id="googleConfirmPassword" required placeholder="••••••••">
+                    <input type="password" id="googleConfirmPassword" required placeholder="••••••••" minlength="6">
                 </div>
                 <button type="submit" class="btn btn-primary btn-full">Complete Registration</button>
             </form>

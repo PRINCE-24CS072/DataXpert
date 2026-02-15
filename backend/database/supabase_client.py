@@ -68,10 +68,19 @@ class SupabaseClient:
             print(f"Error updating google_id: {e}")
             return None
     
+    def update_user_fields(self, user_id, fields):
+        """Update user fields (generic update method)"""
+        try:
+            response = self.supabase.table('users').update(fields).eq('id', user_id).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error updating user fields: {e}")
+            return None
+    
     def update_user_profile(self, user_id, data):
         """Update user profile"""
         try:
-            allowed_fields = ['name', 'email', 'business_name', 'password', 'profile_completed']
+            allowed_fields = ['name', 'email', 'business_name', 'password', 'profile_completed', 'profile_image']
             update_data = {k: v for k, v in data.items() if k in allowed_fields}
             
             response = self.supabase.table('users').update(update_data).eq('id', user_id).execute()
