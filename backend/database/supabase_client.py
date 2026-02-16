@@ -344,3 +344,209 @@ class SupabaseClient:
         except Exception as e:
             print(f"Error getting analysis results: {e}")
             return []
+
+    # ==================== ACTIVITY LOG OPERATIONS ====================
+    
+    def log_activity(self, user_id, action_type, description, entity_type=None, entity_id=None, metadata=None):
+        """Log user activity for audit trail"""
+        try:
+            log_data = {
+                'user_id': user_id,
+                'action_type': action_type,
+                'action_description': description,
+                'entity_type': entity_type,
+                'entity_id': entity_id,
+                'metadata': metadata or {},
+                'created_at': datetime.utcnow().isoformat()
+            }
+            
+            response = self.supabase.table('activity_log').insert(log_data).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error logging activity: {e}")
+            return None
+    
+    def get_activity_log(self, user_id, limit=50, action_type=None):
+        """Get activity log for a user"""
+        try:
+            query = self.supabase.table('activity_log')\
+                .select('*')\
+                .eq('user_id', user_id)\
+                .order('created_at', desc=True)\
+                .limit(limit)
+            
+            if action_type:
+                query = query.eq('action_type', action_type)
+            
+            response = query.execute()
+            return response.data if response.data else []
+        except Exception as e:
+            print(f"Error getting activity log: {e}")
+            return []
+    
+    # ==================== UPLOAD HISTORY OPERATIONS ====================
+    
+    def save_upload_history(self, user_id, upload_data):
+        """Save file upload history"""
+        try:
+            history_data = {
+                'user_id': user_id,
+                'filename': upload_data.get('filename', 'unknown'),
+                'file_type': upload_data.get('file_type', ''),
+                'file_size': upload_data.get('file_size', 0),
+                'original_rows': upload_data.get('original_rows', 0),
+                'processed_rows': upload_data.get('processed_rows', 0),
+                'records_added': upload_data.get('records_added', 0),
+                'outliers_removed': upload_data.get('outliers_removed', 0),
+                'missing_filled': upload_data.get('missing_filled', 0),
+                'processing_options': upload_data.get('processing_options', {}),
+                'status': upload_data.get('status', 'completed'),
+                'error_message': upload_data.get('error_message'),
+                'created_at': datetime.utcnow().isoformat()
+            }
+            
+            response = self.supabase.table('upload_history').insert(history_data).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error saving upload history: {e}")
+            return None
+    
+    def get_upload_history(self, user_id, limit=20):
+        """Get upload history for a user"""
+        try:
+            response = self.supabase.table('upload_history')\
+                .select('*')\
+                .eq('user_id', user_id)\
+                .order('created_at', desc=True)\
+                .limit(limit)\
+                .execute()
+            
+            return response.data if response.data else []
+        except Exception as e:
+            print(f"Error getting upload history: {e}")
+            return []
+    
+    # ==================== DATA BACKUP OPERATIONS ====================
+    
+    def create_data_backup(self, user_id, backup_type='pre_clear', expires_days=30):
+        """Create a backup of user's business data before clearing"""
+        try:
+            # Get all current business data
+            current_data = self.get_user_business_data(user_id)
+            
+            if not current_data:
+                return {'success': False, 'message': 'No data to backup'}
+            
+            from datetime import timedelta
+            expires_at = (datetime.utcnow() + timedelta(days=expires_days)).isoformat()
+            
+            backup_data = {
+                'user_id': user_id,
+                'backup_type': backup_type,
+                'data_snapshot': current_data,
+                'record_count': len(current_data),
+                'expires_at': expires_at,
+                'created_at': datetime.utcnow().isoformat()
+            }
+            
+            response = self.supabase.table('data_backups').insert(backup_data).execute()
+            
+            if response.data:
+                return {'success': True, 'backup': response.data[0], 'record_count': len(current_data)}
+            return {'success': False, 'message': 'Failed to create backup'}
+        except Exception as e:
+            print(f"Error creating backup: {e}")
+            return {'success': False, 'message': str(e)}
+    
+    def get_data_backups(self, user_id):
+        """Get all backups for a user"""
+        try:
+            response = self.supabase.table('data_backups')\
+                .select('*')\
+                .eq('user_id', user_id)\
+                .order('created_at', desc=True)\
+                .execute()
+            
+            return response.data if response.data else []
+        except Exception as e:
+            print(f"Error getting backups: {e}")
+            return []
+    
+    def restore_data_backup(self, user_id, backup_id):
+        """Restore data from a backup"""
+        try:
+            # Get the backup
+            response = self.supabase.table('data_backups')\
+                .select('*')\
+                .eq('id', backup_id)\
+                .eq('user_id', user_id)\
+                .execute()
+            
+            if not response.data:
+                return {'success': False, 'message': 'Backup not found'}
+            
+            backup = response.data[0]
+            data_snapshot = backup.get('data_snapshot', [])
+            
+            if not data_snapshot:
+                return {'success': False, 'message': 'Backup is empty'}
+            
+            # Restore each record
+            restored_count = 0
+            for record in data_snapshot:
+                # Remove id to insert as new record
+                record.pop('id', None)
+                record['user_id'] = user_id
+                result = self.add_business_data(record)
+                if result.get('success'):
+                    restored_count += 1
+            
+            # Mark backup as restored
+            self.supabase.table('data_backups')\
+                .update({'restored': True})\
+                .eq('id', backup_id)\
+                .execute()
+            
+            return {'success': True, 'restored_count': restored_count}
+        except Exception as e:
+            print(f"Error restoring backup: {e}")
+            return {'success': False, 'message': str(e)}
+    
+    # ==================== ANALYSIS HISTORY OPERATIONS ====================
+    
+    def save_analysis_history(self, user_id, analysis_data):
+        """Save analysis to history"""
+        try:
+            history_data = {
+                'user_id': user_id,
+                'chat_id': analysis_data.get('chat_id'),
+                'query_text': analysis_data.get('query_text', ''),
+                'analysis_type': analysis_data.get('analysis_type', 'general'),
+                'result_summary': analysis_data.get('summary', ''),
+                'insights': analysis_data.get('insights', []),
+                'recommendations': analysis_data.get('recommendations', []),
+                'chart_data': analysis_data.get('chart_data'),
+                'data_snapshot': analysis_data.get('data_snapshot'),
+                'created_at': datetime.utcnow().isoformat()
+            }
+            
+            response = self.supabase.table('analysis_history').insert(history_data).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error saving analysis history: {e}")
+            return None
+    
+    def get_analysis_history(self, user_id, limit=20):
+        """Get analysis history for a user"""
+        try:
+            response = self.supabase.table('analysis_history')\
+                .select('*')\
+                .eq('user_id', user_id)\
+                .order('created_at', desc=True)\
+                .limit(limit)\
+                .execute()
+            
+            return response.data if response.data else []
+        except Exception as e:
+            print(f"Error getting analysis history: {e}")
+            return []

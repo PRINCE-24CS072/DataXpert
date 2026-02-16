@@ -20,13 +20,22 @@ class DataProcessor:
             '%Y%m%d', '%d %b %Y', '%d %B %Y', '%b %d, %Y', '%B %d, %Y'
         ]
         
-        # Column mapping for auto-detection
+        # Column mapping for auto-detection - expanded for more flexibility
         self.column_mappings = {
-            'date': ['date', 'record_date', 'transaction_date', 'order_date', 'created_at', 'timestamp', 'day', 'datetime'],
-            'sales': ['sales', 'revenue', 'income', 'total_sales', 'amount', 'sale_amount', 'total', 'gross_sales'],
-            'expenses': ['expenses', 'expense', 'cost', 'costs', 'spending', 'expenditure', 'total_cost'],
-            'profit': ['profit', 'net_profit', 'margin', 'earnings', 'net_income', 'gross_profit'],
-            'category': ['category', 'type', 'product_type', 'segment', 'department', 'classification', 'group']
+            'date': ['date', 'record_date', 'transaction_date', 'order_date', 'created_at', 'timestamp', 
+                     'day', 'datetime', 'purchase_date', 'sale_date', 'entry_date', 'month', 'year',
+                     'period', 'time', 'posting_date'],
+            'sales': ['sales', 'revenue', 'income', 'total_sales', 'amount', 'sale_amount', 'total', 
+                      'gross_sales', 'price', 'value', 'selling_price', 'unit_price', 'net_sales',
+                      'total_amount', 'gross_amount', 'turnover', 'receipt', 'credit'],
+            'expenses': ['expenses', 'expense', 'cost', 'costs', 'spending', 'expenditure', 'total_cost',
+                         'purchase', 'payment', 'debit', 'outgoing', 'charge', 'fee', 'overhead',
+                         'operating_cost', 'cogs', 'cost_of_goods'],
+            'profit': ['profit', 'net_profit', 'margin', 'earnings', 'net_income', 'gross_profit',
+                       'gain', 'surplus', 'return', 'net', 'bottom_line', 'net_amount'],
+            'category': ['category', 'type', 'product_type', 'segment', 'department', 'classification', 
+                         'group', 'class', 'item', 'product', 'service', 'name', 'description',
+                         'product_name', 'item_name', 'line_item', 'account', 'label']
         }
     
     def process_uploaded_data(self, df: pd.DataFrame, options: Dict = None) -> Dict[str, Any]:
@@ -111,19 +120,77 @@ class DataProcessor:
     def _auto_map_columns(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict]:
         """Auto-detect and map columns to standard names"""
         column_map = {}
-        df_columns_lower = {col.lower().strip(): col for col in df.columns}
+        df_columns_lower = {col.lower().strip().replace('_', '').replace(' ', ''): col for col in df.columns}
+        mapped_columns = set()
         
+        # First pass: exact and fuzzy matching
         for standard_name, possible_names in self.column_mappings.items():
             for possible_name in possible_names:
-                if possible_name in df_columns_lower:
-                    original_col = df_columns_lower[possible_name]
-                    if standard_name == 'date':
-                        df = df.rename(columns={original_col: 'record_date'})
-                        column_map['record_date'] = original_col
-                    else:
-                        df = df.rename(columns={original_col: standard_name})
-                        column_map[standard_name] = original_col
+                # Try exact match
+                clean_possible = possible_name.lower().replace('_', '').replace(' ', '')
+                if clean_possible in df_columns_lower:
+                    original_col = df_columns_lower[clean_possible]
+                    if original_col not in mapped_columns:
+                        if standard_name == 'date':
+                            df = df.rename(columns={original_col: 'record_date'})
+                            column_map['record_date'] = original_col
+                        else:
+                            df = df.rename(columns={original_col: standard_name})
+                            column_map[standard_name] = original_col
+                        mapped_columns.add(original_col)
+                        break
+                # Try partial match
+                for col_lower, original_col in df_columns_lower.items():
+                    if original_col not in mapped_columns and possible_name in col_lower:
+                        if standard_name == 'date':
+                            df = df.rename(columns={original_col: 'record_date'})
+                            column_map['record_date'] = original_col
+                        else:
+                            df = df.rename(columns={original_col: standard_name})
+                            column_map[standard_name] = original_col
+                        mapped_columns.add(original_col)
+                        break
+                if standard_name in column_map or 'record_date' in column_map and standard_name == 'date':
                     break
+        
+        # Second pass: Auto-detect unmapped numeric columns as sales/expenses fallback
+        if 'sales' not in column_map:
+            numeric_cols = df.select_dtypes(include=['int64', 'float64', 'int32', 'float32']).columns
+            unmapped_numeric = [col for col in numeric_cols if col not in mapped_columns and col not in ['sales', 'expenses', 'profit']]
+            if unmapped_numeric:
+                # Use first numeric column as sales
+                original_col = unmapped_numeric[0]
+                df = df.rename(columns={original_col: 'sales'})
+                column_map['sales'] = original_col
+                mapped_columns.add(original_col)
+        
+        # Auto-detect date columns if not found
+        if 'record_date' not in df.columns:
+            for col in df.columns:
+                if col not in mapped_columns:
+                    try:
+                        # Check if column looks like dates
+                        sample = df[col].dropna().head(10)
+                        if len(sample) > 0:
+                            pd.to_datetime(sample, errors='raise')
+                            df = df.rename(columns={col: 'record_date'})
+                            column_map['record_date'] = col
+                            mapped_columns.add(col)
+                            break
+                    except:
+                        continue
+        
+        # Ensure required columns exist with defaults
+        if 'record_date' not in df.columns:
+            df['record_date'] = datetime.now().strftime('%Y-%m-%d')
+        if 'category' not in df.columns:
+            df['category'] = 'General'
+        if 'sales' not in df.columns:
+            df['sales'] = 0
+        if 'expenses' not in df.columns:
+            df['expenses'] = 0
+        if 'profit' not in df.columns:
+            df['profit'] = 0
         
         return df, column_map
     
@@ -353,66 +420,115 @@ class DataProcessor:
         return analysis
     
     def suggest_graph_types(self, df: pd.DataFrame) -> List[Dict]:
-        """Suggest appropriate graph types based on data"""
+        """Suggest appropriate graph types based on data - works with any columns"""
         suggestions = []
         
-        has_date = 'record_date' in df.columns
-        has_category = 'category' in df.columns
-        has_numeric = any(col in df.columns for col in ['sales', 'expenses', 'profit'])
+        # Detect column types dynamically
+        numeric_cols = df.select_dtypes(include=['int64', 'float64', 'int32', 'float32']).columns.tolist()
+        categorical_cols = df.select_dtypes(include=['object', 'category']).columns.tolist()
+        datetime_cols = []
         
-        if has_date and has_numeric:
+        # Try to detect date columns
+        for col in df.columns:
+            if 'date' in col.lower() or 'time' in col.lower():
+                datetime_cols.append(col)
+            elif df[col].dtype == 'object':
+                try:
+                    pd.to_datetime(df[col], errors='raise')
+                    datetime_cols.append(col)
+                except:
+                    pass
+        
+        # Also check for mapped columns
+        has_date = 'record_date' in df.columns or len(datetime_cols) > 0
+        has_category = 'category' in df.columns or len(categorical_cols) > 0
+        has_numeric = len(numeric_cols) > 0 or any(col in df.columns for col in ['sales', 'expenses', 'profit'])
+        
+        date_col = 'record_date' if 'record_date' in df.columns else (datetime_cols[0] if datetime_cols else None)
+        cat_col = 'category' if 'category' in df.columns else (categorical_cols[0] if categorical_cols else None)
+        
+        # Get meaningful numeric columns (exclude ID-like columns)
+        meaningful_numeric = [col for col in numeric_cols if not any(x in col.lower() for x in ['id', 'index', 'key'])]
+        if not meaningful_numeric:
+            meaningful_numeric = numeric_cols
+        
+        # Time series charts (if date column exists)
+        if date_col and meaningful_numeric:
             suggestions.append({
                 'type': 'line',
                 'title': 'Time Series Analysis',
-                'description': 'Track changes over time',
+                'description': f'Track {", ".join(meaningful_numeric[:3])} over time',
                 'recommended': True,
-                'fields': {'x': 'record_date', 'y': ['sales', 'profit', 'expenses']}
+                'fields': {'x': date_col, 'y': meaningful_numeric[:3]}
             })
             suggestions.append({
                 'type': 'area',
-                'title': 'Stacked Area Chart',
-                'description': 'Show cumulative trends',
+                'title': 'Trend Area Chart',
+                'description': 'Visualize cumulative trends over time',
                 'recommended': False,
-                'fields': {'x': 'record_date', 'y': ['sales', 'expenses']}
+                'fields': {'x': date_col, 'y': meaningful_numeric[:2]}
             })
         
-        if has_category and has_numeric:
+        # Category charts
+        if cat_col and meaningful_numeric:
             suggestions.append({
                 'type': 'bar',
                 'title': 'Category Comparison',
-                'description': 'Compare values across categories',
+                'description': f'Compare {meaningful_numeric[0]} across {cat_col}',
                 'recommended': True,
-                'fields': {'x': 'category', 'y': 'sales'}
+                'fields': {'x': cat_col, 'y': meaningful_numeric[0]}
             })
             suggestions.append({
                 'type': 'doughnut',
                 'title': 'Category Distribution',
-                'description': 'Show proportion of each category',
+                'description': f'Show proportion of each {cat_col}',
                 'recommended': True,
-                'fields': {'label': 'category', 'value': 'sales'}
+                'fields': {'label': cat_col, 'value': meaningful_numeric[0]}
             })
-            suggestions.append({
-                'type': 'pie',
-                'title': 'Expense Breakdown',
-                'description': 'Distribution of expenses by category',
-                'recommended': False,
-                'fields': {'label': 'category', 'value': 'expenses'}
-            })
+            if len(meaningful_numeric) > 1:
+                suggestions.append({
+                    'type': 'pie',
+                    'title': f'{meaningful_numeric[1]} Breakdown',
+                    'description': f'Distribution of {meaningful_numeric[1]} by {cat_col}',
+                    'recommended': False,
+                    'fields': {'label': cat_col, 'value': meaningful_numeric[1]}
+                })
         
-        if has_numeric:
+        # Numeric comparison charts
+        if len(meaningful_numeric) >= 2:
             suggestions.append({
                 'type': 'bar',
-                'title': 'Sales vs Expenses vs Profit',
-                'description': 'Compare key metrics',
-                'recommended': True,
-                'fields': {'metrics': ['sales', 'expenses', 'profit']}
+                'title': 'Metrics Comparison',
+                'description': f'Compare {", ".join(meaningful_numeric[:3])}',
+                'recommended': len(suggestions) == 0,
+                'fields': {'metrics': meaningful_numeric[:3]}
             })
             suggestions.append({
                 'type': 'scatter',
-                'title': 'Sales-Profit Correlation',
-                'description': 'Analyze relationship between sales and profit',
+                'title': f'{meaningful_numeric[0]} vs {meaningful_numeric[1]} Correlation',
+                'description': 'Analyze relationship between metrics',
                 'recommended': False,
-                'fields': {'x': 'sales', 'y': 'profit'}
+                'fields': {'x': meaningful_numeric[0], 'y': meaningful_numeric[1]}
+            })
+        
+        # If no suggestions yet, provide generic ones
+        if not suggestions and meaningful_numeric:
+            suggestions.append({
+                'type': 'bar',
+                'title': 'Data Overview',
+                'description': 'Bar chart of your numeric data',
+                'recommended': True,
+                'fields': {'metrics': meaningful_numeric[:5]}
+            })
+        
+        if not suggestions and df.shape[0] > 0:
+            # Fallback - just show something
+            suggestions.append({
+                'type': 'bar',
+                'title': 'Record Count by Row',
+                'description': 'Basic data visualization',
+                'recommended': True,
+                'fields': {'data': 'all'}
             })
         
         return suggestions

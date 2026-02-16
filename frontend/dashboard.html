@@ -27,6 +27,10 @@
                 <i class="fas fa-robot"></i>
                 <span>AI Analysis</span>
             </a>
+            <a href="#" class="nav-item" id="historySidebarBtn">
+                <i class="fas fa-history"></i>
+                <span>History</span>
+            </a>
             <a href="#" class="nav-item" id="teamsSidebarBtn">
                 <i class="fas fa-users"></i>
                 <span>Teams</span>
@@ -63,7 +67,8 @@
                 <div class="user-info">
                     <span id="userName">Loading...</span>
                     <div class="user-avatar">
-                        <i class="fas fa-user"></i>
+                        <img id="userAvatar" src="" alt="Profile" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                        <i class="fas fa-user" id="avatarFallback"></i>
                     </div>
                 </div>
             </div>
@@ -441,20 +446,73 @@
 
     <!-- Clear Data Confirmation Modal -->
     <div id="clearDataModal" class="modal">
-        <div class="modal-content modal-small">
+        <div class="modal-content">
             <span class="close" data-modal="clearDataModal">&times;</span>
             <div class="confirm-icon warning">
                 <i class="fas fa-exclamation-triangle"></i>
             </div>
             <h2>Clear All Data?</h2>
-            <p>This will permanently delete all your business data. This action cannot be undone.</p>
+            <p>Choose how you want to handle your data deletion:</p>
+            
+            <div class="clear-options">
+                <label class="clear-option" id="clearOptionBackup">
+                    <input type="radio" name="clearType" value="backup" checked>
+                    <div class="option-card recommended">
+                        <div class="option-icon">
+                            <i class="fas fa-archive"></i>
+                        </div>
+                        <div class="option-details">
+                            <span class="option-title">Keep Backup (30 Days)</span>
+                            <span class="option-desc">Data will be archived. You can restore it within 30 days. Analysis history will be preserved.</span>
+                        </div>
+                        <span class="recommended-tag">Recommended</span>
+                    </div>
+                </label>
+                
+                <label class="clear-option" id="clearOptionPermanent">
+                    <input type="radio" name="clearType" value="permanent">
+                    <div class="option-card danger">
+                        <div class="option-icon">
+                            <i class="fas fa-trash-alt"></i>
+                        </div>
+                        <div class="option-details">
+                            <span class="option-title">Permanent Delete</span>
+                            <span class="option-desc">Data will be permanently deleted immediately. Analysis history will still be preserved.</span>
+                        </div>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="clear-summary" id="clearSummary">
+                <!-- Will show record count -->
+            </div>
+            
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeModal('clearDataModal')">
                     <i class="fas fa-times"></i> Cancel
                 </button>
                 <button class="btn btn-danger" onclick="confirmClearData()">
-                    <i class="fas fa-trash"></i> Yes, Clear All
+                    <i class="fas fa-trash"></i> Clear Data
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content modal-large">
+            <span class="close" data-modal="historyModal">&times;</span>
+            <h2><i class="fas fa-history"></i> Activity History</h2>
+            
+            <div class="history-tabs">
+                <button class="tab-btn active" onclick="showHistoryTab('all')">All Activity</button>
+                <button class="tab-btn" onclick="showHistoryTab('uploads')">Uploads</button>
+                <button class="tab-btn" onclick="showHistoryTab('analysis')">Analysis</button>
+                <button class="tab-btn" onclick="showHistoryTab('backups')">Backups</button>
+            </div>
+            
+            <div class="history-content" id="historyContent">
+                <p class="loading-text">Loading history...</p>
             </div>
         </div>
     </div>

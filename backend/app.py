@@ -618,6 +618,15 @@ def upload_business_data_smart(current_user):
         }), 200
         
     except Exception as e:
+        # Log failed upload
+        try:
+            db_client.save_upload_history(current_user['id'], {
+                'filename': file.filename if 'file' in dir() else 'unknown',
+                'status': 'failed',
+                'error_message': str(e)
+            })
+        except:
+            pass
         return jsonify({'message': f'Upload error: {str(e)}', 'success': False}), 500
 
 @app.route('/api/business-data/analyze-file', methods=['POST'])
@@ -671,21 +680,147 @@ def analyze_uploaded_file(current_user):
 @app.route('/api/business-data/clear', methods=['DELETE'])
 @token_required
 def clear_business_data(current_user):
-    """Clear all business data for the current user"""
+    """Clear all business data for the current user with optional backup"""
     try:
+        data = request.get_json() or {}
+        create_backup = data.get('create_backup', False)
+        backup_days = data.get('backup_days', 30)
+        
+        # Create backup if requested
+        backup_info = None
+        if create_backup:
+            backup_result = db_client.create_data_backup(
+                current_user['id'], 
+                backup_type='pre_clear',
+                expires_days=backup_days
+            )
+            if backup_result['success']:
+                backup_info = {
+                    'backup_id': backup_result['backup'].get('id'),
+                    'record_count': backup_result['record_count'],
+                    'expires_in_days': backup_days
+                }
+        
+        # Clear the data
         result = db_client.clear_user_business_data(current_user['id'])
         
         if result['success']:
+            # Log the activity
+            db_client.log_activity(
+                current_user['id'],
+                'clear',
+                f"Cleared {result.get('deleted_count', 0)} business data records",
+                entity_type='business_data',
+                metadata={
+                    'deleted_count': result.get('deleted_count', 0),
+                    'backup_created': create_backup,
+                    'backup_id': backup_info['backup_id'] if backup_info else None
+                }
+            )
+            
             return jsonify({
                 'success': True,
                 'message': f'Successfully cleared {result.get("deleted_count", 0)} records',
-                'deleted_count': result.get('deleted_count', 0)
+                'deleted_count': result.get('deleted_count', 0),
+                'backup': backup_info
             }), 200
         else:
             return jsonify(result), 400
             
     except Exception as e:
         return jsonify({'message': f'Clear data error: {str(e)}', 'success': False}), 500
+
+# ==================== HISTORY & ACTIVITY ROUTES ====================
+
+@app.route('/api/history/activity', methods=['GET'])
+@token_required
+def get_activity_history(current_user):
+    """Get user's activity log"""
+    try:
+        limit = request.args.get('limit', 50, type=int)
+        action_type = request.args.get('action_type', None)
+        
+        activities = db_client.get_activity_log(current_user['id'], limit, action_type)
+        
+        return jsonify({
+            'success': True,
+            'activities': activities
+        }), 200
+    except Exception as e:
+        return jsonify({'message': f'Error fetching activity: {str(e)}', 'success': False}), 500
+
+@app.route('/api/history/uploads', methods=['GET'])
+@token_required
+def get_upload_history(current_user):
+    """Get user's upload history"""
+    try:
+        limit = request.args.get('limit', 20, type=int)
+        history = db_client.get_upload_history(current_user['id'], limit)
+        
+        return jsonify({
+            'success': True,
+            'uploads': history
+        }), 200
+    except Exception as e:
+        return jsonify({'message': f'Error fetching upload history: {str(e)}', 'success': False}), 500
+
+@app.route('/api/history/analysis', methods=['GET'])
+@token_required
+def get_analysis_history(current_user):
+    """Get user's analysis history"""
+    try:
+        limit = request.args.get('limit', 20, type=int)
+        history = db_client.get_analysis_history(current_user['id'], limit)
+        
+        return jsonify({
+            'success': True,
+            'analyses': history
+        }), 200
+    except Exception as e:
+        return jsonify({'message': f'Error fetching analysis history: {str(e)}', 'success': False}), 500
+
+@app.route('/api/history/backups', methods=['GET'])
+@token_required
+def get_backups(current_user):
+    """Get user's data backups"""
+    try:
+        backups = db_client.get_data_backups(current_user['id'])
+        
+        return jsonify({
+            'success': True,
+            'backups': backups
+        }), 200
+    except Exception as e:
+        return jsonify({'message': f'Error fetching backups: {str(e)}', 'success': False}), 500
+
+@app.route('/api/history/backups/<int:backup_id>/restore', methods=['POST'])
+@token_required
+def restore_backup(current_user, backup_id):
+    """Restore data from a backup"""
+    try:
+        result = db_client.restore_data_backup(current_user['id'], backup_id)
+        
+        if result['success']:
+            # Log the activity
+            db_client.log_activity(
+                current_user['id'],
+                'restore',
+                f"Restored {result.get('restored_count', 0)} records from backup",
+                entity_type='business_data',
+                entity_id=backup_id,
+                metadata={'restored_count': result.get('restored_count', 0)}
+            )
+            
+            return jsonify({
+                'success': True,
+                'message': f'Successfully restored {result.get("restored_count", 0)} records',
+                'restored_count': result.get('restored_count', 0)
+            }), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        return jsonify({'message': f'Restore error: {str(e)}', 'success': False}), 500
 
 @app.route('/api/business-data/generate-chart', methods=['POST'])
 @token_required

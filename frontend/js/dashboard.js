@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupProfileHandlers();
     setupTeamsHandlers();
     setupExcelUploadHandlers();
+    setupHistoryHandlers();
 });
 
 // Load user information
@@ -32,6 +33,16 @@ function loadUserInfo() {
     if (userStr) {
         const user = JSON.parse(userStr);
         document.getElementById('userName').textContent = user.name || 'User';
+        
+        // Update user avatar
+        const avatarImg = document.getElementById('userAvatar');
+        const avatarFallback = document.getElementById('avatarFallback');
+        if (avatarImg) {
+            const profileUrl = user.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=6366f1&color=fff&size=200`;
+            avatarImg.src = profileUrl;
+            avatarImg.style.display = 'block';
+            if (avatarFallback) avatarFallback.style.display = 'none';
+        }
     }
 }
 
@@ -605,6 +616,9 @@ async function manageTeam(teamId) {
 let uploadState = {
     currentStep: 1,
     selectedFile: null,
+    fileData: null,  // Store file content in memory
+    fileName: null,
+    fileType: null,
     fileAnalysis: null,
     graphSuggestions: []
 };
@@ -623,7 +637,7 @@ function setupExcelUploadHandlers() {
     const clearDataBtn = document.getElementById('clearDataBtn');
     if (clearDataBtn) {
         clearDataBtn.addEventListener('click', () => {
-            openModal('clearDataModal');
+            openClearDataModal();
         });
     }
 
@@ -675,6 +689,9 @@ function resetUploadState() {
     uploadState = {
         currentStep: 1,
         selectedFile: null,
+        fileData: null,
+        fileName: null,
+        fileType: null,
         fileAnalysis: null,
         graphSuggestions: []
     };
@@ -712,14 +729,26 @@ async function handleFileSelection(file) {
     }
 
     uploadState.selectedFile = file;
+    uploadState.fileName = file.name;
+    uploadState.fileType = fileExtension;
+    
+    // Store file content in memory to avoid stream consumption issue
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        uploadState.fileData = arrayBuffer;
+    } catch (error) {
+        console.error('Error reading file:', error);
+        showMessage('Error reading file', 'error');
+        return;
+    }
     
     // Show file preview
     document.getElementById('filePreview').style.display = 'block';
     document.getElementById('selectedFileName').textContent = file.name;
     document.getElementById('nextStepBtn').style.display = 'inline-flex';
     
-    // Analyze file
-    await analyzeUploadedFile(file);
+    // Analyze file using stored data
+    await analyzeUploadedFile();
 }
 
 function clearSelectedFile() {
@@ -729,8 +758,17 @@ function clearSelectedFile() {
     document.getElementById('excelFileInput').value = '';
 }
 
-async function analyzeUploadedFile(file) {
+async function analyzeUploadedFile() {
+    if (!uploadState.fileData) {
+        console.error('No file data available');
+        return;
+    }
+    
     try {
+        // Create a new Blob from stored array buffer
+        const blob = new Blob([uploadState.fileData]);
+        const file = new File([blob], uploadState.fileName, { type: uploadState.selectedFile.type });
+        
         const formData = new FormData();
         formData.append('file', file);
 
@@ -751,9 +789,12 @@ async function analyzeUploadedFile(file) {
             
             // Update graph options
             updateGraphOptions(result.graph_suggestions);
+        } else {
+            showMessage(result.message || 'Error analyzing file', 'error');
         }
     } catch (error) {
         console.error('Error analyzing file:', error);
+        showMessage('Error analyzing file. Please try again.', 'error');
     }
 }
 
@@ -822,9 +863,21 @@ function updateAnalysisPreview(analysis, preview) {
 
 function updateGraphOptions(suggestions) {
     const container = document.getElementById('graphOptions');
-    if (!container || !suggestions) return;
+    if (!container) return;
     
     let html = '';
+    
+    if (!suggestions || suggestions.length === 0) {
+        html = `
+            <div class="no-suggestions">
+                <i class="fas fa-chart-bar"></i>
+                <p>Default charts will be generated based on your data.</p>
+                <span class="hint">Charts will be created automatically after upload.</span>
+            </div>
+        `;
+        container.innerHTML = html;
+        return;
+    }
     
     suggestions.forEach((suggestion, index) => {
         const iconMap = {
@@ -888,8 +941,8 @@ function updateUploadStepUI() {
 }
 
 async function processAndUploadData() {
-    if (!uploadState.selectedFile) {
-        showMessage('No file selected', 'error');
+    if (!uploadState.fileData) {
+        showMessage('No file data available', 'error');
         return;
     }
     
@@ -909,9 +962,13 @@ async function processAndUploadData() {
     const outlierMethod = document.getElementById('outlierMethod').value;
     const fillMethod = document.getElementById('fillMethod').value;
     
+    // Create fresh file from stored data
+    const blob = new Blob([uploadState.fileData]);
+    const file = new File([blob], uploadState.fileName, { type: uploadState.selectedFile.type });
+    
     // Build form data
     const formData = new FormData();
-    formData.append('file', uploadState.selectedFile);
+    formData.append('file', file);
     formData.append('remove_outliers', removeOutliers);
     formData.append('fill_missing', fillMissing);
     formData.append('outlier_method', outlierMethod);
@@ -1011,17 +1068,56 @@ async function handleExcelFileUpload(file) {
 
 // ==================== CLEAR DATA ====================
 
+// Show clear data modal with record count
+async function openClearDataModal() {
+    openModal('clearDataModal');
+    
+    // Load current data count
+    try {
+        const response = await fetch(`${API_BASE_URL}/dashboard/stats`, {
+            headers: getAuthHeaders()
+        });
+        const data = await response.json();
+        
+        if (data.success && data.stats) {
+            const count = data.stats.data_count || 0;
+            const summaryDiv = document.getElementById('clearSummary');
+            if (summaryDiv) {
+                summaryDiv.innerHTML = `
+                    <div class="summary-info">
+                        <i class="fas fa-database"></i>
+                        <span>You have <strong>${count}</strong> data records that will be affected.</span>
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading data count:', error);
+    }
+}
+
 async function confirmClearData() {
+    const clearType = document.querySelector('input[name="clearType"]:checked')?.value || 'backup';
+    const createBackup = clearType === 'backup';
+    
     try {
         const response = await fetch(`${API_BASE_URL}/business-data/clear`, {
             method: 'DELETE',
-            headers: getAuthHeaders()
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+                create_backup: createBackup,
+                backup_days: 30
+            })
         });
 
         const result = await response.json();
 
         if (result.success) {
-            showMessage(`Successfully cleared ${result.deleted_count} records`, 'success');
+            let message = `Successfully cleared ${result.deleted_count} records.`;
+            if (result.backup) {
+                message += ` Backup created (expires in 30 days).`;
+            }
+            showMessage(message, 'success');
             closeModal('clearDataModal');
             loadDashboardData();
         } else {
@@ -1031,6 +1127,277 @@ async function confirmClearData() {
         console.error('Error clearing data:', error);
         showMessage('Error clearing data', 'error');
     }
+}
+
+// ==================== HISTORY MANAGEMENT ====================
+
+let currentHistoryTab = 'all';
+
+function setupHistoryHandlers() {
+    const historyBtn = document.getElementById('historySidebarBtn');
+    if (historyBtn) {
+        historyBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openHistoryModal();
+        });
+    }
+}
+
+async function openHistoryModal() {
+    openModal('historyModal');
+    await loadHistoryData('all');
+}
+
+async function showHistoryTab(tab) {
+    currentHistoryTab = tab;
+    
+    // Update tab buttons
+    document.querySelectorAll('.history-tabs .tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    await loadHistoryData(tab);
+}
+
+async function loadHistoryData(tab) {
+    const container = document.getElementById('historyContent');
+    container.innerHTML = '<p class="loading-text">Loading history...</p>';
+    
+    try {
+        let endpoint = '';
+        switch (tab) {
+            case 'uploads':
+                endpoint = `${API_BASE_URL}/history/uploads`;
+                break;
+            case 'analysis':
+                endpoint = `${API_BASE_URL}/history/analysis`;
+                break;
+            case 'backups':
+                endpoint = `${API_BASE_URL}/history/backups`;
+                break;
+            default:
+                endpoint = `${API_BASE_URL}/history/activity`;
+        }
+        
+        const response = await fetch(endpoint, {
+            headers: getAuthHeaders()
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            renderHistoryContent(tab, result);
+        } else {
+            container.innerHTML = '<p class="no-data">Error loading history</p>';
+        }
+    } catch (error) {
+        console.error('Error loading history:', error);
+        container.innerHTML = '<p class="no-data">Error loading history</p>';
+    }
+}
+
+function renderHistoryContent(tab, result) {
+    const container = document.getElementById('historyContent');
+    
+    switch (tab) {
+        case 'uploads':
+            renderUploadHistory(container, result.uploads || []);
+            break;
+        case 'analysis':
+            renderAnalysisHistory(container, result.analyses || []);
+            break;
+        case 'backups':
+            renderBackupsHistory(container, result.backups || []);
+            break;
+        default:
+            renderActivityHistory(container, result.activities || []);
+    }
+}
+
+function renderActivityHistory(container, activities) {
+    if (!activities || activities.length === 0) {
+        container.innerHTML = '<p class="no-data">No activity recorded yet</p>';
+        return;
+    }
+    
+    const iconMap = {
+        'upload': 'fa-upload',
+        'clear': 'fa-trash',
+        'delete': 'fa-trash-alt',
+        'analysis': 'fa-chart-line',
+        'restore': 'fa-undo',
+        'login': 'fa-sign-in-alt',
+        'export': 'fa-download'
+    };
+    
+    container.innerHTML = `
+        <div class="history-list">
+            ${activities.map(activity => `
+                <div class="history-item">
+                    <div class="history-icon ${activity.action_type}">
+                        <i class="fas ${iconMap[activity.action_type] || 'fa-circle'}"></i>
+                    </div>
+                    <div class="history-details">
+                        <span class="history-action">${activity.action_description || activity.action_type}</span>
+                        <span class="history-meta">
+                            <i class="fas fa-clock"></i> ${formatDateTime(activity.created_at)}
+                        </span>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderUploadHistory(container, uploads) {
+    if (!uploads || uploads.length === 0) {
+        container.innerHTML = '<p class="no-data">No uploads yet</p>';
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="history-list">
+            ${uploads.map(upload => `
+                <div class="history-item upload-item">
+                    <div class="history-icon upload">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <div class="history-details">
+                        <span class="history-filename">${upload.filename}</span>
+                        <div class="history-stats">
+                            <span><i class="fas fa-plus-circle"></i> ${upload.records_added} added</span>
+                            ${upload.outliers_removed > 0 ? `<span><i class="fas fa-filter"></i> ${upload.outliers_removed} outliers</span>` : ''}
+                            ${upload.missing_filled > 0 ? `<span><i class="fas fa-magic"></i> ${upload.missing_filled} filled</span>` : ''}
+                        </div>
+                        <span class="history-meta">
+                            <i class="fas fa-clock"></i> ${formatDateTime(upload.created_at)}
+                            <span class="status-badge ${upload.status}">${upload.status}</span>
+                        </span>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderAnalysisHistory(container, analyses) {
+    if (!analyses || analyses.length === 0) {
+        container.innerHTML = '<p class="no-data">No analysis history yet</p>';
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="history-list">
+            ${analyses.map(analysis => `
+                <div class="history-item analysis-item">
+                    <div class="history-icon analysis">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <div class="history-details">
+                        <span class="history-query">"${truncateText(analysis.query_text, 60)}"</span>
+                        <span class="history-type">${analysis.analysis_type || 'General Analysis'}</span>
+                        <span class="history-summary">${truncateText(analysis.result_summary, 100)}</span>
+                        <span class="history-meta">
+                            <i class="fas fa-clock"></i> ${formatDateTime(analysis.created_at)}
+                        </span>
+                    </div>
+                    <button class="btn btn-sm btn-secondary" onclick="viewAnalysisDetail(${analysis.id})">
+                        <i class="fas fa-eye"></i> View
+                    </button>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderBackupsHistory(container, backups) {
+    if (!backups || backups.length === 0) {
+        container.innerHTML = '<p class="no-data">No backups available</p>';
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="history-list">
+            ${backups.map(backup => {
+                const expiresDate = new Date(backup.expires_at);
+                const isExpired = expiresDate < new Date();
+                const daysLeft = Math.ceil((expiresDate - new Date()) / (1000 * 60 * 60 * 24));
+                
+                return `
+                    <div class="history-item backup-item ${isExpired ? 'expired' : ''} ${backup.restored ? 'restored' : ''}">
+                        <div class="history-icon backup">
+                            <i class="fas fa-archive"></i>
+                        </div>
+                        <div class="history-details">
+                            <span class="backup-type">${backup.backup_type === 'pre_clear' ? 'Pre-Clear Backup' : 'Manual Backup'}</span>
+                            <span class="backup-count"><strong>${backup.record_count}</strong> records</span>
+                            <span class="history-meta">
+                                <i class="fas fa-clock"></i> ${formatDateTime(backup.created_at)}
+                                ${!isExpired && !backup.restored ? `<span class="expires-badge">Expires in ${daysLeft} days</span>` : ''}
+                                ${backup.restored ? '<span class="restored-badge">Restored</span>' : ''}
+                                ${isExpired ? '<span class="expired-badge">Expired</span>' : ''}
+                            </span>
+                        </div>
+                        ${!isExpired && !backup.restored ? `
+                            <button class="btn btn-sm btn-primary" onclick="restoreBackup(${backup.id})">
+                                <i class="fas fa-undo"></i> Restore
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+async function restoreBackup(backupId) {
+    if (!confirm('Are you sure you want to restore this backup? This will add the backed up data to your current data.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/history/backups/${backupId}/restore`, {
+            method: 'POST',
+            headers: getAuthHeaders()
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showMessage(`Successfully restored ${result.restored_count} records!`, 'success');
+            loadHistoryData('backups');
+            loadDashboardData();
+        } else {
+            showMessage(result.message || 'Failed to restore backup', 'error');
+        }
+    } catch (error) {
+        console.error('Error restoring backup:', error);
+        showMessage('Error restoring backup', 'error');
+    }
+}
+
+function viewAnalysisDetail(analysisId) {
+    showMessage('Analysis detail view coming soon!', 'info');
+}
+
+// Helper functions
+function formatDateTime(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function truncateText(text, maxLength) {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
 }
 
 // ==================== CUSTOM CHART GENERATION ====================
