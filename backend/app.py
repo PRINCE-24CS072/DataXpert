@@ -12,6 +12,7 @@ from database.supabase_client import SupabaseClient
 from ai.analysis_engine import AnalysisEngine
 from ai.nlp_processor import NLPProcessor
 from ai.anomaly_detector import AnomalyDetector
+from ai.data_processor import DataProcessor
 
 load_dotenv()
 
@@ -33,6 +34,7 @@ db_client = SupabaseClient()
 analysis_engine = AnalysisEngine()
 nlp_processor = NLPProcessor()
 anomaly_detector = AnomalyDetector()
+data_processor = DataProcessor()
 
 # JWT token decorator
 def token_required(f):
@@ -524,6 +526,209 @@ def upload_business_data(current_user):
         
     except Exception as e:
         return jsonify({'message': f'Upload error: {str(e)}', 'success': False}), 500
+
+@app.route('/api/business-data/upload-smart', methods=['POST'])
+@token_required
+def upload_business_data_smart(current_user):
+    """Upload business data with AI preprocessing, cleaning, and outlier removal"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'message': 'No file uploaded', 'success': False}), 400
+        
+        file = request.files['file']
+        
+        if file.filename == '':
+            return jsonify({'message': 'No file selected', 'success': False}), 400
+        
+        # Validate file extension
+        allowed_extensions = {'xlsx', 'xls', 'csv'}
+        file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+        
+        if file_ext not in allowed_extensions:
+            return jsonify({'message': 'Invalid file type. Allowed: xlsx, xls, csv', 'success': False}), 400
+        
+        # Get processing options from form data
+        options = {
+            'remove_outliers': request.form.get('remove_outliers', 'true').lower() == 'true',
+            'fill_missing': request.form.get('fill_missing', 'true').lower() == 'true',
+            'outlier_method': request.form.get('outlier_method', 'iqr'),  # iqr, zscore, percentile
+            'fill_method': request.form.get('fill_method', 'smart')  # smart, mean, median, zero
+        }
+        
+        # Parse file
+        import pandas as pd
+        from io import BytesIO
+        
+        try:
+            if file_ext == 'csv':
+                df = pd.read_csv(BytesIO(file.read()))
+            else:
+                df = pd.read_excel(BytesIO(file.read()))
+        except Exception as e:
+            return jsonify({'message': f'Error reading file: {str(e)}', 'success': False}), 400
+        
+        # Process data with AI
+        process_result = data_processor.process_uploaded_data(df, options)
+        
+        if not process_result['success']:
+            return jsonify({
+                'message': f'Data processing failed: {process_result.get("error", "Unknown error")}',
+                'success': False,
+                'report': process_result['report']
+            }), 400
+        
+        processed_df = process_result['data']
+        report = process_result['report']
+        
+        # Insert processed data into database
+        records_added = 0
+        errors = []
+        
+        for index, row in processed_df.iterrows():
+            try:
+                data = {
+                    'user_id': current_user['id'],
+                    'record_date': str(row.get('record_date', '')),
+                    'category': str(row.get('category', 'General')),
+                    'sales': float(row.get('sales', 0)),
+                    'expenses': float(row.get('expenses', 0)),
+                    'profit': float(row.get('profit', 0))
+                }
+                
+                result = db_client.add_business_data(data)
+                if result['success']:
+                    records_added += 1
+                else:
+                    errors.append(f"Row {index + 1}: {result.get('message', 'Unknown error')}")
+                    
+            except Exception as e:
+                errors.append(f"Row {index + 1}: {str(e)}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully processed and uploaded {records_added} records',
+            'records_added': records_added,
+            'original_rows': report['original_rows'],
+            'final_rows': report['final_rows'],
+            'outliers_removed': report.get('outliers_removed', 0),
+            'missing_filled': report.get('missing_filled', 0),
+            'processing_steps': report.get('processing_steps', []),
+            'warnings': report.get('warnings', []),
+            'errors': errors if errors else None
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'message': f'Upload error: {str(e)}', 'success': False}), 500
+
+@app.route('/api/business-data/analyze-file', methods=['POST'])
+@token_required
+def analyze_uploaded_file(current_user):
+    """Analyze a file before uploading to suggest processing options"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'message': 'No file uploaded', 'success': False}), 400
+        
+        file = request.files['file']
+        
+        if file.filename == '':
+            return jsonify({'message': 'No file selected', 'success': False}), 400
+        
+        # Validate file extension
+        allowed_extensions = {'xlsx', 'xls', 'csv'}
+        file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+        
+        if file_ext not in allowed_extensions:
+            return jsonify({'message': 'Invalid file type', 'success': False}), 400
+        
+        # Parse file
+        import pandas as pd
+        from io import BytesIO
+        
+        try:
+            if file_ext == 'csv':
+                df = pd.read_csv(BytesIO(file.read()))
+            else:
+                df = pd.read_excel(BytesIO(file.read()))
+        except Exception as e:
+            return jsonify({'message': f'Error reading file: {str(e)}', 'success': False}), 400
+        
+        # Analyze data quality
+        analysis = data_processor.analyze_data_quality(df)
+        
+        # Get graph suggestions
+        graph_suggestions = data_processor.suggest_graph_types(df)
+        
+        return jsonify({
+            'success': True,
+            'analysis': analysis,
+            'graph_suggestions': graph_suggestions,
+            'preview': df.head(5).to_dict(orient='records')
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'message': f'Analysis error: {str(e)}', 'success': False}), 500
+
+@app.route('/api/business-data/clear', methods=['DELETE'])
+@token_required
+def clear_business_data(current_user):
+    """Clear all business data for the current user"""
+    try:
+        result = db_client.clear_user_business_data(current_user['id'])
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'message': f'Successfully cleared {result.get("deleted_count", 0)} records',
+                'deleted_count': result.get('deleted_count', 0)
+            }), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        return jsonify({'message': f'Clear data error: {str(e)}', 'success': False}), 500
+
+@app.route('/api/business-data/generate-chart', methods=['POST'])
+@token_required
+def generate_custom_chart(current_user):
+    """Generate a custom chart based on user requirements"""
+    try:
+        data = request.get_json()
+        chart_type = data.get('chart_type', 'line')
+        x_field = data.get('x_field', 'record_date')
+        y_fields = data.get('y_fields', ['sales'])
+        group_by = data.get('group_by', None)
+        date_range = data.get('date_range', None)
+        
+        # Get user's business data
+        business_data = db_client.get_user_business_data(current_user['id'])
+        
+        if not business_data:
+            return jsonify({
+                'success': False,
+                'message': 'No business data available'
+            }), 400
+        
+        import pandas as pd
+        df = pd.DataFrame(business_data)
+        
+        # Apply date range filter if specified
+        if date_range and 'start' in date_range and 'end' in date_range:
+            df['record_date'] = pd.to_datetime(df['record_date'])
+            df = df[(df['record_date'] >= date_range['start']) & (df['record_date'] <= date_range['end'])]
+        
+        # Generate chart data based on type
+        chart_data = analysis_engine.generate_custom_chart(
+            df, chart_type, x_field, y_fields, group_by
+        )
+        
+        return jsonify({
+            'success': True,
+            'chart_data': chart_data,
+            'chart_type': chart_type
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'message': f'Chart generation error: {str(e)}', 'success': False}), 500
 
 # ==================== AI ANALYSIS ROUTES ====================
 

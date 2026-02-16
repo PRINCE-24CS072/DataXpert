@@ -473,6 +473,198 @@ class AnalysisEngine:
             'category': category_chart
         }
     
+    def generate_custom_chart(self, df, chart_type, x_field, y_fields, group_by=None):
+        """Generate custom chart data based on user requirements"""
+        try:
+            # Color palette for charts
+            colors = [
+                {'border': 'rgb(99, 102, 241)', 'bg': 'rgba(99, 102, 241, 0.2)'},
+                {'border': 'rgb(16, 185, 129)', 'bg': 'rgba(16, 185, 129, 0.2)'},
+                {'border': 'rgb(245, 87, 108)', 'bg': 'rgba(245, 87, 108, 0.2)'},
+                {'border': 'rgb(251, 191, 36)', 'bg': 'rgba(251, 191, 36, 0.2)'},
+                {'border': 'rgb(139, 92, 246)', 'bg': 'rgba(139, 92, 246, 0.2)'},
+                {'border': 'rgb(14, 165, 233)', 'bg': 'rgba(14, 165, 233, 0.2)'}
+            ]
+            
+            # Ensure y_fields is a list
+            if isinstance(y_fields, str):
+                y_fields = [y_fields]
+            
+            # Handle date field
+            if x_field == 'record_date' and 'record_date' in df.columns:
+                df['record_date'] = pd.to_datetime(df['record_date'])
+                df = df.sort_values('record_date')
+                labels = df['record_date'].dt.strftime('%Y-%m-%d').tolist()
+            elif x_field in df.columns:
+                labels = df[x_field].astype(str).tolist()
+            else:
+                labels = [f"Entry {i}" for i in range(len(df))]
+            
+            # Generate datasets based on chart type
+            if chart_type in ['pie', 'doughnut']:
+                # For pie/doughnut, group by category or x_field
+                if group_by and group_by in df.columns:
+                    grouped = df.groupby(group_by)[y_fields[0]].sum()
+                elif x_field in df.columns and x_field != 'record_date':
+                    grouped = df.groupby(x_field)[y_fields[0]].sum()
+                else:
+                    grouped = df.groupby('category' if 'category' in df.columns else df.index)[y_fields[0]].sum()
+                
+                return {
+                    'labels': grouped.index.tolist(),
+                    'datasets': [{
+                        'data': grouped.values.tolist(),
+                        'backgroundColor': [
+                            'rgba(99, 102, 241, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 87, 108, 0.8)',
+                            'rgba(251, 191, 36, 0.8)',
+                            'rgba(139, 92, 246, 0.8)',
+                            'rgba(14, 165, 233, 0.8)',
+                            'rgba(236, 72, 153, 0.8)',
+                            'rgba(34, 197, 94, 0.8)'
+                        ][:len(grouped)]
+                    }]
+                }
+            
+            elif chart_type == 'bar':
+                if group_by and group_by in df.columns:
+                    # Grouped bar chart
+                    grouped = df.groupby(group_by)[y_fields].sum()
+                    datasets = []
+                    for i, y_field in enumerate(y_fields):
+                        datasets.append({
+                            'label': y_field.replace('_', ' ').title(),
+                            'data': grouped[y_field].tolist(),
+                            'backgroundColor': colors[i % len(colors)]['bg'].replace('0.2', '0.8'),
+                            'borderColor': colors[i % len(colors)]['border'],
+                            'borderWidth': 1
+                        })
+                    return {
+                        'labels': grouped.index.tolist(),
+                        'datasets': datasets
+                    }
+                else:
+                    # Regular bar chart
+                    datasets = []
+                    for i, y_field in enumerate(y_fields):
+                        if y_field in df.columns:
+                            datasets.append({
+                                'label': y_field.replace('_', ' ').title(),
+                                'data': df[y_field].tolist(),
+                                'backgroundColor': colors[i % len(colors)]['bg'].replace('0.2', '0.7'),
+                                'borderColor': colors[i % len(colors)]['border'],
+                                'borderWidth': 1
+                            })
+                    return {
+                        'labels': labels,
+                        'datasets': datasets
+                    }
+            
+            elif chart_type == 'line':
+                # Line chart
+                datasets = []
+                for i, y_field in enumerate(y_fields):
+                    if y_field in df.columns:
+                        datasets.append({
+                            'label': y_field.replace('_', ' ').title(),
+                            'data': df[y_field].tolist(),
+                            'borderColor': colors[i % len(colors)]['border'],
+                            'backgroundColor': colors[i % len(colors)]['bg'],
+                            'fill': True,
+                            'tension': 0.4
+                        })
+                return {
+                    'labels': labels,
+                    'datasets': datasets
+                }
+            
+            elif chart_type == 'area':
+                # Area chart (stacked line)
+                datasets = []
+                for i, y_field in enumerate(y_fields):
+                    if y_field in df.columns:
+                        datasets.append({
+                            'label': y_field.replace('_', ' ').title(),
+                            'data': df[y_field].tolist(),
+                            'borderColor': colors[i % len(colors)]['border'],
+                            'backgroundColor': colors[i % len(colors)]['bg'].replace('0.2', '0.5'),
+                            'fill': True,
+                            'tension': 0.4
+                        })
+                return {
+                    'labels': labels,
+                    'datasets': datasets
+                }
+            
+            elif chart_type == 'scatter':
+                # Scatter plot
+                if len(y_fields) >= 2:
+                    x_data = df[y_fields[0]].tolist() if y_fields[0] in df.columns else []
+                    y_data = df[y_fields[1]].tolist() if y_fields[1] in df.columns else []
+                    
+                    scatter_data = [{'x': x, 'y': y} for x, y in zip(x_data, y_data)]
+                    
+                    return {
+                        'datasets': [{
+                            'label': f'{y_fields[0].title()} vs {y_fields[1].title()}',
+                            'data': scatter_data,
+                            'backgroundColor': colors[0]['bg'].replace('0.2', '0.8'),
+                            'borderColor': colors[0]['border']
+                        }]
+                    }
+                else:
+                    return {'labels': [], 'datasets': []}
+            
+            elif chart_type == 'radar':
+                # Radar/Spider chart - useful for comparing multiple metrics
+                if group_by and group_by in df.columns:
+                    grouped = df.groupby(group_by)[y_fields].mean()
+                    datasets = []
+                    for i, (idx, row) in enumerate(grouped.iterrows()):
+                        datasets.append({
+                            'label': str(idx),
+                            'data': row.tolist(),
+                            'backgroundColor': colors[i % len(colors)]['bg'],
+                            'borderColor': colors[i % len(colors)]['border'],
+                            'fill': True
+                        })
+                    return {
+                        'labels': y_fields,
+                        'datasets': datasets
+                    }
+                else:
+                    return {
+                        'labels': y_fields,
+                        'datasets': [{
+                            'label': 'Overview',
+                            'data': [df[f].mean() if f in df.columns else 0 for f in y_fields],
+                            'backgroundColor': colors[0]['bg'],
+                            'borderColor': colors[0]['border'],
+                            'fill': True
+                        }]
+                    }
+            
+            else:
+                # Default to line chart
+                datasets = []
+                for i, y_field in enumerate(y_fields):
+                    if y_field in df.columns:
+                        datasets.append({
+                            'label': y_field.replace('_', ' ').title(),
+                            'data': df[y_field].tolist(),
+                            'borderColor': colors[i % len(colors)]['border'],
+                            'backgroundColor': colors[i % len(colors)]['bg']
+                        })
+                return {
+                    'labels': labels,
+                    'datasets': datasets
+                }
+                
+        except Exception as e:
+            print(f"Chart generation error: {e}")
+            return {'labels': [], 'datasets': []}
+    
     def _ml_forecast(self, df):
         """Advanced ML-based forecasting"""
         try:

@@ -28,6 +28,10 @@ const API_ENDPOINTS = {
     // Business Data
     BUSINESS_DATA: `${API_BASE_URL}/business/data`,
     BUSINESS_SUMMARY: `${API_BASE_URL}/business/summary`,
+    BUSINESS_DATA_UPLOAD: `${API_BASE_URL}/business-data/upload-smart`,
+    BUSINESS_DATA_ANALYZE: `${API_BASE_URL}/business-data/analyze-file`,
+    BUSINESS_DATA_CLEAR: `${API_BASE_URL}/business-data/clear`,
+    BUSINESS_DATA_CHART: `${API_BASE_URL}/business-data/generate-chart`,
     
     // AI Analysis
     AI_CHAT: `${API_BASE_URL}/ai/chat`,

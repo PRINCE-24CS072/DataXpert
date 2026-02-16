@@ -130,6 +130,9 @@
                             <button class="btn btn-success btn-small" id="uploadDataBtn" title="Upload Excel/CSV file">
                                 <i class="fas fa-file-upload"></i> Upload File
                             </button>
+                            <button class="btn btn-danger btn-small" id="clearDataBtn" title="Clear all data">
+                                <i class="fas fa-trash"></i> Clear Data
+                            </button>
                         </div>
                     </div>
                     <canvas id="salesChart"></canvas>
@@ -306,35 +309,209 @@
         </div>
     </div>
 
-    <!-- Upload Data Modal -->
+    <!-- Upload Data Modal - Enhanced with AI Processing -->
     <div id="uploadDataModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content modal-large">
             <span class="close" data-modal="uploadDataModal">&times;</span>
-            <h2>Upload Business Data</h2>
-            <p>Upload your business data from Excel or CSV file</p>
+            <h2><i class="fas fa-magic"></i> Smart Data Upload</h2>
+            <p>Upload your data and let AI clean, preprocess, and visualize it</p>
             
-            <div class="upload-options">
-                <div class="upload-info">
-                    <i class="fas fa-file-excel" style="font-size: 48px; color: #10b981;"></i>
-                    <p><strong>Supported formats:</strong> Excel (.xlsx, .xls) and CSV (.csv)</p>
-                    <p><strong>Required columns:</strong> record_date, sales, expenses, profit, category (optional)</p>
+            <div class="upload-steps">
+                <!-- Step 1: File Upload -->
+                <div class="upload-step" id="uploadStep1">
+                    <div class="step-header">
+                        <span class="step-number">1</span>
+                        <h3>Select File</h3>
+                    </div>
+                    
+                    <div class="upload-zone" id="uploadZone">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Drag & drop your file here or click to browse</p>
+                        <p class="upload-formats"><strong>Supported:</strong> Excel (.xlsx, .xls) and CSV (.csv)</p>
+                        <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
+                        <button class="btn btn-primary" onclick="document.getElementById('excelFileInput').click()">
+                            <i class="fas fa-folder-open"></i> Choose File
+                        </button>
+                    </div>
+                    
+                    <div id="filePreview" class="file-preview" style="display:none;">
+                        <div class="file-info">
+                            <i class="fas fa-file-excel"></i>
+                            <span id="selectedFileName">file.xlsx</span>
+                            <button class="btn btn-sm btn-secondary" onclick="clearSelectedFile()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="upload-zone" id="uploadZone">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p>Drag & drop your file here or click to browse</p>
-                    <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
-                    <button class="btn btn-primary" onclick="document.getElementById('excelFileInput').click()">
-                        Choose File
-                    </button>
+                <!-- Step 2: AI Processing Options -->
+                <div class="upload-step" id="uploadStep2" style="display:none;">
+                    <div class="step-header">
+                        <span class="step-number">2</span>
+                        <h3>AI Processing Options</h3>
+                    </div>
+                    
+                    <div class="data-analysis-preview" id="dataAnalysisPreview">
+                        <!-- Will be populated by JS -->
+                    </div>
+                    
+                    <div class="processing-options">
+                        <div class="option-group">
+                            <label class="toggle-option">
+                                <input type="checkbox" id="removeOutliers" checked>
+                                <span class="toggle-slider"></span>
+                                <span class="option-label">
+                                    <i class="fas fa-filter"></i> Remove Outliers
+                                    <small>Automatically detect and remove anomalous data points</small>
+                                </span>
+                            </label>
+                            
+                            <div class="sub-options" id="outlierOptions">
+                                <label>Method:</label>
+                                <select id="outlierMethod">
+                                    <option value="iqr" selected>IQR (Recommended)</option>
+                                    <option value="zscore">Z-Score</option>
+                                    <option value="percentile">Percentile</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label class="toggle-option">
+                                <input type="checkbox" id="fillMissing" checked>
+                                <span class="toggle-slider"></span>
+                                <span class="option-label">
+                                    <i class="fas fa-magic"></i> Fill Missing Values
+                                    <small>Intelligently fill gaps in your data</small>
+                                </span>
+                            </label>
+                            
+                            <div class="sub-options" id="fillOptions">
+                                <label>Method:</label>
+                                <select id="fillMethod">
+                                    <option value="smart" selected>Smart (Category-based)</option>
+                                    <option value="mean">Mean</option>
+                                    <option value="median">Median</option>
+                                    <option value="zero">Zero</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
+                <!-- Step 3: Graph Selection -->
+                <div class="upload-step" id="uploadStep3" style="display:none;">
+                    <div class="step-header">
+                        <span class="step-number">3</span>
+                        <h3>Choose Visualizations</h3>
+                    </div>
+                    
+                    <p class="step-description">Select which charts AI should generate for your data</p>
+                    
+                    <div class="graph-options" id="graphOptions">
+                        <!-- Will be populated dynamically based on data -->
+                    </div>
+                </div>
+                
+                <!-- Progress Display -->
                 <div id="uploadProgress" class="upload-progress" style="display:none;">
                     <div class="progress-bar">
                         <div class="progress-fill" id="progressFill"></div>
                     </div>
-                    <p id="uploadStatus">Uploading...</p>
+                    <p id="uploadStatus">Processing...</p>
+                    <div id="processingSteps" class="processing-steps"></div>
                 </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="backStepBtn" style="display:none;" onclick="previousUploadStep()">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button class="btn btn-primary" id="nextStepBtn" style="display:none;" onclick="nextUploadStep()">
+                    Next <i class="fas fa-arrow-right"></i>
+                </button>
+                <button class="btn btn-success" id="processUploadBtn" style="display:none;" onclick="processAndUploadData()">
+                    <i class="fas fa-robot"></i> Process & Upload
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clear Data Confirmation Modal -->
+    <div id="clearDataModal" class="modal">
+        <div class="modal-content modal-small">
+            <span class="close" data-modal="clearDataModal">&times;</span>
+            <div class="confirm-icon warning">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h2>Clear All Data?</h2>
+            <p>This will permanently delete all your business data. This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('clearDataModal')">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="btn btn-danger" onclick="confirmClearData()">
+                    <i class="fas fa-trash"></i> Yes, Clear All
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Chart Modal -->
+    <div id="customChartModal" class="modal">
+        <div class="modal-content modal-large">
+            <span class="close" data-modal="customChartModal">&times;</span>
+            <h2><i class="fas fa-chart-bar"></i> Create Custom Chart</h2>
+            <p>Design your own visualization</p>
+            
+            <div class="chart-builder">
+                <div class="builder-options">
+                    <div class="form-group">
+                        <label for="chartTypeSelect">Chart Type</label>
+                        <select id="chartTypeSelect">
+                            <option value="line">Line Chart</option>
+                            <option value="bar">Bar Chart</option>
+                            <option value="area">Area Chart</option>
+                            <option value="pie">Pie Chart</option>
+                            <option value="doughnut">Doughnut Chart</option>
+                            <option value="scatter">Scatter Plot</option>
+                            <option value="radar">Radar Chart</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Y-Axis Fields (metrics to display)</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="yFields" value="sales" checked> Sales</label>
+                            <label><input type="checkbox" name="yFields" value="profit"> Profit</label>
+                            <label><input type="checkbox" name="yFields" value="expenses"> Expenses</label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="groupBySelect">Group By</label>
+                        <select id="groupBySelect">
+                            <option value="">None (Time Series)</option>
+                            <option value="category">Category</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="chart-preview">
+                    <canvas id="customChartPreview"></canvas>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('customChartModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="previewCustomChart()">
+                    <i class="fas fa-eye"></i> Preview
+                </button>
+                <button class="btn btn-success" onclick="saveCustomChart()">
+                    <i class="fas fa-save"></i> Add to Dashboard
+                </button>
             </div>
         </div>
     </div>

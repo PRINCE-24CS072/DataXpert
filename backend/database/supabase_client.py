@@ -191,6 +191,31 @@ class SupabaseClient:
             print(f"Error getting recent data: {e}")
             return []
     
+    def clear_user_business_data(self, user_id):
+        """Clear all business data for a user"""
+        try:
+            # First count existing records
+            count_response = self.supabase.table('business_data')\
+                .select('id', count='exact')\
+                .eq('user_id', user_id)\
+                .execute()
+            
+            deleted_count = count_response.count if hasattr(count_response, 'count') else len(count_response.data)
+            
+            # Delete all records
+            response = self.supabase.table('business_data')\
+                .delete()\
+                .eq('user_id', user_id)\
+                .execute()
+            
+            return {
+                'success': True,
+                'deleted_count': deleted_count
+            }
+        except Exception as e:
+            print(f"Error clearing business data: {e}")
+            return {'success': False, 'message': f'Error clearing data: {str(e)}'}
+    
     def get_business_summary(self, user_id):
         """Get business summary statistics"""
         try:

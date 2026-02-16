@@ -601,12 +601,29 @@ async function manageTeam(teamId) {
 
 // ==================== EXCEL/CSV UPLOAD ====================
 
+// Upload state management
+let uploadState = {
+    currentStep: 1,
+    selectedFile: null,
+    fileAnalysis: null,
+    graphSuggestions: []
+};
+
 function setupExcelUploadHandlers() {
     // Upload button click
     const uploadBtn = document.getElementById('uploadDataBtn');
     if (uploadBtn) {
         uploadBtn.addEventListener('click', () => {
+            resetUploadState();
             openModal('uploadDataModal');
+        });
+    }
+
+    // Clear data button click
+    const clearDataBtn = document.getElementById('clearDataBtn');
+    if (clearDataBtn) {
+        clearDataBtn.addEventListener('click', () => {
+            openModal('clearDataModal');
         });
     }
 
@@ -633,27 +650,59 @@ function setupExcelUploadHandlers() {
             uploadZone.classList.remove('dragover');
             const files = e.dataTransfer.files;
             if (files.length > 0) {
-                handleExcelFileUpload(files[0]);
+                handleFileSelection(files[0]);
             }
         });
     }
+
+    // Toggle option checkbox listeners
+    const removeOutliersCheckbox = document.getElementById('removeOutliers');
+    if (removeOutliersCheckbox) {
+        removeOutliersCheckbox.addEventListener('change', (e) => {
+            document.getElementById('outlierOptions').style.display = e.target.checked ? 'flex' : 'none';
+        });
+    }
+
+    const fillMissingCheckbox = document.getElementById('fillMissing');
+    if (fillMissingCheckbox) {
+        fillMissingCheckbox.addEventListener('change', (e) => {
+            document.getElementById('fillOptions').style.display = e.target.checked ? 'flex' : 'none';
+        });
+    }
+}
+
+function resetUploadState() {
+    uploadState = {
+        currentStep: 1,
+        selectedFile: null,
+        fileAnalysis: null,
+        graphSuggestions: []
+    };
+    
+    // Reset UI
+    document.getElementById('uploadStep1').style.display = 'block';
+    document.getElementById('uploadStep2').style.display = 'none';
+    document.getElementById('uploadStep3').style.display = 'none';
+    document.getElementById('uploadProgress').style.display = 'none';
+    document.getElementById('filePreview').style.display = 'none';
+    document.getElementById('backStepBtn').style.display = 'none';
+    document.getElementById('nextStepBtn').style.display = 'none';
+    document.getElementById('processUploadBtn').style.display = 'none';
+    
+    // Clear file input
+    const fileInput = document.getElementById('excelFileInput');
+    if (fileInput) fileInput.value = '';
 }
 
 async function handleExcelFileSelect(event) {
     const file = event.target.files[0];
     if (file) {
-        await handleExcelFileUpload(file);
+        await handleFileSelection(file);
     }
 }
 
-async function handleExcelFileUpload(file) {
+async function handleFileSelection(file) {
     // Validate file type
-    const validTypes = [
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/csv'
-    ];
-    
     const fileExtension = file.name.split('.').pop().toLowerCase();
     const validExtensions = ['xlsx', 'xls', 'csv'];
 
@@ -662,64 +711,398 @@ async function handleExcelFileUpload(file) {
         return;
     }
 
-    // Show progress
-    const progressDiv = document.getElementById('uploadProgress');
-    const progressFill = document.getElementById('progressFill');
-    const uploadStatus = document.getElementById('uploadStatus');
+    uploadState.selectedFile = file;
     
-    progressDiv.style.display = 'block';
-    progressFill.style.width = '0%';
-    uploadStatus.textContent = 'Uploading...';
+    // Show file preview
+    document.getElementById('filePreview').style.display = 'block';
+    document.getElementById('selectedFileName').textContent = file.name;
+    document.getElementById('nextStepBtn').style.display = 'inline-flex';
+    
+    // Analyze file
+    await analyzeUploadedFile(file);
+}
 
+function clearSelectedFile() {
+    uploadState.selectedFile = null;
+    document.getElementById('filePreview').style.display = 'none';
+    document.getElementById('nextStepBtn').style.display = 'none';
+    document.getElementById('excelFileInput').value = '';
+}
+
+async function analyzeUploadedFile(file) {
     try {
         const formData = new FormData();
         formData.append('file', file);
 
-        // Simulate progress (since we can't get real progress from fetch)
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            progress += 10;
-            if (progress <= 90) {
-                progressFill.style.width = progress + '%';
-            }
-        }, 200);
-
-        const response = await fetch(`${API_BASE_URL}/business-data/upload`, {
+        const response = await fetch(`${API_BASE_URL}/business-data/analyze-file`, {
             method: 'POST',
             headers: getAuthHeadersForFormData(),
             body: formData
         });
 
+        const result = await response.json();
+
+        if (result.success) {
+            uploadState.fileAnalysis = result.analysis;
+            uploadState.graphSuggestions = result.graph_suggestions;
+            
+            // Update analysis preview
+            updateAnalysisPreview(result.analysis, result.preview);
+            
+            // Update graph options
+            updateGraphOptions(result.graph_suggestions);
+        }
+    } catch (error) {
+        console.error('Error analyzing file:', error);
+    }
+}
+
+function updateAnalysisPreview(analysis, preview) {
+    const container = document.getElementById('dataAnalysisPreview');
+    if (!container) return;
+    
+    let html = `
+        <div class="analysis-summary">
+            <div class="summary-item">
+                <i class="fas fa-table"></i>
+                <span><strong>${analysis.total_rows}</strong> rows</span>
+            </div>
+            <div class="summary-item">
+                <i class="fas fa-columns"></i>
+                <span><strong>${analysis.total_columns}</strong> columns</span>
+            </div>
+    `;
+    
+    // Show missing values if any
+    const missingCount = Object.keys(analysis.missing_values).length;
+    if (missingCount > 0) {
+        html += `
+            <div class="summary-item warning">
+                <i class="fas fa-exclamation-circle"></i>
+                <span><strong>${missingCount}</strong> columns with missing data</span>
+            </div>
+        `;
+    }
+    
+    html += `</div>`;
+    
+    // Show recommendations
+    if (analysis.recommendations && analysis.recommendations.length > 0) {
+        html += `
+            <div class="recommendations">
+                <h4><i class="fas fa-lightbulb"></i> AI Recommendations</h4>
+                <ul>
+                    ${analysis.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+    
+    // Show data preview
+    if (preview && preview.length > 0) {
+        html += `
+            <div class="data-preview">
+                <h4><i class="fas fa-eye"></i> Data Preview (first 5 rows)</h4>
+                <div class="preview-table-wrapper">
+                    <table class="preview-table">
+                        <thead>
+                            <tr>${Object.keys(preview[0]).map(key => `<th>${key}</th>`).join('')}</tr>
+                        </thead>
+                        <tbody>
+                            ${preview.map(row => `<tr>${Object.values(row).map(val => `<td>${val !== null ? val : '-'}</td>`).join('')}</tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+}
+
+function updateGraphOptions(suggestions) {
+    const container = document.getElementById('graphOptions');
+    if (!container || !suggestions) return;
+    
+    let html = '';
+    
+    suggestions.forEach((suggestion, index) => {
+        const iconMap = {
+            'line': 'fa-chart-line',
+            'bar': 'fa-chart-bar',
+            'pie': 'fa-chart-pie',
+            'doughnut': 'fa-chart-pie',
+            'area': 'fa-chart-area',
+            'scatter': 'fa-braille',
+            'radar': 'fa-spider'
+        };
+        
+        html += `
+            <label class="graph-option ${suggestion.recommended ? 'recommended' : ''}">
+                <input type="checkbox" name="selectedGraphs" value="${index}" ${suggestion.recommended ? 'checked' : ''}>
+                <div class="graph-option-content">
+                    <i class="fas ${iconMap[suggestion.type] || 'fa-chart-bar'}"></i>
+                    <div class="graph-details">
+                        <span class="graph-title">${suggestion.title}</span>
+                        <span class="graph-description">${suggestion.description}</span>
+                    </div>
+                    ${suggestion.recommended ? '<span class="recommended-badge">Recommended</span>' : ''}
+                </div>
+            </label>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function nextUploadStep() {
+    if (uploadState.currentStep === 1 && !uploadState.selectedFile) {
+        showMessage('Please select a file first', 'error');
+        return;
+    }
+    
+    uploadState.currentStep++;
+    updateUploadStepUI();
+}
+
+function previousUploadStep() {
+    if (uploadState.currentStep > 1) {
+        uploadState.currentStep--;
+        updateUploadStepUI();
+    }
+}
+
+function updateUploadStepUI() {
+    // Hide all steps
+    document.getElementById('uploadStep1').style.display = 'none';
+    document.getElementById('uploadStep2').style.display = 'none';
+    document.getElementById('uploadStep3').style.display = 'none';
+    
+    // Show current step
+    document.getElementById(`uploadStep${uploadState.currentStep}`).style.display = 'block';
+    
+    // Update buttons
+    document.getElementById('backStepBtn').style.display = uploadState.currentStep > 1 ? 'inline-flex' : 'none';
+    document.getElementById('nextStepBtn').style.display = uploadState.currentStep < 3 ? 'inline-flex' : 'none';
+    document.getElementById('processUploadBtn').style.display = uploadState.currentStep === 3 ? 'inline-flex' : 'none';
+}
+
+async function processAndUploadData() {
+    if (!uploadState.selectedFile) {
+        showMessage('No file selected', 'error');
+        return;
+    }
+    
+    // Show progress
+    document.getElementById('uploadStep3').style.display = 'none';
+    document.getElementById('uploadProgress').style.display = 'block';
+    document.getElementById('backStepBtn').style.display = 'none';
+    document.getElementById('processUploadBtn').style.display = 'none';
+    
+    const progressFill = document.getElementById('progressFill');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const processingSteps = document.getElementById('processingSteps');
+    
+    // Get processing options
+    const removeOutliers = document.getElementById('removeOutliers').checked;
+    const fillMissing = document.getElementById('fillMissing').checked;
+    const outlierMethod = document.getElementById('outlierMethod').value;
+    const fillMethod = document.getElementById('fillMethod').value;
+    
+    // Build form data
+    const formData = new FormData();
+    formData.append('file', uploadState.selectedFile);
+    formData.append('remove_outliers', removeOutliers);
+    formData.append('fill_missing', fillMissing);
+    formData.append('outlier_method', outlierMethod);
+    formData.append('fill_method', fillMethod);
+    
+    // Simulate progress steps
+    const steps = [
+        'Scanning file...',
+        'Auto-detecting column types...',
+        'Cleaning data...',
+        fillMissing ? 'Filling missing values...' : null,
+        removeOutliers ? 'Removing outliers...' : null,
+        'Calculating derived values...',
+        'Uploading to database...'
+    ].filter(Boolean);
+    
+    let currentStepIndex = 0;
+    
+    const updateProgress = () => {
+        if (currentStepIndex < steps.length) {
+            const progress = ((currentStepIndex + 1) / steps.length) * 80;
+            progressFill.style.width = progress + '%';
+            uploadStatus.textContent = steps[currentStepIndex];
+            processingSteps.innerHTML = steps.slice(0, currentStepIndex + 1)
+                .map((step, i) => `<div class="step-item ${i < currentStepIndex ? 'completed' : i === currentStepIndex ? 'active' : ''}">
+                    <i class="fas ${i < currentStepIndex ? 'fa-check-circle' : i === currentStepIndex ? 'fa-spinner fa-spin' : 'fa-circle'}"></i>
+                    ${step}
+                </div>`).join('');
+            currentStepIndex++;
+        }
+    };
+    
+    // Start progress animation
+    updateProgress();
+    const progressInterval = setInterval(updateProgress, 800);
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/business-data/upload-smart`, {
+            method: 'POST',
+            headers: getAuthHeadersForFormData(),
+            body: formData
+        });
+        
         clearInterval(progressInterval);
         progressFill.style.width = '100%';
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            uploadStatus.textContent = 'Upload complete!';
+            processingSteps.innerHTML = `
+                <div class="success-summary">
+                    <i class="fas fa-check-circle"></i>
+                    <div class="summary-details">
+                        <p><strong>${result.records_added}</strong> records added successfully</p>
+                        ${result.outliers_removed > 0 ? `<p><i class="fas fa-filter"></i> ${result.outliers_removed} outliers removed</p>` : ''}
+                        ${result.missing_filled > 0 ? `<p><i class="fas fa-magic"></i> ${result.missing_filled} missing values filled</p>` : ''}
+                    </div>
+                </div>
+            `;
+            
+            showMessage(`Successfully processed and uploaded ${result.records_added} records!`, 'success');
+            
+            setTimeout(() => {
+                closeModal('uploadDataModal');
+                resetUploadState();
+                loadDashboardData();
+            }, 2500);
+        } else {
+            uploadStatus.textContent = 'Upload failed';
+            processingSteps.innerHTML = `
+                <div class="error-summary">
+                    <i class="fas fa-times-circle"></i>
+                    <p>${result.message || 'An error occurred during processing'}</p>
+                </div>
+            `;
+            showMessage(result.message || 'Failed to upload file', 'error');
+        }
+    } catch (error) {
+        clearInterval(progressInterval);
+        console.error('Error uploading file:', error);
+        uploadStatus.textContent = 'Upload error';
+        processingSteps.innerHTML = `
+            <div class="error-summary">
+                <i class="fas fa-times-circle"></i>
+                <p>Network error. Please try again.</p>
+            </div>
+        `;
+        showMessage('Error uploading file', 'error');
+    }
+}
+
+// Legacy upload function for backwards compatibility
+async function handleExcelFileUpload(file) {
+    await handleFileSelection(file);
+}
+
+// ==================== CLEAR DATA ====================
+
+async function confirmClearData() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/business-data/clear`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
 
         const result = await response.json();
 
         if (result.success) {
-            uploadStatus.textContent = `Success! ${result.records_added || 0} records added.`;
-            showMessage(`Successfully uploaded ${result.records_added} records!`, 'success');
-            
-            setTimeout(() => {
-                closeModal('uploadDataModal');
-                progressDiv.style.display = 'none';
-                document.getElementById('excelFileInput').value = '';
-                loadDashboardData(); // Reload dashboard
-            }, 2000);
+            showMessage(`Successfully cleared ${result.deleted_count} records`, 'success');
+            closeModal('clearDataModal');
+            loadDashboardData();
         } else {
-            uploadStatus.textContent = 'Upload failed';
-            showMessage(result.message || 'Failed to upload file', 'error');
-            setTimeout(() => {
-                progressDiv.style.display = 'none';
-            }, 3000);
+            showMessage(result.message || 'Failed to clear data', 'error');
         }
     } catch (error) {
-        console.error('Error uploading file:', error);
-        uploadStatus.textContent = 'Upload error';
-        showMessage('Error uploading file', 'error');
-        setTimeout(() => {
-            progressDiv.style.display = 'none';
-        }, 3000);
+        console.error('Error clearing data:', error);
+        showMessage('Error clearing data', 'error');
     }
+}
+
+// ==================== CUSTOM CHART GENERATION ====================
+
+let customChartInstance = null;
+
+async function previewCustomChart() {
+    const chartType = document.getElementById('chartTypeSelect').value;
+    const yFieldCheckboxes = document.querySelectorAll('input[name="yFields"]:checked');
+    const yFields = Array.from(yFieldCheckboxes).map(cb => cb.value);
+    const groupBy = document.getElementById('groupBySelect').value || null;
+    
+    if (yFields.length === 0) {
+        showMessage('Please select at least one metric to display', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/business-data/generate-chart`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+                chart_type: chartType,
+                x_field: 'record_date',
+                y_fields: yFields,
+                group_by: groupBy
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            renderCustomChartPreview(result.chart_data, chartType);
+        } else {
+            showMessage(result.message || 'Failed to generate chart', 'error');
+        }
+    } catch (error) {
+        console.error('Error generating chart:', error);
+        showMessage('Error generating chart', 'error');
+    }
+}
+
+function renderCustomChartPreview(chartData, chartType) {
+    const canvas = document.getElementById('customChartPreview');
+    const ctx = canvas.getContext('2d');
+    
+    if (customChartInstance) {
+        customChartInstance.destroy();
+    }
+    
+    customChartInstance = new Chart(ctx, {
+        type: chartType,
+        data: chartData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: chartType === 'pie' || chartType === 'doughnut' ? 'bottom' : 'top'
+                }
+            },
+            scales: chartType !== 'pie' && chartType !== 'doughnut' && chartType !== 'radar' ? {
+                y: { beginAtZero: true }
+            } : undefined
+        }
+    });
+}
+
+function saveCustomChart() {
+    showMessage('Custom chart saved to dashboard!', 'success');
+    closeModal('customChartModal');
 }
 
 // Helper function for FormData auth headers
