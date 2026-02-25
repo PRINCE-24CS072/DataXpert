@@ -98,6 +98,11 @@ function openModal(modalId) {
         setTimeout(() => {
             modal.querySelector('.modal-content').classList.add('show');
         }, 10);
+        
+        // Re-render Google buttons when modal opens to ensure they work
+        if (typeof renderGoogleButtons === 'function') {
+            setTimeout(renderGoogleButtons, 100);
+        }
     }
 }
 

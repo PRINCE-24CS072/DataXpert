@@ -4,8 +4,22 @@
 let googleAuthRetries = 0;
 const MAX_GOOGLE_AUTH_RETRIES = 10;
 
-// Track current Google action (login or signup)
-let currentGoogleAction = 'login';
+// Track current Google action - determined by which modal is open
+function getCurrentGoogleAction() {
+    const loginModal = document.getElementById('loginModal');
+    const signupModal = document.getElementById('signupModal');
+    
+    // Check which modal is currently visible
+    if (signupModal && signupModal.style.display === 'block') {
+        return 'signup';
+    }
+    if (loginModal && loginModal.style.display === 'block') {
+        return 'login';
+    }
+    
+    // Default to login
+    return 'login';
+}
 
 // Initialize Google Sign-In
 function initGoogleAuth() {
@@ -48,8 +62,6 @@ function renderGoogleButtons() {
         try {
             // Clear previous content
             googleLoginBtn.innerHTML = '';
-            // Set action to login when this button is used
-            googleLoginBtn.onclick = () => { currentGoogleAction = 'login'; };
             
             google.accounts.id.renderButton(
                 googleLoginBtn,
@@ -74,8 +86,6 @@ function renderGoogleButtons() {
         try {
             // Clear previous content
             googleSignupBtn.innerHTML = '';
-            // Set action to signup when this button is used
-            googleSignupBtn.onclick = () => { currentGoogleAction = 'signup'; };
             
             google.accounts.id.renderButton(
                 googleSignupBtn,
@@ -108,7 +118,9 @@ function showFallbackButton(container, action) {
 
 // Handle Google OAuth Callback
 async function handleGoogleCallback(response) {
-    console.log('Google callback received, action:', currentGoogleAction);
+    // Determine action based on which modal is currently open
+    const action = getCurrentGoogleAction();
+    console.log('Google callback received, action:', action);
     
     try {
         const result = await fetch(API_ENDPOINTS.GOOGLE_AUTH, {
@@ -118,12 +130,13 @@ async function handleGoogleCallback(response) {
             },
             body: JSON.stringify({
                 token: response.credential,
-                action: currentGoogleAction  // Pass 'login' or 'signup'
+                action: action  // Pass 'login' or 'signup' based on modal
             })
         });
 
         const data = await result.json();
         console.log('Backend response:', data);
+        console.log('User data from backend:', data.user);
 
         if (data.success) {
             // Store tokens - user can now access dashboard
@@ -139,15 +152,21 @@ async function handleGoogleCallback(response) {
             if (data.needs_profile_completion) {
                 // Store flag for profile completion banner
                 localStorage.setItem('dataxpert_needs_profile_completion', 'true');
-                showMessage('Welcome! Please complete your profile to get the best experience.', 'info');
+                
+                // Show appropriate message based on action
+                if (action === 'signup') {
+                    showMessage('Welcome! ✓ Please complete your profile to unlock all features.', 'success');
+                } else {
+                    showMessage('Welcome back! Please complete your profile information.', 'info');
+                }
             } else {
-                showMessage('Login successful! Redirecting...', 'success');
+                showMessage(action === 'signup' ? 'Account created successfully! ✓ Redirecting...' : 'Login successful! ✓ Redirecting...', 'success');
             }
             
-            // Redirect to dashboard after 1 second
+            // Redirect to dashboard after 1.5 seconds
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
-            }, 1000);
+            }, 1500);
         } else {
             // Handle different error scenarios
             if (data.need_signup) {
