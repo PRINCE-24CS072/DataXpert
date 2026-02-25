@@ -289,10 +289,26 @@ def update_profile(current_user):
     """Update user profile"""
     try:
         data = request.get_json()
-        result = db_client.update_user_profile(current_user['id'], data)
-        return jsonify(result), 200 if result['success'] else 400
+        user = db_client.update_user_profile(current_user['id'], data)
+        
+        if user:
+            # Remove password from response
+            user.pop('password', None)
+            return jsonify({
+                'success': True,
+                'user': user,
+                'message': 'Profile updated successfully'
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to update profile'
+            }), 400
     except Exception as e:
-        return jsonify({'message': f'Update error: {str(e)}', 'success': False}), 500
+        return jsonify({
+            'success': False,
+            'message': f'Update error: {str(e)}'
+        }), 500
 
 @app.route('/api/users/update-profile', methods=['POST'])
 @token_required

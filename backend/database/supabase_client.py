@@ -83,9 +83,13 @@ class SupabaseClient:
             allowed_fields = ['name', 'email', 'business_name', 'password', 'profile_completed', 'profile_image']
             update_data = {k: v for k, v in data.items() if k in allowed_fields}
             
+            if not update_data:
+                print('No valid fields to update')
+                return None
+            
             response = self.supabase.table('users').update(update_data).eq('id', user_id).execute()
             
-            if response.data:
+            if response.data and len(response.data) > 0:
                 return response.data[0]
             return None
         except Exception as e:

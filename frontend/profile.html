@@ -286,8 +286,18 @@
         async function handleUpdateProfile(event) {
             event.preventDefault();
 
-            const name = document.getElementById('profileName').value;
-            const businessName = document.getElementById('profileBusinessName').value;
+            const name = document.getElementById('profileName').value.trim();
+            const businessName = document.getElementById('profileBusinessName').value.trim();
+
+            if (!name) {
+                showMessage('Name is required', 'error');
+                return;
+            }
+
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
             try {
                 const response = await fetch(API_ENDPOINTS.USER_PROFILE, {
@@ -301,19 +311,22 @@
 
                 const data = await response.json();
 
-                if (data.success) {
+                if (data.success && data.user) {
                     // Update local storage
                     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
                     currentUser = data.user;
                     populateProfile(data.user);
                     loadUserInfo(); // Update topbar
-                    showMessage('Profile updated successfully!', 'success');
+                    showMessage('Profile updated successfully! ✓', 'success');
                 } else {
                     showMessage(data.message || 'Failed to update profile', 'error');
                 }
             } catch (error) {
                 console.error('Error updating profile:', error);
-                showMessage('Error updating profile', 'error');
+                showMessage('Error updating profile. Please try again.', 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
             }
         }
 
@@ -335,6 +348,11 @@
                 return;
             }
 
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Changing...';
+
             try {
                 const response = await fetch(API_ENDPOINTS.CHANGE_PASSWORD, {
                     method: 'POST',
@@ -349,30 +367,27 @@
 
                 if (data.success) {
                     document.getElementById('changePasswordForm').reset();
-                    showMessage('Password changed successfully!', 'success');
+                    showMessage('Password changed successfully! ✓', 'success');
                 } else {
                     showMessage(data.message || 'Failed to change password', 'error');
                 }
             } catch (error) {
                 console.error('Error changing password:', error);
-                showMessage('Error changing password', 'error');
+                showMessage('Error changing password. Please try again.', 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
             }
         }
 
-        // Handle profile image upload
-        async function handleProfileImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            // Validate file type
-            if (!file.type.startsWith('image/')) {
-                showMessage('Please select an image file', 'error');
+        // Handlevent.target.value = '';
                 return;
             }
 
             // Validate file size (5MB max)
             if (file.size > 5 * 1024 * 1024) {
                 showMessage('Image size must be less than 5MB', 'error');
+                event.target.value = '';
                 return;
             }
 
@@ -392,8 +407,8 @@
 
                 const data = await response.json();
 
-                if (data.success) {
-                    // Update profile image
+                if (data.success && data.profile_image) {
+                    // Update profile image in UI
                     document.getElementById('profilePhoto').src = data.profile_image;
                     
                     // Update user in localStorage
@@ -404,6 +419,16 @@
                         localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
                         loadUserInfo(); // Update topbar
                     }
+
+                    showMessage('Profile photo updated successfully! ✓', 'success');
+                } else {
+                    showMessage(data.message || 'Failed to upload image', 'error');
+                }
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                showMessage('Error uploading image. Please try again.', 'error');
+            } finally {
+                event.target.value = ''; // Clear file input
 
                     showMessage('Profile photo updated successfully!', 'success');
                 } else {
@@ -637,6 +662,55 @@
 
         .message-toast.info {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .btn {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn:not(:disabled):hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn:not(:disabled):active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #2d3748;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .fa-spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         @media (max-width: 768px) {
