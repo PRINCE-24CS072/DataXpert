@@ -213,19 +213,37 @@
         // Load profile
         async function loadProfile() {
             try {
+                // First try to load from localStorage
+                const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    currentUser = user;
+                    populateProfile(user);
+                }
+
+                // Then fetch fresh data from server
                 const response = await fetch(API_ENDPOINTS.USER_PROFILE, {
                     headers: getAuthHeaders()
                 });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch profile');
+                }
 
                 const data = await response.json();
 
                 if (data.success && data.user) {
                     currentUser = data.user;
                     populateProfile(data.user);
+                    // Update localStorage with fresh data
+                    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
                 }
             } catch (error) {
                 console.error('Error loading profile:', error);
-                showMessage('Error loading profile', 'error');
+                // If we have cached data, we already displayed it, so just log the error
+                if (!currentUser) {
+                    showMessage('Unable to load profile. Please refresh the page.', 'error');
+                }
             }
         }
 
@@ -318,7 +336,7 @@
             }
 
             try {
-                const response = await fetch(`${API_ENDPOINTS.BASE}/api/user/change-password`, {
+                const response = await fetch(API_ENDPOINTS.CHANGE_PASSWORD, {
                     method: 'POST',
                     headers: getAuthHeaders(),
                     body: JSON.stringify({

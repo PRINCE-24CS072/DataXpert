@@ -147,7 +147,7 @@
             timeline.innerHTML = '<div class="loading-placeholder"><i class="fas fa-spinner fa-spin"></i><p>Loading activity...</p></div>';
 
             try {
-                const response = await fetch(`${API_ENDPOINTS.BASE}/api/activity/history?filter=${filter}`, {
+                const response = await fetch(`${API_ENDPOINTS.ACTIVITY_HISTORY}?filter=${filter}`, {
                     headers: getAuthHeaders()
                 });
 

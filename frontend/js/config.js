@@ -12,6 +12,8 @@ const STORAGE_KEYS = {
 
 // API Endpoints
 const API_ENDPOINTS = {
+    BASE: API_BASE_URL,
+    
     // Auth
     SIGNUP: `${API_BASE_URL}/auth/signup`,
     LOGIN: `${API_BASE_URL}/auth/login`,
@@ -20,7 +22,12 @@ const API_ENDPOINTS = {
     COMPLETE_PROFILE: `${API_BASE_URL}/auth/complete-profile`,
     
     // User
-    PROFILE: `${API_BASE_URL}/user/profile`,
+    USER_PROFILE: `${API_BASE_URL}/user/profile`,
+    CHANGE_PASSWORD: `${API_BASE_URL}/users/change-password`,
+    UPLOAD_PROFILE_IMAGE: `${API_BASE_URL}/users/upload-profile-image`,
+    
+    // Activity History
+    ACTIVITY_HISTORY: `${API_BASE_URL}/activity/history`,
     
     // Teams
     TEAMS: `${API_BASE_URL}/teams`,
