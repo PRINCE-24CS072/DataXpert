@@ -49,6 +49,10 @@ function setupModals() {
     if (switchToSignup) {
         switchToSignup.addEventListener('click', (e) => {
             e.preventDefault();
+            // Clear error messages when switching
+            if (typeof clearMessages === 'function') {
+                clearMessages();
+            }
             closeModal('loginModal');
             openModal('signupModal');
         });
@@ -57,6 +61,10 @@ function setupModals() {
     if (switchToLogin) {
         switchToLogin.addEventListener('click', (e) => {
             e.preventDefault();
+            // Clear error messages when switching
+            if (typeof clearMessages === 'function') {
+                clearMessages();
+            }
             closeModal('signupModal');
             openModal('loginModal');
         });
@@ -81,6 +89,11 @@ function setupModals() {
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
+        // Clear any existing error messages from previous attempts
+        if (typeof clearMessages === 'function') {
+            clearMessages();
+        }
+        
         modal.style.display = 'block';
         setTimeout(() => {
             modal.querySelector('.modal-content').classList.add('show');

@@ -210,18 +210,53 @@ function setupGoogleButtons() {
 async function handleSignup(event) {
     event.preventDefault();
     
-    const username = document.getElementById('signupUsername').value;
-    const businessName = document.getElementById('signupBusinessName').value;
-    const email = document.getElementById('signupEmail').value;
+    // Clear any previous error messages
+    clearMessages();
+    
+    const username = document.getElementById('signupUsername').value.trim();
+    const businessName = document.getElementById('signupBusinessName').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
+
+    // Validate required fields
+    if (!username) {
+        showMessage('Username is required', 'error');
+        return;
+    }
+
+    if (!businessName) {
+        showMessage('Business name is required', 'error');
+        return;
+    }
+
+    if (!email) {
+        showMessage('Email is required', 'error');
+        return;
+    }
+
+    if (!password) {
+        showMessage('Password is required', 'error');
+        return;
+    }
+
+    if (password.length < 6) {
+        showMessage('Password must be at least 6 characters long', 'error');
+        return;
+    }
 
     if (password !== confirmPassword) {
         showMessage('Passwords do not match', 'error');
         return;
     }
 
-    console.log('Attempting signup...');
+    console.log('Attempting signup for:', email);
+    
+    // Get submit button and add loading state
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
     
     try {
         const response = await fetch(API_ENDPOINTS.SIGNUP, {
@@ -248,6 +283,8 @@ async function handleSignup(event) {
         } catch (e) {
             console.error('Failed to parse response:', e);
             showMessage('Server error. Please try again.', 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
             return;
         }
 
@@ -260,23 +297,27 @@ async function handleSignup(event) {
                 localStorage.setItem('dataxpert_cached_stats', JSON.stringify(data.stats));
             }
             
-            showMessage('Account created successfully!', 'success');
+            showMessage('Account created successfully! ✓ Redirecting...', 'success');
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
             }, 1000);
         } else {
             // Show the specific error message from backend
             console.error('Signup failed:', data.message);
-            showMessage(data.message || 'Signup failed', 'error');
+            showMessage(data.message || 'Signup failed. Please try again.', 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
         }
     } catch (error) {
         console.error('Signup error:', error);
         // Check if it's a network error
         if (error.message === 'Failed to fetch' || !navigator.onLine) {
-            showMessage('Cannot connect to server. Please make sure the backend is running.', 'error');
+            showMessage('Cannot connect to server. Please check your internet connection.', 'error');
         } else {
-            showMessage('Signup error. Please try again.', 'error');
+            showMessage('An error occurred during signup. Please try again.', 'error');
         }
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
     }
 }
 
@@ -284,8 +325,28 @@ async function handleSignup(event) {
 async function handleLogin(event) {
     event.preventDefault();
     
-    const email = document.getElementById('loginEmail').value;
+    // Clear any previous error messages
+    clearMessages();
+    
+    const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
+
+    // Validate required fields
+    if (!email) {
+        showMessage('Email is required', 'error');
+        return;
+    }
+
+    if (!password) {
+        showMessage('Password is required', 'error');
+        return;
+    }
+
+    // Get submit button and add loading state
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
 
     try {
         const response = await fetch(API_ENDPOINTS.LOGIN, {
@@ -310,7 +371,7 @@ async function handleLogin(event) {
                 localStorage.setItem('dataxpert_cached_stats', JSON.stringify(data.stats));
             }
             
-            showMessage('Login successful!', 'success');
+            showMessage('Login successful! ✓ Redirecting...', 'success');
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
             }, 1000);
@@ -318,20 +379,32 @@ async function handleLogin(event) {
             // Check if user needs to sign up first
             if (data.need_signup) {
                 showMessage('No account found with this email. Please sign up first', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
                 // Optionally switch to signup modal after 2 seconds
                 setTimeout(() => {
-                    document.getElementById('loginModal').style.display = 'none';
-                    document.getElementById('signupModal').style.display = 'block';
-                }, 2000);
+                    closeModal('loginModal');
+                    openModal('signupModal');
+                }, 2500);
             } else if (data.profile_incomplete) {
                 showMessage('Please complete your signup first', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
             } else {
-                showMessage(data.message || 'Login failed', 'error');
+                showMessage(data.message || 'Login failed. Please check your credentials.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
             }
         }
     } catch (error) {
         console.error('Login error:', error);
-        showMessage('Login error. Please try again.', 'error');
+        if (error.message === 'Failed to fetch' || !navigator.onLine) {
+            showMessage('Cannot connect to server. Please check your internet connection.', 'error');
+        } else {
+            showMessage('An error occurred during login. Please try again.', 'error');
+        }
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
     }
 }
 
@@ -363,12 +436,17 @@ async function verifyAuth() {
 }
 
 // Show Message
-function showMessage(message, type = 'info') {
-    // Remove existing messages
+// Clear all error messages (useful when switching modals)
+function clearMessages() {
     const existingMsg = document.querySelector('.message-toast');
     if (existingMsg) {
         existingMsg.remove();
     }
+}
+
+function showMessage(message, type = 'info') {
+    // Remove existing messages
+    clearMessages();
 
     // Create new message
     const messageDiv = document.createElement('div');
