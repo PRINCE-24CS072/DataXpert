@@ -1,19 +1,30 @@
 <div align="center">
   <img src="assets/logo.png" alt="DataXpert Logo" width="300"/>
   <h1>DataXpert</h1>
-  <p><strong>AI-Assisted Business Data Analytics & Management System</strong></p>
+  <p><strong>AI-Powered Business Analytics Platform</strong></p>
+  <p>
+    <a href="#features">Features</a> •
+    <a href="#quick-start">Quick Start</a> •
+    <a href="#documentation">Documentation</a> •
+    <a href="#technology">Technology</a>
+  </p>
 </div>
+
+---
 
 ## 📋 Overview
 
-**DataXpert** is a comprehensive web application that helps businesses analyze their data through AI-powered insights. Built with Flask (Python) backend and vanilla JavaScript frontend, it provides:
+**DataXpert** is a modern business analytics platform that leverages AI to provide actionable insights from your business data. Built with Python Flask backend and vanilla JavaScript frontend, it offers real-time analytics, AI-powered chat interface, and comprehensive data visualization.
 
-- 🔐 **Secure Authentication** - Email/password and Google OAuth
-- 📊 **Interactive Dashboard** - Real-time business metrics and visualizations
-- 🤖 **AI Analysis** - Chat-based interface for intelligent data insights
-- 👥 **Team Management** - Collaborate with team members
-- 🔔 **Anomaly Detection** - Automatic detection of unusual patterns
-- 📈 **Data Visualization** - Beautiful charts powered by Chart.js
+### ✨ What Makes DataXpert Special
+
+- 🔐 **Dual Authentication** - Email/password OR  Google OAuth for seamless access
+- 📊 **Live Dashboard** - Real-time metrics with interactive Chart.js visualizations
+- 🤖 **AI Chat Analysis** - Natural language queries for immediate insights
+- 📈 **Anomaly Detection** - Automated Z-score based outlier identification
+- 📁 **Excel Import** - Bulk upload and process business data from spreadsheets
+- 👤 **Smart Profiles** - Google profile integration with completion prompts
+- ⚡ **Optimized Performance** - Streamlined codebase for faster response times
 
 ## 🚀 Quick Start
 
@@ -52,81 +63,23 @@
    GOOGLE_CLIENT_ID=your-google-client-id
    ```
 
-4. **Setup Database (Supabase)**
+4. **Setup Database**
    
-   Create the following tables in your Supabase project:
-
-   **users**
-   ```sql
-   CREATE TABLE users (
-       id SERIAL PRIMARY KEY,
-       name VARCHAR(255) NOT NULL,
-       email VARCHAR(255) UNIQUE NOT NULL,
-       password VARCHAR(255),
-       google_id VARCHAR(255) UNIQUE,
-       role VARCHAR(50) DEFAULT 'user',
-       created_at TIMESTAMP DEFAULT NOW()
-   );
+   Run the SQL setup script in your Supabase SQL Editor:
+   ```bash
+   # Copy contents of database_setup.sql and run in Supabase
    ```
+   
+   Or manually create tables (see `database_setup.sql` for complete schema):
+   - `users` - User accounts with Google OAuth support
+   - `business_data` - Business metrics and records
+   - `chats` - AI chat conversation history
+   - `analysis_results` - AI-generated insights
+   - `teams` - Team management (optional)
+   - `upload_history` - File upload tracking
+   - `activity_log` - User activity audit trail
 
-   **teams**
-   ```sql
-   CREATE TABLE teams (
-       id SERIAL PRIMARY KEY,
-       team_name VARCHAR(255) NOT NULL,
-       owner_id INTEGER REFERENCES users(id),
-       created_at TIMESTAMP DEFAULT NOW()
-   );
-   ```
-
-   **team_members**
-   ```sql
-   CREATE TABLE team_members (
-       id SERIAL PRIMARY KEY,
-       team_id INTEGER REFERENCES teams(id),
-       user_id INTEGER REFERENCES users(id),
-       role VARCHAR(50) DEFAULT 'member',
-       joined_at TIMESTAMP DEFAULT NOW()
-   );
-   ```
-
-   **business_data**
-   ```sql
-   CREATE TABLE business_data (
-       id SERIAL PRIMARY KEY,
-       user_id INTEGER REFERENCES users(id),
-       record_date DATE NOT NULL,
-       sales FLOAT NOT NULL,
-       expenses FLOAT NOT NULL,
-       profit FLOAT NOT NULL,
-       category VARCHAR(100)
-   );
-   ```
-
-   **chats**
-   ```sql
-   CREATE TABLE chats (
-       id SERIAL PRIMARY KEY,
-       user_id INTEGER REFERENCES users(id),
-       message TEXT NOT NULL,
-       response TEXT,
-       timestamp TIMESTAMP DEFAULT NOW()
-   );
-   ```
-
-   **analysis_results**
-   ```sql
-   CREATE TABLE analysis_results (
-       id SERIAL PRIMARY KEY,
-       chat_id INTEGER REFERENCES chats(id),
-       summary TEXT NOT NULL,
-       anomaly_score FLOAT DEFAULT 0.0,
-       insight_level VARCHAR(50) NOT NULL,
-       created_at TIMESTAMP DEFAULT NOW()
-   );
-   ```
-
-5. **Run Backend Server**
+5. **Run Backend**
    ```bash
    python app.py
    ```
@@ -185,7 +138,7 @@ DataXpert/
 - **Authentication**: JWT, Google OAuth 2.0
 - **AI/ML**: Rule-based NLP, Anomaly Detection
 
-## 📖 Features
+## � Features
 
 ### Authentication
 - Email/password registration and login
@@ -334,7 +287,7 @@ Contributions are welcome! Please:
 4. Push to the branch
 5. Open a Pull Request
 
-## 👥 About SGP Group
+## � About SGP Group
 
 24CS067 - ManavPatel
 24CS072 - Prince Patel
@@ -353,4 +306,16 @@ Feel free to reach out — I’d love to hear from you! 😊
 --
 **Made with ❤️ by SGP Group**
 
-*Last Updated: February 2024*
+*Last Updated: February 25, 2026 (Optimized Version)*
+
+## ⚡ Performance Optimizations
+
+This version includes significant performance improvements:
+- ✅ Removed 50+ debug print statements from backend
+- ✅ Optimized database error handling
+- ✅ Cleaned frontend console.log statements
+- ✅ Improved query response times
+- ✅ Reduced debugging overhead for production use
+- ✅ Streamlined code for faster execution
+
+See [CHANGELOG.md](CHANGELOG.md) for detailed version history.

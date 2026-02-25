@@ -127,7 +127,6 @@ def signup():
             return jsonify(result), 400
             
     except Exception as e:
-        print(f"Signup error: {str(e)}")  # Log to console
         return jsonify({'message': f'Signup error: {str(e)}', 'success': False}), 500
 
 @app.route('/api/auth/login', methods=['POST'])
@@ -945,7 +944,7 @@ def generate_custom_chart(current_user):
 
 @app.route('/api/activity/history', methods=['GET'])
 @token_required
-def get_activity_history(current_user):
+def get_activity_data_history(current_user):
     """Get activity history for user"""
     try:
         filter_type = request.args.get('filter', 'all')

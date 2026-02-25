@@ -20,15 +20,11 @@ class SupabaseClient:
     def create_user(self, user_data):
         """Create a new user"""
         try:
-            print(f"[DB] Attempting to create user with email: {user_data.get('email')}")
             user_data['created_at'] = datetime.utcnow().isoformat()
             response = self.supabase.table('users').insert(user_data).execute()
-            print(f"[DB] Insert response: {response.data}")
             return {'success': True, 'data': response.data[0]} if response.data else {'success': False, 'error': 'No data returned from database'}
         except Exception as e:
-            error_message = str(e)
-            print(f"[DB ERROR] Error creating user: {error_message}")
-            return {'success': False, 'error': error_message}
+            return {'success': False, 'error': str(e)}
     
     def get_user_by_id(self, user_id):
         """Get user by ID"""
@@ -36,7 +32,6 @@ class SupabaseClient:
             response = self.supabase.table('users').select('*').eq('id', user_id).execute()
             return response.data[0] if response.data else None
         except Exception as e:
-            print(f"Error getting user: {e}")
             return None
     
     def get_user_by_email(self, email):
@@ -45,7 +40,6 @@ class SupabaseClient:
             response = self.supabase.table('users').select('*').eq('email', email).execute()
             return response.data[0] if response.data else None
         except Exception as e:
-            print(f"Error getting user by email: {e}")
             return None
     
     def get_user_by_google_id(self, google_id):
@@ -54,7 +48,6 @@ class SupabaseClient:
             response = self.supabase.table('users').select('*').eq('google_id', google_id).execute()
             return response.data[0] if response.data else None
         except Exception as e:
-            print(f"Error getting user by google_id: {e}")
             return None
     
     def update_user_google_id(self, user_id, google_id):
@@ -65,7 +58,6 @@ class SupabaseClient:
             }).eq('id', user_id).execute()
             return response.data[0] if response.data else None
         except Exception as e:
-            print(f"Error updating google_id: {e}")
             return None
     
     def update_user_fields(self, user_id, fields):
@@ -74,7 +66,6 @@ class SupabaseClient:
             response = self.supabase.table('users').update(fields).eq('id', user_id).execute()
             return response.data[0] if response.data else None
         except Exception as e:
-            print(f"Error updating user fields: {e}")
             return None
     
     def update_user_profile(self, user_id, data):
@@ -84,7 +75,6 @@ class SupabaseClient:
             update_data = {k: v for k, v in data.items() if k in allowed_fields}
             
             if not update_data:
-                print('No valid fields to update')
                 return None
             
             response = self.supabase.table('users').update(update_data).eq('id', user_id).execute()
@@ -93,7 +83,6 @@ class SupabaseClient:
                 return response.data[0]
             return None
         except Exception as e:
-            print(f'Error updating profile: {str(e)}')
             return None
     
     # ==================== BUSINESS DATA OPERATIONS ====================
@@ -122,7 +111,6 @@ class SupabaseClient:
             
             return response.data if response.data else []
         except Exception as e:
-            print(f"Error getting business data: {e}")
             return []
     
     def get_recent_business_data(self, user_id, limit=10):
@@ -137,7 +125,6 @@ class SupabaseClient:
             
             return response.data if response.data else []
         except Exception as e:
-            print(f"Error getting recent data: {e}")
             return []
     
     def clear_user_business_data(self, user_id):
@@ -162,7 +149,6 @@ class SupabaseClient:
                 'deleted_count': deleted_count
             }
         except Exception as e:
-            print(f"Error clearing business data: {e}")
             return {'success': False, 'message': f'Error clearing data: {str(e)}'}
     
     def get_business_summary(self, user_id):
@@ -182,7 +168,6 @@ class SupabaseClient:
                 'data_count': len(data)
             }
         except Exception as e:
-            print(f"Error getting summary: {e}")
             return {}
     
     def get_total_sales(self, user_id):
@@ -230,7 +215,6 @@ class SupabaseClient:
             response = self.supabase.table('chats').insert(chat_data).execute()
             return response.data[0] if response.data else None
         except Exception as e:
-            print(f"Error saving chat: {e}")
             return None
     
     def get_last_user_chat(self, user_id):
@@ -245,7 +229,6 @@ class SupabaseClient:
             
             return response.data[0] if response.data else None
         except Exception as e:
-            print(f"Error getting last chat: {e}")
             return None
     
     def get_user_chats(self, user_id):
@@ -259,7 +242,6 @@ class SupabaseClient:
             
             return response.data if response.data else []
         except Exception as e:
-            print(f"Error getting chats: {e}")
             return []
     
     # ==================== ANALYSIS RESULTS OPERATIONS ====================
@@ -278,7 +260,6 @@ class SupabaseClient:
             response = self.supabase.table('analysis_results').insert(result_data).execute()
             return response.data[0] if response.data else None
         except Exception as e:
-            print(f"Error saving analysis results: {e}")
             return None
     
     def get_analysis_results(self, chat_id):
@@ -291,7 +272,6 @@ class SupabaseClient:
             
             return response.data if response.data else []
         except Exception as e:
-            print(f"Error getting analysis results: {e}")
             return []
 
     # ==================== ACTIVITY LOG OPERATIONS ====================
@@ -312,7 +292,6 @@ class SupabaseClient:
             response = self.supabase.table('activity_log').insert(log_data).execute()
             return response.data[0] if response.data else None
         except Exception as e:
-            print(f"Error logging activity: {e}")
             return None
     
     def get_activity_log(self, user_id, limit=50, action_type=None):
@@ -330,7 +309,6 @@ class SupabaseClient:
             response = query.execute()
             return response.data if response.data else []
         except Exception as e:
-            print(f"Error getting activity log: {e}")
             return []
     
     # ==================== UPLOAD HISTORY OPERATIONS ====================
@@ -357,7 +335,6 @@ class SupabaseClient:
             response = self.supabase.table('upload_history').insert(history_data).execute()
             return response.data[0] if response.data else None
         except Exception as e:
-            print(f"Error saving upload history: {e}")
             return None
     
     def get_upload_history(self, user_id, limit=20):

@@ -39,7 +39,6 @@ function initGoogleAuth() {
             
             // Render Google buttons
             renderGoogleButtons();
-            console.log('✅ Google Auth initialized successfully');
         } catch (error) {
             console.error('Google Auth initialization error:', error);
         }
@@ -73,7 +72,6 @@ function renderGoogleButtons() {
                     shape: 'rectangular'
                 }
             );
-            console.log('✅ Login button rendered');
         } catch (error) {
             console.error('Error rendering login button:', error);
             showFallbackButton(googleLoginBtn, 'Login');
@@ -97,7 +95,6 @@ function renderGoogleButtons() {
                     shape: 'rectangular'
                 }
             );
-            console.log('✅ Signup button rendered');
         } catch (error) {
             console.error('Error rendering signup button:', error);
             showFallbackButton(googleSignupBtn, 'Sign Up');
@@ -120,7 +117,6 @@ function showFallbackButton(container, action) {
 async function handleGoogleCallback(response) {
     // Determine action based on which modal is currently open
     const action = getCurrentGoogleAction();
-    console.log('Google callback received, action:', action);
     
     try {
         const result = await fetch(API_ENDPOINTS.GOOGLE_AUTH, {
@@ -133,10 +129,6 @@ async function handleGoogleCallback(response) {
                 action: action  // Pass 'login' or 'signup' based on modal
             })
         });
-
-        const data = await result.json();
-        console.log('Backend response:', data);
-        console.log('User data from backend:', data.user);
 
         if (data.success) {
             // Store tokens - user can now access dashboard
@@ -199,7 +191,6 @@ async function handleGoogleCallback(response) {
 function setupGoogleButtons() {
     // This is now handled by renderGoogleButtons()
     // Keeping for backwards compatibility
-    console.log('Google buttons setup complete');
 }
 
 // Email/Password Signup
@@ -245,8 +236,6 @@ async function handleSignup(event) {
         showMessage('Passwords do not match', 'error');
         return;
     }
-
-    console.log('Attempting signup for:', email);
     
     // Get submit button and add loading state
     const submitBtn = event.target.querySelector('button[type="submit"]');
@@ -268,14 +257,11 @@ async function handleSignup(event) {
                 confirmPassword
             })
         });
-
-        console.log('Response status:', response.status);
         
         // Parse JSON response regardless of status code
         let data;
         try {
             data = await response.json();
-            console.log('Response data:', data);
         } catch (e) {
             console.error('Failed to parse response:', e);
             showMessage('Server error. Please try again.', 'error');
@@ -587,7 +573,6 @@ function closeAllModals() {
 
 // Initialize auth when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, setting up auth...');
     
     // Setup form handlers
     const loginForm = document.getElementById('loginForm');
