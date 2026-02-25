@@ -173,19 +173,11 @@ class AuthService:
                 # Remove password from response
                 user.pop('password', None)
                 
-                # Check if profile is completed
-                if not user.get('profile_completed', False):
-                    return {
-                        'message': 'Please complete your profile',
-                        'success': True,
-                        'profile_incomplete': True,
-                        'user': user
-                    }
-                
                 return {
                     'message': 'Google authentication successful',
                     'success': True,
-                    'user': user
+                    'user': user,
+                    'needs_profile_completion': not user.get('business_name')  # Flag for frontend
                 }
             else:
                 # User doesn't exist
@@ -197,14 +189,16 @@ class AuthService:
                         'need_signup': True
                     }
                 
-                # Signup action - create new user with incomplete profile
+                # Signup action - create new user and allow immediate login
+                # Google OAuth users don't need password initially
                 user_data = {
                     'name': name,
                     'email': email,
                     'google_id': google_id,
                     'profile_image': profile_image if profile_image else f'https://ui-avatars.com/api/?name={name.replace(" ", "+")}&background=6366f1&color=fff&size=200',
                     'role': 'user',
-                    'profile_completed': False
+                    'profile_completed': True,  # Allow immediate login
+                    'business_name': None  # Can be added later
                 }
                 
                 result = self.db_client.create_user(user_data)
@@ -221,10 +215,10 @@ class AuthService:
                 user.pop('password', None)
                 
                 return {
-                    'message': 'Please complete your profile',
+                    'message': 'Google authentication successful',
                     'success': True,
-                    'profile_incomplete': True,
-                    'user': user
+                    'user': user,
+                    'needs_profile_completion': not user.get('business_name')  # Flag for frontend
                 }
             
         except ValueError as e:
@@ -232,8 +226,8 @@ class AuthService:
         except Exception as e:
             return {'message': f'Google auth error: {str(e)}', 'success': False}
     
-    def complete_profile(self, user_id, business_name, password, profile_image=None):
-        """Complete user profile after Google OAuth"""
+    def complete_profile(self, user_id, business_name, password=None, profile_image=None):
+        """Complete user profile after Google OAuth - password is optional for Google users"""
         try:
             # Get user
             user = self.db_client.get_user_by_id(user_id)
@@ -241,15 +235,16 @@ class AuthService:
             if not user:
                 return {'message': 'User not found', 'success': False}
             
-            # Hash password
-            hashed_password = self.hash_password(password)
-            
             # Prepare update data
             update_data = {
                 'business_name': business_name,
-                'password': hashed_password,
                 'profile_completed': True
             }
+            
+            # Hash password only if provided
+            if password:
+                hashed_password = self.hash_password(password)
+                update_data['password'] = hashed_password
             
             # Update profile image if provided, otherwise keep existing
             if profile_image:

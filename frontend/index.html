@@ -228,7 +228,7 @@
     <div id="googleProfileModal" class="modal">
         <div class="modal-content">
             <h2>Complete Your Profile</h2>
-            <p>Please provide additional information to complete your registration</p>
+            <p>Welcome! Please add your business name to get started. You can also set a password for email login (optional).</p>
             
             <form id="googleProfileForm">
                 <!-- Profile Image Preview -->
@@ -248,19 +248,21 @@
                     <small style="color: #666;">Automatically retrieved from your Google account</small>
                 </div>
                 <div class="form-group">
-                    <label for="googleBusinessName">Business Name</label>
+                    <label for="googleBusinessName">Business Name <span style="color: red;">*</span></label>
                     <input type="text" id="googleBusinessName" required placeholder="Your Company Ltd">
+                    <small style="color: #666;">Required: Your business or company name</small>
                 </div>
                 <div class="form-group">
-                    <label for="googlePassword">Create Password</label>
-                    <input type="password" id="googlePassword" required placeholder="••••••••" minlength="6">
-                    <small style="color: #666;">Create a password for your account (minimum 6 characters)</small>
+                    <label for="googlePassword">Create Password <span style="color: #888;">(Optional)</span></label>
+                    <input type="password" id="googlePassword" placeholder="••••••••" minlength="6">
+                    <small style="color: #666;">Optional: Create a password if you want to login with email too</small>
                 </div>
                 <div class="form-group">
-                    <label for="googleConfirmPassword">Confirm Password</label>
-                    <input type="password" id="googleConfirmPassword" required placeholder="••••••••" minlength="6">
+                    <label for="googleConfirmPassword">Confirm Password <span style="color: #888;">(Optional)</span></label>
+                    <input type="password" id="googleConfirmPassword" placeholder="••••••••" minlength="6">
                 </div>
                 <button type="submit" class="btn btn-primary btn-full">Complete Registration</button>
+                <button type="button" class="btn btn-secondary btn-full" onclick="skipProfileCompletion()" style="margin-top: 10px;">Skip for Now</button>
             </form>
         </div>
     </div>

@@ -70,6 +70,27 @@
             </div>
         </header>
 
+        <!-- Profile Completion Banner -->
+        <div id="profileCompletionBanner" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; margin: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); animation: slideDown 0.5s ease;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-info-circle" style="font-size: 24px;"></i>
+                    <div>
+                        <strong style="font-size: 16px; display: block; margin-bottom: 5px;">Complete Your Profile</strong>
+                        <span style="font-size: 14px; opacity: 0.9;">Add your business details to unlock all features and get personalized insights</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <a href="profile.html" class="btn btn-light" style="padding: 8px 20px; background: white; color: #667eea; border: none; border-radius: 5px; text-decoration: none; font-weight: 500;">
+                        Complete Now
+                    </a>
+                    <button onclick="dismissProfileBanner()" style="background: transparent; border: none; color: white; cursor: pointer; padding: 5px 10px; font-size: 20px;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Dashboard Content -->
         <div class="dashboard-container">
             <!-- Stats Cards -->

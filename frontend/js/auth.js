@@ -126,51 +126,28 @@ async function handleGoogleCallback(response) {
         console.log('Backend response:', data);
 
         if (data.success) {
-            // Check if profile needs completion
-            if (data.profile_incomplete) {
-                // Store user data temporarily
-                sessionStorage.setItem('incomplete_user', JSON.stringify(data.user));
-                
-                // Populate user info in the profile completion form
-                const usernameField = document.getElementById('googleUsername');
-                const emailField = document.getElementById('googleEmail');
-                const profileImageField = document.getElementById('googleProfileImage');
-                
-                if (usernameField && data.user.name) {
-                    usernameField.value = data.user.name;
-                }
-                if (emailField && data.user.email) {
-                    emailField.value = data.user.email;
-                }
-                if (profileImageField && data.user.profile_image) {
-                    profileImageField.src = data.user.profile_image;
-                    profileImageField.style.display = 'block';
-                } else if (profileImageField) {
-                    // Set default avatar if no profile image
-                    profileImageField.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user.name)}&background=6366f1&color=fff&size=200`;
-                    profileImageField.style.display = 'block';
-                }
-                
-                // Close other modals
-                closeAllModals();
-                // Show profile completion modal
-                document.getElementById('googleProfileModal').style.display = 'block';
-                showMessage('Please complete your profile to continue', 'info');
-            } else {
-                // Profile complete, proceed with login
-                localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
-                localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
-                
-                // Cache initial stats if available
-                if (data.stats) {
-                    localStorage.setItem('dataxpert_cached_stats', JSON.stringify(data.stats));
-                }
-                
-                showMessage('Login successful! Redirecting...', 'success');
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 1000);
+            // Store tokens - user can now access dashboard
+            localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
+            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
+            
+            // Cache initial stats if available
+            if (data.stats) {
+                localStorage.setItem('dataxpert_cached_stats', JSON.stringify(data.stats));
             }
+            
+            // Check if profile needs completion (missing business name)
+            if (data.needs_profile_completion) {
+                // Store flag for profile completion banner
+                localStorage.setItem('dataxpert_needs_profile_completion', 'true');
+                showMessage('Welcome! Please complete your profile to get the best experience.', 'info');
+            } else {
+                showMessage('Login successful! Redirecting...', 'success');
+            }
+            
+            // Redirect to dashboard after 1 second
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1000);
         } else {
             // Handle different error scenarios
             if (data.need_signup) {
@@ -295,6 +272,11 @@ async function handleSignup(event) {
             // Cache initial stats to avoid extra API call
             if (data.stats) {
                 localStorage.setItem('dataxpert_cached_stats', JSON.stringify(data.stats));
+            }
+            
+            // Check if business name is missing - suggest completing profile
+            if (!data.user.business_name) {
+                localStorage.setItem('dataxpert_needs_profile_completion', 'true');
             }
             
             showMessage('Account created successfully! ✓ Redirecting...', 'success');
@@ -482,19 +464,32 @@ function showMessage(message, type = 'info') {
 async function handleGoogleProfileCompletion(event) {
     event.preventDefault();
     
-    const businessName = document.getElementById('googleBusinessName').value;
+    const businessName = document.getElementById('googleBusinessName').value.trim();
     const password = document.getElementById('googlePassword').value;
     const confirmPassword = document.getElementById('googleConfirmPassword').value;
     
-    if (password !== confirmPassword) {
-        showMessage('Passwords do not match', 'error');
+    // Business name is required
+    if (!businessName) {
+        showMessage('Business name is required', 'error');
         return;
+    }
+    
+    // Validate passwords only if provided
+    if (password || confirmPassword) {
+        if (password !== confirmPassword) {
+            showMessage('Passwords do not match', 'error');
+            return;
+        }
+        if (password.length < 6) {
+            showMessage('Password must be at least 6 characters', 'error');
+            return;
+        }
     }
     
     // Get user data from session storage
     const incompleteUserData = sessionStorage.getItem('incomplete_user');
     if (!incompleteUserData) {
-        showMessage('Session expired. Please try again.', 'error');
+        showMessage('Session expired. Please login again.', 'error');
         document.getElementById('googleProfileModal').style.display = 'none';
         return;
     }
@@ -510,8 +505,8 @@ async function handleGoogleProfileCompletion(event) {
             body: JSON.stringify({
                 userId: user.id,
                 businessName,
-                password,
-                confirmPassword
+                password: password || null,  // Send null if empty
+                confirmPassword: confirmPassword || null
             })
         });
         
@@ -525,6 +520,14 @@ async function handleGoogleProfileCompletion(event) {
             localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
             localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
             
+            // Cache stats
+            if (data.stats) {
+                localStorage.setItem('dataxpert_cached_stats', JSON.stringify(data.stats));
+            }
+            
+            // Remove profile completion flag
+            localStorage.removeItem('dataxpert_needs_profile_completion');
+            
             showMessage('Profile completed! Redirecting...', 'success');
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
@@ -536,6 +539,23 @@ async function handleGoogleProfileCompletion(event) {
         console.error('Profile completion error:', error);
         showMessage('Error completing profile. Please try again.', 'error');
     }
+}
+
+// Skip profile completion (temporary - can be completed later from profile page)
+function skipProfileCompletion() {
+    const incompleteUserData = sessionStorage.getItem('incomplete_user');
+    if (!incompleteUserData) {
+        showMessage('Session expired. Please login again.', 'error');
+        document.getElementById('googleProfileModal').style.display = 'none';
+        return;
+    }
+    
+    // User already has token from Google signup, just redirect
+    document.getElementById('googleProfileModal').style.display = 'none';
+    showMessage('You can complete your profile anytime from settings', 'info');
+    setTimeout(() => {
+        window.location.href = 'dashboard.html';
+    }, 1000);
 }
 
 // Close all modals utility

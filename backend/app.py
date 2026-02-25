@@ -200,22 +200,43 @@ def google_auth():
         result = auth_service.google_auth(google_token, action)
         
         if result['success']:
-            # Generate JWT token only if profile is complete
-            if not result.get('profile_incomplete'):
-                token = jwt.encode({
-                    'user_id': result['user']['id'],
-                    'exp': datetime.utcnow() + timedelta(days=7)
-                }, app.config['JWT_SECRET_KEY'], algorithm="HS256")
+            # Generate JWT token - user can login immediately even without business name
+            token = jwt.encode({
+                'user_id': result['user']['id'],
+                'exp': datetime.utcnow() + timedelta(days=7)
+            }, app.config['JWT_SECRET_KEY'], algorithm="HS256")
+            
+            # Get initial dashboard stats
+            try:
+                business_data = db_client.get_user_business_data(result['user']['id'])
+                total_sales = sum(item.get('sales', 0) for item in business_data)
+                total_profit = sum(item.get('profit', 0) for item in business_data)
+                total_expenses = sum(item.get('expenses', 0) for item in business_data)
                 
-                return jsonify({
-                    'message': 'Google authentication successful',
-                    'success': True,
-                    'token': token,
-                    'user': result['user']
-                }), 200
-            else:
-                # Profile incomplete - no token yet
-                return jsonify(result), 200
+                stats = {
+                    'total_sales': total_sales,
+                    'total_profit': total_profit,
+                    'total_expenses': total_expenses,
+                    'data_count': len(business_data),
+                    'recent_data': business_data[:5] if business_data else []
+                }
+            except:
+                stats = {
+                    'total_sales': 0,
+                    'total_profit': 0,
+                    'total_expenses': 0,
+                    'data_count': 0,
+                    'recent_data': []
+                }
+            
+            return jsonify({
+                'message': 'Google authentication successful',
+                'success': True,
+                'token': token,
+                'user': result['user'],
+                'stats': stats,
+                'needs_profile_completion': result.get('needs_profile_completion', False)
+            }), 200
         else:
             return jsonify(result), 401
             
@@ -233,20 +254,70 @@ def verify_token(current_user):
 
 @app.route('/api/auth/complete-profile', methods=['POST'])
 def complete_profile():
-    """Complete Google OAuth user profile"""
+    """Complete Google OAuth user profile - password is optional"""
     try:
         data = request.get_json()
         user_id = data.get('userId')
         business_name = data.get('businessName')
-        password = data.get('password')
-        confirm_password = data.get('confirmPassword')
+        password = data.get('password')  # Optional
+        confirm_password = data.get('confirmPassword')  # Optional
         profile_image = data.get('profileImage')  # Optional
         
-        if not all([user_id, business_name, password, confirm_password]):
-            return jsonify({'message': 'All fields are required', 'success': False}), 400
+        if not user_id or not business_name:
+            return jsonify({'message': 'User ID and Business Name are required', 'success': False}), 400
         
-        if password != confirm_password:
-            return jsonify({'message': 'Passwords do not match', 'success': False}), 400
+        # Only validate password if provided
+        if password or confirm_password:
+            if password != confirm_password:
+                return jsonify({'message': 'Passwords do not match', 'success': False}), 400
+            
+            if len(password) < 6:
+                return jsonify({'message': 'Password must be at least 6 characters', 'success': False}), 400
+        
+        result = auth_service.complete_profile(user_id, business_name, password, profile_image)
+        
+        if result['success']:
+            # Generate JWT token
+            token = jwt.encode({
+                'user_id': result['user']['id'],
+                'exp': datetime.utcnow() + timedelta(days=7)
+            }, app.config['JWT_SECRET_KEY'], algorithm="HS256")
+            
+            # Get initial dashboard stats
+            try:
+                business_data = db_client.get_user_business_data(result['user']['id'])
+                total_sales = sum(item.get('sales', 0) for item in business_data)
+                total_profit = sum(item.get('profit', 0) for item in business_data)
+                total_expenses = sum(item.get('expenses', 0) for item in business_data)
+                
+                stats = {
+                    'total_sales': total_sales,
+                    'total_profit': total_profit,
+                    'total_expenses': total_expenses,
+                    'data_count': len(business_data),
+                    'recent_data': business_data[:5] if business_data else []
+                }
+            except:
+                stats = {
+                    'total_sales': 0,
+                    'total_profit': 0,
+                    'total_expenses': 0,
+                    'data_count': 0,
+                    'recent_data': []
+                }
+            
+            return jsonify({
+                'message': 'Profile completed successfully',
+                'success': True,
+                'token': token,
+                'user': result['user'],
+                'stats': stats
+            }), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        return jsonify({'message': f'Profile completion error: {str(e)}', 'success': False}), 500
         
         if len(password) < 6:
             return jsonify({'message': 'Password must be at least 6 characters long', 'success': False}), 400

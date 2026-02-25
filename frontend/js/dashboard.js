@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     loadUserInfo();
+    checkProfileCompletion();  // Check if profile needs completion
     loadDashboardData();
     setupEventListeners();
     setupExcelUploadHandlers();
@@ -41,6 +42,35 @@ function loadUserInfo() {
             avatarImg.style.display = 'block';
             if (avatarFallback) avatarFallback.style.display = 'none';
         }
+    }
+}
+
+// Check if profile needs completion and show banner
+function checkProfileCompletion() {
+    const needsCompletion = localStorage.getItem('dataxpert_needs_profile_completion');
+    const bannerDismissed = localStorage.getItem('dataxpert_profile_banner_dismissed');
+    const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+    
+    if (userStr) {
+        const user = JSON.parse(userStr);
+        const banner = document.getElementById('profileCompletionBanner');
+        
+        // Show banner if:
+        // 1. Flag is set OR user doesn't have business name
+        // 2. Banner hasn't been dismissed
+        if (banner && !bannerDismissed && (needsCompletion || !user.business_name)) {
+            banner.style.display = 'block';
+        }
+    }
+}
+
+// Dismiss profile completion banner
+function dismissProfileBanner() {
+    const banner = document.getElementById('profileCompletionBanner');
+    if (banner) {
+        banner.style.display = 'none';
+        // Remember dismissal for this session
+        localStorage.setItem('dataxpert_profile_banner_dismissed', 'true');
     }
 }
 
