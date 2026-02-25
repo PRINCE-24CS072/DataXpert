@@ -161,6 +161,11 @@ async function handleGoogleCallback(response) {
                 localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
                 localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
                 
+                // Cache initial stats if available
+                if (data.stats) {
+                    localStorage.setItem('dataxpert_cached_stats', JSON.stringify(data.stats));
+                }
+                
                 showMessage('Login successful! Redirecting...', 'success');
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
@@ -250,6 +255,11 @@ async function handleSignup(event) {
             localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
             localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
             
+            // Cache initial stats to avoid extra API call
+            if (data.stats) {
+                localStorage.setItem('dataxpert_cached_stats', JSON.stringify(data.stats));
+            }
+            
             showMessage('Account created successfully!', 'success');
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
@@ -294,6 +304,11 @@ async function handleLogin(event) {
         if (data.success) {
             localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
             localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
+            
+            // Cache initial stats to avoid extra API call
+            if (data.stats) {
+                localStorage.setItem('dataxpert_cached_stats', JSON.stringify(data.stats));
+            }
             
             showMessage('Login successful!', 'success');
             setTimeout(() => {

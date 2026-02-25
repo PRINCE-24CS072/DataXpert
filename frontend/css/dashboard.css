@@ -106,13 +106,14 @@
 
 .user-info {
     display: flex;
+    flex-direction: row-reverse;
     align-items: center;
-    gap: 12px;
+    gap: 15px;
 }
 
 .user-avatar {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     background: var(--gradient-primary);
     border-radius: 50%;
     display: flex;
@@ -120,6 +121,9 @@
     justify-content: center;
     color: white;
     overflow: hidden;
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    flex-shrink: 0;
 }
 
 .user-avatar img {
@@ -130,7 +134,7 @@
 }
 
 .user-avatar i {
-    font-size: 1rem;
+    font-size: 1.1rem;
 }
 
 /* Dashboard Container */

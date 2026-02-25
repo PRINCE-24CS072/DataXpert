@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - DataXpert</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dashboard-page">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <span>DataXpert</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="analysis.html" class="nav-item">
+                <i class="fas fa-robot"></i>
+                <span>AI Analysis</span>
+            </a>
+            <a href="history.html" class="nav-item">
+                <i class="fas fa-history"></i>
+                <span>History</span>
+            </a>
+            <a href="profile.html" class="nav-item active">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <a href="docs/index.html" class="nav-item">
+                <i class="fas fa-book"></i>
+                <span>Documentation</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn btn-secondary btn-full" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>My Profile</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <div class="user-avatar">
+                        <img id="userAvatar" src="" alt="Profile" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                        <i class="fas fa-user" id="avatarFallback"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Profile Content -->
+        <div class="dashboard-container">
+            <!-- Profile Header Card -->
+            <div class="profile-header-card">
+                <div class="profile-header-content">
+                    <div class="profile-name-section">
+                        <h2 id="profileDisplayName">Loading...</h2>
+                        <p id="profileDisplayEmail">email@example.com</p>
+                        <p class="profile-business-name" id="profileDisplayBusiness">Business Name</p>
+                    </div>
+                    <div class="profile-photo-section">
+                        <div class="profile-photo-wrapper">
+                            <img id="profilePhoto" src="" alt="Profile Photo" class="profile-photo">
+                            <div class="profile-photo-overlay">
+                                <button class="btn-photo-change" onclick="document.getElementById('profileImageInput').click()">
+                                    <i class="fas fa-camera"></i>
+                                    <span>Change Photo</span>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="file" id="profileImageInput" accept="image/*" style="display:none;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Details Card -->
+            <div class="profile-cards-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-user-edit"></i> Profile Information</h3>
+                    </div>
+                    <div class="profile-form-container">
+                        <form id="updateProfileForm">
+                            <div class="form-group">
+                                <label for="profileName">Full Name</label>
+                                <input type="text" id="profileName" required placeholder="Your Name">
+                            </div>
+                            <div class="form-group">
+                                <label for="profileEmail">Email Address</label>
+                                <input type="email" id="profileEmail" readonly style="background-color: #f7fafc; cursor: not-allowed;">
+                                <small class="form-hint">Email cannot be changed</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="profileBusinessName">Business Name</label>
+                                <input type="text" id="profileBusinessName" placeholder="Your Business">
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Change Password Card -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-lock"></i> Change Password</h3>
+                    </div>
+                    <div class="profile-form-container">
+                        <form id="changePasswordForm">
+                            <div class="form-group">
+                                <label for="currentPassword">Current Password</label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="currentPassword" required>
+                                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('currentPassword')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="newPassword">New Password</label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="newPassword" required minlength="6">
+                                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('newPassword')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <small class="form-hint">At least 6 characters</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmNewPassword">Confirm New Password</label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="confirmNewPassword" required minlength="6">
+                                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmNewPassword')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-secondary">
+                                <i class="fas fa-key"></i> Update Password
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Message Toast -->
+    <div id="messageToast" class="message-toast"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        let currentUser = null;
+
+        // Check authentication
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!isAuthenticated()) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const verified = await verifyAuth();
+            if (!verified) {
+                return;
+            }
+
+            loadUserInfo();
+            loadProfile();
+            setupEventListeners();
+        });
+
+        // Load user information
+        function loadUserInfo() {
+            const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                document.getElementById('userName').textContent = user.name || 'User';
+                
+                const avatarImg = document.getElementById('userAvatar');
+                const avatarFallback = document.getElementById('avatarFallback');
+                if (avatarImg) {
+                    const profileUrl = user.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=6366f1&color=fff&size=200`;
+                    avatarImg.src = profileUrl;
+                    avatarImg.style.display = 'block';
+                    if (avatarFallback) avatarFallback.style.display = 'none';
+                }
+            }
+        }
+
+        // Load profile
+        async function loadProfile() {
+            try {
+                const response = await fetch(API_ENDPOINTS.USER_PROFILE, {
+                    headers: getAuthHeaders()
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.user) {
+                    currentUser = data.user;
+                    populateProfile(data.user);
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                showMessage('Error loading profile', 'error');
+            }
+        }
+
+        // Populate profile
+        function populateProfile(user) {
+            // Header
+            document.getElementById('profileDisplayName').textContent = user.name || 'User';
+            document.getElementById('profileDisplayEmail').textContent = user.email || '';
+            document.getElementById('profileDisplayBusiness').textContent = user.business_name || 'No business name set';
+            
+            // Photo
+            const profilePhoto = document.getElementById('profilePhoto');
+            const photoUrl = user.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=6366f1&color=fff&size=400`;
+            profilePhoto.src = photoUrl;
+
+            // Form fields
+            document.getElementById('profileName').value = user.name || '';
+            document.getElementById('profileEmail').value = user.email || '';
+            document.getElementById('profileBusinessName').value = user.business_name || '';
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Profile form
+            document.getElementById('updateProfileForm').addEventListener('submit', handleUpdateProfile);
+
+            // Password form
+            document.getElementById('changePasswordForm').addEventListener('submit', handleChangePassword);
+
+            // Profile image upload
+            document.getElementById('profileImageInput').addEventListener('change', handleProfileImageUpload);
+
+            // Menu toggle
+            document.getElementById('menuToggle').addEventListener('click', () => {
+                document.querySelector('.sidebar').classList.toggle('collapsed');
+            });
+        }
+
+        // Handle update profile
+        async function handleUpdateProfile(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('profileName').value;
+            const businessName = document.getElementById('profileBusinessName').value;
+
+            try {
+                const response = await fetch(API_ENDPOINTS.USER_PROFILE, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({
+                        name: name,
+                        business_name: businessName
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Update local storage
+                    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
+                    currentUser = data.user;
+                    populateProfile(data.user);
+                    loadUserInfo(); // Update topbar
+                    showMessage('Profile updated successfully!', 'success');
+                } else {
+                    showMessage(data.message || 'Failed to update profile', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                showMessage('Error updating profile', 'error');
+            }
+        }
+
+        // Handle change password
+        async function handleChangePassword(event) {
+            event.preventDefault();
+
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+            if (newPassword !== confirmNewPassword) {
+                showMessage('New passwords do not match', 'error');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showMessage('Password must be at least 6 characters', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_ENDPOINTS.BASE}/api/user/change-password`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('changePasswordForm').reset();
+                    showMessage('Password changed successfully!', 'success');
+                } else {
+                    showMessage(data.message || 'Failed to change password', 'error');
+                }
+            } catch (error) {
+                console.error('Error changing password:', error);
+                showMessage('Error changing password', 'error');
+            }
+        }
+
+        // Handle profile image upload
+        async function handleProfileImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showMessage('Please select an image file', 'error');
+                return;
+            }
+
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                showMessage('Image size must be less than 5MB', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('profile_image', file);
+
+            try {
+                showMessage('Uploading image...', 'info');
+
+                const response = await fetch(API_ENDPOINTS.UPLOAD_PROFILE_IMAGE, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem(STORAGE_KEYS.TOKEN)}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Update profile image
+                    document.getElementById('profilePhoto').src = data.profile_image;
+                    
+                    // Update user in localStorage
+                    const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+                    if (userStr) {
+                        const user = JSON.parse(userStr);
+                        user.profile_image = data.profile_image;
+                        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+                        loadUserInfo(); // Update topbar
+                    }
+
+                    showMessage('Profile photo updated successfully!', 'success');
+                } else {
+                    showMessage(data.message || 'Failed to upload image', 'error');
+                }
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                showMessage('Error uploading image', 'error');
+            }
+        }
+
+        // Toggle password visibility
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            const button = input.parentElement.querySelector('.toggle-password i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.classList.remove('fa-eye');
+                button.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                button.classList.remove('fa-eye-slash');
+                button.classList.add('fa-eye');
+            }
+        }
+
+        // Show message
+        function showMessage(message, type = 'info') {
+            const toast = document.getElementById('messageToast');
+            toast.textContent = message;
+            toast.className = `message-toast ${type} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+
+    <style>
+        .profile-header-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            color: white;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .profile-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .profile-name-section {
+            flex: 1;
+        }
+
+        .profile-name-section h2 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .profile-name-section p {
+            margin: 5px 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .profile-business-name {
+            font-weight: 500;
+            margin-top: 10px !important;
+        }
+
+        .profile-photo-section {
+            flex-shrink: 0;
+        }
+
+        .profile-photo-wrapper {
+            position: relative;
+            width: 150px;
+            height: 150px;
+        }
+
+        .profile-photo {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid rgba(255,255,255,0.3);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .profile-photo-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .profile-photo-wrapper:hover .profile-photo-overlay {
+            opacity: 1;
+        }
+
+        .btn-photo-change {
+            background: none;
+            border: 2px solid white;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-photo-change:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .profile-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 30px;
+        }
+
+        .profile-form-container {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-hint {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .password-input-wrapper {
+            position: relative;
+        }
+
+        .password-input-wrapper input {
+            padding-right: 45px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #718096;
+            cursor: pointer;
+            padding: 5px 10px;
+            font-size: 16px;
+        }
+
+        .toggle-password:hover {
+            color: #667eea;
+        }
+
+        .message-toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 10000;
+        }
+
+        .message-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .message-toast.success {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .message-toast.error {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .message-toast.info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        @media (max-width: 768px) {
+            .profile-header-content {
+                flex-direction: column-reverse;
+                text-align: center;
+            }
+
+            .profile-cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>

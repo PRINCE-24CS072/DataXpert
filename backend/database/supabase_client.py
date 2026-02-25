@@ -92,61 +92,6 @@ class SupabaseClient:
             print(f'Error updating profile: {str(e)}')
             return None
     
-    # ==================== TEAM OPERATIONS ====================
-    
-    def create_team(self, team_name, owner_id):
-        """Create a new team"""
-        try:
-            team_data = {
-                'team_name': team_name,
-                'owner_id': owner_id,
-                'created_at': datetime.utcnow().isoformat()
-            }
-            
-            response = self.supabase.table('teams').insert(team_data).execute()
-            
-            if response.data:
-                team = response.data[0]
-                # Add owner as team member
-                self.add_team_member(team['id'], owner_id, 'owner')
-                return {'success': True, 'team': team}
-            return {'success': False, 'message': 'Failed to create team'}
-        except Exception as e:
-            return {'success': False, 'message': f'Error creating team: {str(e)}'}
-    
-    def get_user_teams(self, user_id):
-        """Get all teams for a user"""
-        try:
-            # Get teams where user is a member
-            response = self.supabase.table('team_members')\
-                .select('*, teams(*)')\
-                .eq('user_id', user_id)\
-                .execute()
-            
-            teams = [item['teams'] for item in response.data if item.get('teams')]
-            return teams
-        except Exception as e:
-            print(f"Error getting teams: {e}")
-            return []
-    
-    def add_team_member(self, team_id, user_id, role='member'):
-        """Add a member to a team"""
-        try:
-            member_data = {
-                'team_id': team_id,
-                'user_id': user_id,
-                'role': role,
-                'joined_at': datetime.utcnow().isoformat()
-            }
-            
-            response = self.supabase.table('team_members').insert(member_data).execute()
-            
-            if response.data:
-                return {'success': True, 'member': response.data[0]}
-            return {'success': False, 'message': 'Failed to add member'}
-        except Exception as e:
-            return {'success': False, 'message': f'Error adding member: {str(e)}'}
-    
     # ==================== BUSINESS DATA OPERATIONS ====================
     
     def add_business_data(self, data):

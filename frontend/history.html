@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity History - DataXpert</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dashboard-page">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <span>DataXpert</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="analysis.html" class="nav-item">
+                <i class="fas fa-robot"></i>
+                <span>AI Analysis</span>
+            </a>
+            <a href="history.html" class="nav-item active">
+                <i class="fas fa-history"></i>
+                <span>History</span>
+            </a>
+            <a href="profile.html" class="nav-item">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <a href="docs/index.html" class="nav-item">
+                <i class="fas fa-book"></i>
+                <span>Documentation</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn btn-secondary btn-full" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>Activity History</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <div class="user-avatar">
+                        <img id="userAvatar" src="" alt="Profile" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                        <i class="fas fa-user" id="avatarFallback"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- History Content -->
+        <div class="dashboard-container">
+            <div class="chart-card" style="max-width: 100%;">
+                <div class="chart-header">
+                    <h3><i class="fas fa-history"></i> Your Activity</h3>
+                    <div class="history-filters">
+                        <button class="filter-btn active" data-filter="all">All Activity</button>
+                        <button class="filter-btn" data-filter="uploads">Uploads</button>
+                        <button class="filter-btn" data-filter="analysis">Analysis</button>
+                        <button class="filter-btn" data-filter="backups">Backups</button>
+                    </div>
+                </div>
+                
+                <div class="history-timeline" id="historyTimeline">
+                    <div class="loading-placeholder">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading your activity history...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Check authentication
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!isAuthenticated()) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const verified = await verifyAuth();
+            if (!verified) {
+                return;
+            }
+
+            loadUserInfo();
+            loadHistory('all');
+            setupFilters();
+        });
+
+        // Load user information
+        function loadUserInfo() {
+            const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                document.getElementById('userName').textContent = user.name || 'User';
+                
+                const avatarImg = document.getElementById('userAvatar');
+                const avatarFallback = document.getElementById('avatarFallback');
+                if (avatarImg) {
+                    const profileUrl = user.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=6366f1&color=fff&size=200`;
+                    avatarImg.src = profileUrl;
+                    avatarImg.style.display = 'block';
+                    if (avatarFallback) avatarFallback.style.display = 'none';
+                }
+            }
+        }
+
+        // Setup filter buttons
+        function setupFilters() {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    loadHistory(btn.dataset.filter);
+                });
+            });
+        }
+
+        // Load history
+        async function loadHistory(filter = 'all') {
+            const timeline = document.getElementById('historyTimeline');
+            timeline.innerHTML = '<div class="loading-placeholder"><i class="fas fa-spinner fa-spin"></i><p>Loading activity...</p></div>';
+
+            try {
+                const response = await fetch(`${API_ENDPOINTS.BASE}/api/activity/history?filter=${filter}`, {
+                    headers: getAuthHeaders()
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.activities && data.activities.length > 0) {
+                    renderHistory(data.activities, filter);
+                } else {
+                    timeline.innerHTML = '<div class="no-data"><i class="fas fa-history"></i><p>No activity history yet</p></div>';
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+                timeline.innerHTML = '<div class="no-data"><i class="fas fa-exclamation-triangle"></i><p>Error loading history</p></div>';
+            }
+        }
+
+        // Render history
+        function renderHistory(activities, filter) {
+            const timeline = document.getElementById('historyTimeline');
+            
+            const filteredActivities = filter === 'all' 
+                ? activities 
+                : activities.filter(a => a.type === filter);
+
+            if (filteredActivities.length === 0) {
+                timeline.innerHTML = '<div class="no-data"><i class="fas fa-history"></i><p>No activities found for this filter</p></div>';
+                return;
+            }
+
+            timeline.innerHTML = filteredActivities.map(activity => {
+                const icon = getActivityIcon(activity.type);
+                const color = getActivityColor(activity.type);
+                return `
+                    <div class="history-item">
+                        <div class="history-icon" style="background: ${color};">
+                            <i class="${icon}"></i>
+                        </div>
+                        <div class="history-content">
+                            <h4>${activity.title}</h4>
+                            <p>${activity.description}</p>
+                            <span class="history-date">${formatDate(activity.created_at)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Get activity icon
+        function getActivityIcon(type) {
+            const icons = {
+                'uploads': 'fas fa-file-upload',
+                'analysis': 'fas fa-chart-line',
+                'backups': 'fas fa-archive',
+                'data_added': 'fas fa-plus-circle',
+                'data_deleted': 'fas fa-trash',
+                'profile_updated': 'fas fa-user-edit'
+            };
+            return icons[type] || 'fas fa-circle';
+        }
+
+        // Get activity color
+        function getActivityColor(type) {
+            const colors = {
+                'uploads': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'analysis': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                'backups': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                'data_added': 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                'data_deleted': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                'profile_updated': 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)'
+            };
+            return colors[type] || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            
+            if (days === 0) {
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                if (hours === 0) {
+                    const minutes = Math.floor(diff / (1000 * 60));
+                    return minutes === 0 ? 'Just now' : `${minutes} min${minutes > 1 ? 's' : ''} ago`;
+                }
+                return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+            } else if (days === 1) {
+                return 'Yesterday';
+            } else if (days < 7) {
+                return `${days} days ago`;
+            } else {
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            }
+        }
+
+        // Menu toggle
+        document.getElementById('menuToggle').addEventListener('click', () => {
+            document.querySelector('.sidebar').classList.toggle('collapsed');
+        });
+    </script>
+
+    <style>
+        .history-filters {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .filter-btn:hover {
+            border-color: #667eea;
+        }
+
+        .history-timeline {
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            gap: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .history-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .history-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .history-content {
+            flex: 1;
+        }
+
+        .history-content h4 {
+            margin: 0 0 8px 0;
+            color: #2d3748;
+            font-size: 16px;
+        }
+
+        .history-content p {
+            margin: 0 0 8px 0;
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .history-date {
+            font-size: 12px;
+            color: #a0aec0;
+        }
+
+        .loading-placeholder {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .loading-placeholder i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .no-data i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #cbd5e0;
+        }
+    </style>
+</body>
+</html>

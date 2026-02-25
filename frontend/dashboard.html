@@ -31,11 +31,7 @@
                 <i class="fas fa-history"></i>
                 <span>History</span>
             </a>
-            <a href="#" class="nav-item" id="teamsSidebarBtn">
-                <i class="fas fa-users"></i>
-                <span>Teams</span>
-            </a>
-            <a href="#" class="nav-item" id="profileSidebarBtn">
+            <a href="profile.html" class="nav-item">
                 <i class="fas fa-user"></i>
                 <span>Profile</span>
             </a>
@@ -166,19 +162,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Teams Section -->
-            <div class="teams-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-users"></i> Your Teams</h2>
-                    <button class="btn btn-primary" id="createTeamBtn">
-                        <i class="fas fa-plus"></i> Create Team
-                    </button>
-                </div>
-                <div class="teams-grid" id="teamsGrid">
-                    <p class="no-data">No teams yet. Create your first team!</p>
-                </div>
-            </div>
         </div>
     </main>
 
@@ -223,94 +206,6 @@
                 </div>
                 <button type="submit" class="btn btn-primary btn-full">Add Data</button>
             </form>
-        </div>
-    </div>
-
-    <!-- Create Team Modal -->
-    <div id="createTeamModal" class="modal">
-        <div class="modal-content">
-            <span class="close" data-modal="createTeamModal">&times;</span>
-            <h2>Create New Team</h2>
-            <p>Create a team to collaborate with your colleagues</p>
-            
-            <form id="createTeamForm">
-                <div class="form-group">
-                    <label for="teamName">Team Name</label>
-                    <input type="text" id="teamName" required placeholder="Enter team name">
-                </div>
-                <button type="submit" class="btn btn-primary btn-full">Create Team</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Profile Modal -->
-    <div id="profileModal" class="modal">
-        <div class="modal-content">
-            <span class="close" data-modal="profileModal">&times;</span>
-            <h2>My Profile</h2>
-            
-            <div class="profile-section">
-                <div class="profile-image-container">
-                    <img id="profileImagePreview" src="" alt="Profile" class="profile-image-large">
-                    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('profileImageInput').click()">
-                        <i class="fas fa-camera"></i> Change Photo
-                    </button>
-                    <input type="file" id="profileImageInput" accept="image/*" style="display:none;">
-                </div>
-                
-                <form id="updateProfileForm">
-                    <div class="form-group">
-                        <label for="profileName">Name</label>
-                        <input type="text" id="profileName" required placeholder="Your Name">
-                    </div>
-                    <div class="form-group">
-                        <label for="profileEmail">Email</label>
-                        <input type="email" id="profileEmail" readonly style="background-color: #f0f0f0;">
-                    </div>
-                    <div class="form-group">
-                        <label for="profileBusinessName">Business Name</label>
-                        <input type="text" id="profileBusinessName" placeholder="Your Business">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full">Update Profile</button>
-                </form>
-                
-                <hr style="margin: 20px 0;">
-                
-                <h3>Change Password</h3>
-                <form id="changePasswordForm">
-                    <div class="form-group">
-                        <label for="currentPassword">Current Password</label>
-                        <input type="password" id="currentPassword" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="newPassword">New Password</label>
-                        <input type="password" id="newPassword" required minlength="6">
-                    </div>
-                    <div class="form-group">
-                        <label for="confirmNewPassword">Confirm New Password</label>
-                        <input type="password" id="confirmNewPassword" required minlength="6">
-                    </div>
-                    <button type="submit" class="btn btn-secondary btn-full">Change Password</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Teams Management Modal -->
-    <div id="teamsModal" class="modal">
-        <div class="modal-content" style="max-width: 800px;">
-            <span class="close" data-modal="teamsModal">&times;</span>
-            <h2>My Teams</h2>
-            
-            <div class="teams-header">
-                <button class="btn btn-primary" onclick="openModal('createTeamModal')">
-                    <i class="fas fa-plus"></i> Create New Team
-                </button>
-            </div>
-            
-            <div id="teamsListContainer" class="teams-list">
-                <p class="loading-text">Loading teams...</p>
-            </div>
         </div>
     </div>
 
@@ -494,25 +389,6 @@
                 <button class="btn btn-danger" onclick="confirmClearData()">
                     <i class="fas fa-trash"></i> Clear Data
                 </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- History Modal -->
-    <div id="historyModal" class="modal">
-        <div class="modal-content modal-large">
-            <span class="close" data-modal="historyModal">&times;</span>
-            <h2><i class="fas fa-history"></i> Activity History</h2>
-            
-            <div class="history-tabs">
-                <button class="tab-btn active" onclick="showHistoryTab('all')">All Activity</button>
-                <button class="tab-btn" onclick="showHistoryTab('uploads')">Uploads</button>
-                <button class="tab-btn" onclick="showHistoryTab('analysis')">Analysis</button>
-                <button class="tab-btn" onclick="showHistoryTab('backups')">Backups</button>
-            </div>
-            
-            <div class="history-content" id="historyContent">
-                <p class="loading-text">Loading history...</p>
             </div>
         </div>
     </div>

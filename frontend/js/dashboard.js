@@ -21,10 +21,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadUserInfo();
     loadDashboardData();
     setupEventListeners();
-    setupProfileHandlers();
-    setupTeamsHandlers();
     setupExcelUploadHandlers();
-    setupHistoryHandlers();
+    setupHistoryLink();
 });
 
 // Load user information
@@ -49,7 +47,16 @@ function loadUserInfo() {
 // Load dashboard data
 async function loadDashboardData() {
     try {
-        // Load stats
+        // Check for cached stats from login
+        const cachedStats = localStorage.getItem('dataxpert_cached_stats');
+        if (cachedStats) {
+            const stats = JSON.parse(cachedStats);
+            updateStats(stats);
+            updateRecentData(stats.recent_data);
+            localStorage.removeItem('dataxpert_cached_stats'); // Clear cache after use
+        }
+
+        // Load stats (will update with fresh data)
         const statsResponse = await fetch(API_ENDPOINTS.DASHBOARD_STATS, {
             headers: getAuthHeaders()
         });
@@ -60,7 +67,7 @@ async function loadDashboardData() {
             updateRecentData(statsData.stats.recent_data);
         }
 
-        // Load charts
+        // Load charts in parallel
         const chartsResponse = await fetch(API_ENDPOINTS.DASHBOARD_CHARTS, {
             headers: getAuthHeaders()
         });
@@ -69,9 +76,6 @@ async function loadDashboardData() {
         if (chartsData.success) {
             renderCharts(chartsData.charts);
         }
-
-        // Load teams
-        await loadTeams();
 
     } catch (error) {
         console.error('Error loading dashboard:', error);
@@ -175,54 +179,12 @@ function renderCharts(chartsData) {
     }
 }
 
-// Load teams
-async function loadTeams() {
-    try {
-        const response = await fetch(API_ENDPOINTS.TEAMS, {
-            headers: getAuthHeaders()
-        });
-        const data = await response.json();
-
-        if (data.success) {
-            renderTeams(data.teams);
-        }
-    } catch (error) {
-        console.error('Error loading teams:', error);
-    }
-}
-
-// Render teams
-function renderTeams(teams) {
-    const container = document.getElementById('teamsGrid');
-    
-    if (!teams || teams.length === 0) {
-        container.innerHTML = '<p class="no-data">No teams yet. Create your first team!</p>';
-        return;
-    }
-
-    container.innerHTML = teams.map(team => `
-        <div class="team-card">
-            <div class="team-icon">
-                <i class="fas fa-users"></i>
-            </div>
-            <h4>${team.team_name}</h4>
-            <p>Created: ${formatDate(team.created_at)}</p>
-        </div>
-    `).join('');
-}
-
 // Setup event listeners
 function setupEventListeners() {
     // Add data button
     const addDataBtn = document.getElementById('addDataBtn');
     if (addDataBtn) {
         addDataBtn.addEventListener('click', () => openModal('addDataModal'));
-    }
-
-    // Create team button
-    const createTeamBtn = document.getElementById('createTeamBtn');
-    if (createTeamBtn) {
-        createTeamBtn.addEventListener('click', () => openModal('createTeamModal'));
     }
 
     // Add data form
@@ -243,12 +205,6 @@ function setupEventListeners() {
         
         salesInput.addEventListener('input', calculateProfit);
         expensesInput.addEventListener('input', calculateProfit);
-    }
-
-    // Create team form
-    const createTeamForm = document.getElementById('createTeamForm');
-    if (createTeamForm) {
-        createTeamForm.addEventListener('submit', handleCreateTeam);
     }
 
     // Close buttons
@@ -304,35 +260,6 @@ async function handleAddData(event) {
     }
 }
 
-// Handle create team
-async function handleCreateTeam(event) {
-    event.preventDefault();
-    
-    const teamName = document.getElementById('teamName').value;
-
-    try {
-        const response = await fetch(API_ENDPOINTS.TEAMS, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ team_name: teamName })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showMessage('Team created successfully!', 'success');
-            closeModal('createTeamModal');
-            document.getElementById('createTeamForm').reset();
-            loadTeams(); // Reload teams
-        } else {
-            showMessage(result.message || 'Failed to create team', 'error');
-        }
-    } catch (error) {
-        console.error('Error creating team:', error);
-        showMessage('Error creating team', 'error');
-    }
-}
-
 // Utility functions
 function formatNumber(num) {
     return new Intl.NumberFormat('en-US', {
@@ -368,6 +295,18 @@ function closeModal(modalId) {
         setTimeout(() => {
             modal.style.display = 'none';
         }, 300);
+    }
+}
+
+// ==================== HISTORY LINK ====================
+
+function setupHistoryLink() {
+    const historyBtn = document.getElementById('historySidebarBtn');
+    if (historyBtn) {
+        historyBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'history.html';
+        });
     }
 }
 
@@ -544,70 +483,6 @@ async function handleChangePassword(event) {
         console.error('Error changing password:', error);
         showMessage('Error changing password', 'error');
     }
-}
-
-// ==================== TEAMS MANAGEMENT ====================
-
-function setupTeamsHandlers() {
-    // Teams button click
-    const teamsBtn = document.getElementById('teamsSidebarBtn');
-    if (teamsBtn) {
-        teamsBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            loadTeamsModal();
-            openModal('teamsModal');
-        });
-    }
-}
-
-async function loadTeamsModal() {
-    const container = document.getElementById('teamsListContainer');
-    container.innerHTML = '<p class="loading-text">Loading teams...</p>';
-
-    try {
-        const response = await fetch(API_ENDPOINTS.TEAMS, {
-            headers: getAuthHeaders()
-        });
-
-        const result = await response.json();
-
-        if (result.success && result.teams) {
-            if (result.teams.length === 0) {
-                container.innerHTML = '<p class="no-data">No teams yet. Create your first team!</p>';
-            } else {
-                container.innerHTML = result.teams.map(team => `
-                    <div class="team-item">
-                        <div class="team-info">
-                            <h3>${team.team_name}</h3>
-                            <p>Created: ${formatDate(team.created_at)}</p>
-                            <p>Members: ${team.member_count || 0}</p>
-                        </div>
-                        <div class="team-actions">
-                            <button class="btn btn-primary btn-sm" onclick="viewTeamDetails(${team.id})">
-                                <i class="fas fa-eye"></i> View
-                            </button>
-                            ${team.owner_id ? `<button class="btn btn-secondary btn-sm" onclick="manageTeam(${team.id})">
-                                <i class="fas fa-cog"></i> Manage
-                            </button>` : ''}
-                        </div>
-                    </div>
-                `).join('');
-            }
-        } else {
-            container.innerHTML = '<p class="no-data">Error loading teams</p>';
-        }
-    } catch (error) {
-        console.error('Error loading teams:', error);
-        container.innerHTML = '<p class="no-data">Error loading teams</p>';
-    }
-}
-
-async function viewTeamDetails(teamId) {
-    showMessage('Team details feature coming soon!', 'info');
-}
-
-async function manageTeam(teamId) {
-    showMessage('Team management feature coming soon!', 'info');
 }
 
 // ==================== EXCEL/CSV UPLOAD ====================

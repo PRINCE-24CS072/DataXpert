@@ -107,11 +107,21 @@ def signup():
                 'exp': datetime.utcnow() + timedelta(days=7)
             }, app.config['JWT_SECRET_KEY'], algorithm="HS256")
             
+            # Get initial dashboard stats to reduce subsequent API calls
+            stats = {
+                'total_sales': 0,
+                'total_profit': 0,
+                'total_expenses': 0,
+                'data_count': 0,
+                'recent_data': []
+            }
+            
             return jsonify({
                 'message': 'Signup successful',
                 'success': True,
                 'token': token,
-                'user': result['user']
+                'user': result['user'],
+                'stats': stats  # Include stats to avoid extra API call
             }), 201
         else:
             return jsonify(result), 400
@@ -140,11 +150,35 @@ def login():
                 'exp': datetime.utcnow() + timedelta(days=7)
             }, app.config['JWT_SECRET_KEY'], algorithm="HS256")
             
+            # Get initial dashboard stats to reduce subsequent API calls
+            try:
+                business_data = db_client.get_user_business_data(result['user']['id'])
+                total_sales = sum(item.get('sales', 0) for item in business_data)
+                total_profit = sum(item.get('profit', 0) for item in business_data)
+                total_expenses = sum(item.get('expenses', 0) for item in business_data)
+                
+                stats = {
+                    'total_sales': total_sales,
+                    'total_profit': total_profit,
+                    'total_expenses': total_expenses,
+                    'data_count': len(business_data),
+                    'recent_data': business_data[:5] if business_data else []
+                }
+            except:
+                stats = {
+                    'total_sales': 0,
+                    'total_profit': 0,
+                    'total_expenses': 0,
+                    'data_count': 0,
+                    'recent_data': []
+                }
+            
             return jsonify({
                 'message': 'Login successful',
                 'success': True,
                 'token': token,
-                'user': result['user']
+                'user': result['user'],
+                'stats': stats  # Include stats to avoid extra API call
             }), 200
         else:
             return jsonify(result), 401
@@ -362,51 +396,6 @@ def upload_profile_image(current_user):
             
     except Exception as e:
         return jsonify({'message': f'Upload error: {str(e)}', 'success': False}), 500
-
-# ==================== TEAM ROUTES ====================
-
-@app.route('/api/teams', methods=['GET'])
-@token_required
-def get_teams(current_user):
-    """Get all teams for current user"""
-    try:
-        teams = db_client.get_user_teams(current_user['id'])
-        return jsonify({
-            'success': True,
-            'teams': teams
-        }), 200
-    except Exception as e:
-        return jsonify({'message': f'Error fetching teams: {str(e)}', 'success': False}), 500
-
-@app.route('/api/teams', methods=['POST'])
-@token_required
-def create_team(current_user):
-    """Create a new team"""
-    try:
-        data = request.get_json()
-        team_name = data.get('team_name')
-        
-        if not team_name:
-            return jsonify({'message': 'Team name is required', 'success': False}), 400
-        
-        result = db_client.create_team(team_name, current_user['id'])
-        return jsonify(result), 201 if result['success'] else 400
-    except Exception as e:
-        return jsonify({'message': f'Create team error: {str(e)}', 'success': False}), 500
-
-@app.route('/api/teams/<int:team_id>/members', methods=['POST'])
-@token_required
-def add_team_member(current_user, team_id):
-    """Add member to team"""
-    try:
-        data = request.get_json()
-        user_id = data.get('user_id')
-        role = data.get('role', 'member')
-        
-        result = db_client.add_team_member(team_id, user_id, role)
-        return jsonify(result), 200 if result['success'] else 400
-    except Exception as e:
-        return jsonify({'message': f'Add member error: {str(e)}', 'success': False}), 500
 
 # ==================== BUSINESS DATA ROUTES ====================
 
@@ -864,6 +853,43 @@ def generate_custom_chart(current_user):
         
     except Exception as e:
         return jsonify({'message': f'Chart generation error: {str(e)}', 'success': False}), 500
+
+# ==================== ACTIVITY HISTORY ROUTES ====================
+
+@app.route('/api/activity/history', methods=['GET'])
+@token_required
+def get_activity_history(current_user):
+    """Get activity history for user"""
+    try:
+        filter_type = request.args.get('filter', 'all')
+        
+        # Get user's business data activities
+        business_data = db_client.get_user_business_data(current_user['id'])
+        
+        activities = []
+        
+        # Transform business data into activity items
+        for item in business_data[:20]:  # Limit to 20 items
+            activity = {
+                'type': 'uploads',
+                'title': 'Data Entry Added',
+                'description': f'{item.get("category", "General")} - Sales: ${item.get("sales", 0):.2f}, Profit: ${item.get("profit", 0):.2f}',
+                'created_at': item.get('record_date') or item.get('created_at', '')
+            }
+            
+            if filter_type == 'all' or filter_type == 'uploads':
+                activities.append(activity)
+        
+        # Sort by date (newest first)
+        activities.sort(key=lambda x: x['created_at'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'activities': activities
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'message': f'Error fetching history: {str(e)}', 'success': False}), 500
 
 # ==================== AI ANALYSIS ROUTES ====================
 
