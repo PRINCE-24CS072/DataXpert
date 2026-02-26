@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255),
     business_name VARCHAR(255),
     google_id VARCHAR(255) UNIQUE,
+    profile_image TEXT,
     role VARCHAR(50) DEFAULT 'user',
     profile_completed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW()

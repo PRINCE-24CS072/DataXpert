@@ -229,7 +229,7 @@ def google_auth():
                 }
             
             return jsonify({
-                'message': 'Google authentication successful',
+                'message': result.get('message', 'Google authentication successful'),
                 'success': True,
                 'token': token,
                 'user': result['user'],

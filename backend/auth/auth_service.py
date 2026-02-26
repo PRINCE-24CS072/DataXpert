@@ -112,7 +112,16 @@ class AuthService:
             return {'message': f'Login error: {str(e)}', 'success': False}
     
     def google_auth(self, token, action='login'):
-        """Authenticate user with Google OAuth"""
+        """
+        Authenticate user with Google OAuth
+        
+        Flow:
+        - SIGNUP + New User → Create account with Google data + generated password → Redirect to dashboard
+        - SIGNUP + Existing User → Show 'user already exists' error
+        - LOGIN + Existing User → Login successfully → Redirect to dashboard
+        - LOGIN + New User → Show 'signup first' warning
+        - All cases: Flag needs_profile_completion if business_name is missing
+        """
         try:
             # Verify Google token
             idinfo = id_token.verify_oauth2_token(
@@ -124,73 +133,76 @@ class AuthService:
             if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
                 return {'message': 'Invalid token issuer', 'success': False}
             
-            # Extract user info
+            # Extract user info from Google
             google_id = idinfo['sub']
             email = idinfo['email']
             name = idinfo.get('name', email.split('@')[0])
             profile_image = idinfo.get('picture', None)
             
-            # Check if user exists
+            # Check if user exists by email
             user = self.db_client.get_user_by_email(email)
             
-            if not user:
-                # Check if user exists by google_id
-                user = self.db_client.get_user_by_google_id(google_id)
-            
+            # CASE 1: USER EXISTS
             if user:
-                # User exists
-                if action == 'signup' and user.get('google_id'):
-                    # Trying to signup but user with Google already exists
+                if action == 'signup':
+                    # CASE: Existing user trying to signup → Show error
                     return {
-                        'message': 'An account with this email already exists. Please login instead',
+                        'message': 'User already exists with this email. Please login instead',
                         'success': False,
                         'already_exists': True
                     }
                 
-                # Login action OR linking Google to manual account
-                # Update google_id and profile_image if not set
+                # CASE: Existing user login → Success
+                # Update Google ID and profile image if not set
                 updates = {}
                 if not user.get('google_id'):
                     updates['google_id'] = google_id
                     user['google_id'] = google_id
                 
-                # Update profile image with Google profile pic if user doesn't have one
+                # Update profile image with Google profile pic if better quality available
                 if profile_image and (not user.get('profile_image') or 'ui-avatars.com' in user.get('profile_image', '')):
                     updates['profile_image'] = profile_image
                     user['profile_image'] = profile_image
                 
+                # Apply updates if any
                 if updates:
-                    self.db_client.update_user_fields(user['id'], updates)
+                    updated_user = self.db_client.update_user_fields(user['id'], updates)
+                    if updated_user:
+                        user = updated_user
                 
                 # Remove password from response
                 user.pop('password', None)
                 
                 return {
-                    'message': 'Google authentication successful',
+                    'message': 'Login successful! Welcome back',
                     'success': True,
                     'user': user,
-                    'needs_profile_completion': not user.get('business_name')  # Flag for frontend
+                    'needs_profile_completion': not user.get('business_name')
                 }
+            
+            # CASE 2: USER DOES NOT EXIST
             else:
-                # User doesn't exist
                 if action == 'login':
-                    # Trying to login but user doesn't exist
+                    # CASE: New user trying to login → Show signup warning
                     return {
                         'message': 'No account found with this email. Please sign up first',
                         'success': False,
                         'need_signup': True
                     }
                 
-                # Signup action - create new user and allow immediate login
-                # Google OAuth users don't need password initially
+                # CASE: New user signup → Create account
+                # Generate a password from Google ID (user can change later if needed)
+                generated_password = self.hash_password(google_id)
+                
                 user_data = {
                     'name': name,
                     'email': email,
                     'google_id': google_id,
+                    'password': generated_password,  # Generate password from Google ID
                     'profile_image': profile_image if profile_image else f'https://ui-avatars.com/api/?name={name.replace(" ", "+")}&background=6366f1&color=fff&size=200',
                     'role': 'user',
-                    'profile_completed': True,  # Allow immediate login
-                    'business_name': None  # Can be added later
+                    'profile_completed': True,  # Allow immediate access
+                    'business_name': None  # To be completed later
                 }
                 
                 result = self.db_client.create_user(user_data)
@@ -198,7 +210,7 @@ class AuthService:
                 if not result.get('success'):
                     error_msg = result.get('error', 'Unknown database error')
                     return {
-                        'message': f'Failed to create user: {error_msg}',
+                        'message': f'Failed to create account: {error_msg}',
                         'success': False
                     }
                 
@@ -207,10 +219,10 @@ class AuthService:
                 user.pop('password', None)
                 
                 return {
-                    'message': 'Google authentication successful',
+                    'message': 'Account created successfully! Welcome to DataXpert',
                     'success': True,
                     'user': user,
-                    'needs_profile_completion': not user.get('business_name')  # Flag for frontend
+                    'needs_profile_completion': True  # Always true for new Google users
                 }
             
         except ValueError as e:

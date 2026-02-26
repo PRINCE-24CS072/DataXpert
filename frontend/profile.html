@@ -317,6 +317,13 @@
                     currentUser = data.user;
                     populateProfile(data.user);
                     loadUserInfo(); // Update topbar
+                    
+                    // If business name was added, clear profile completion flags
+                    if (businessName) {
+                        localStorage.removeItem('dataxpert_needs_profile_completion');
+                        localStorage.removeItem('dataxpert_profile_banner_dismissed');
+                    }
+                    
                     showMessage('Profile updated successfully! ✓', 'success');
                 } else {
                     showMessage(data.message || 'Failed to update profile', 'error');

@@ -130,8 +130,10 @@ async function handleGoogleCallback(response) {
             })
         });
 
+        const data = await result.json();
+
         if (data.success) {
-            // Store tokens - user can now access dashboard
+            // Store authentication tokens
             localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
             localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
             
@@ -147,13 +149,18 @@ async function handleGoogleCallback(response) {
                 
                 // Show appropriate message based on action
                 if (action === 'signup') {
-                    showMessage('Welcome! ✓ Please complete your profile to unlock all features.', 'success');
+                    showMessage('✓ Account created! Please complete your profile (business name).', 'success');
                 } else {
-                    showMessage('Welcome back! Please complete your profile information.', 'info');
+                    showMessage('✓ Welcome back! Please complete your profile (business name).', 'success');
                 }
             } else {
-                showMessage(action === 'signup' ? 'Account created successfully! ✓ Redirecting...' : 'Login successful! ✓ Redirecting...', 'success');
+                // Profile is complete - show success message
+                showMessage(data.message || (action === 'signup' ? 'Account created successfully!' : 'Login successful!'), 'success');
             }
+            
+            // Close any open modals
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('signupModal').style.display = 'none';
             
             // Redirect to dashboard after 1.5 seconds
             setTimeout(() => {
@@ -162,22 +169,25 @@ async function handleGoogleCallback(response) {
         } else {
             // Handle different error scenarios
             if (data.need_signup) {
-                // User tried to login but doesn't exist
-                showMessage('No account found with this email. Please sign up first', 'error');
+                // LOGIN attempt with non-existent account → Prompt to signup
+                showMessage('⚠ No account found. Please sign up first', 'error');
+                
                 // Switch to signup modal after 2 seconds
                 setTimeout(() => {
                     document.getElementById('loginModal').style.display = 'none';
                     document.getElementById('signupModal').style.display = 'block';
                 }, 2000);
             } else if (data.already_exists) {
-                // User tried to signup but already exists
-                showMessage('An account with this email already exists. Please login instead', 'error');
+                // SIGNUP attempt with existing account → Prompt to login
+                showMessage('⚠ Account already exists. Please login instead', 'error');
+                
                 // Switch to login modal after 2 seconds
                 setTimeout(() => {
                     document.getElementById('signupModal').style.display = 'none';
                     document.getElementById('loginModal').style.display = 'block';
                 }, 2000);
             } else {
+                // Generic error
                 showMessage(data.message || 'Google authentication failed', 'error');
             }
         }
