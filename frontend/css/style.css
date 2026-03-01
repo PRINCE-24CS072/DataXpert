@@ -1,10 +1,10 @@
 :root {
-    --primary-color: #7c3aed;
-    --primary-dark: #6d28d9;
-    --primary-light: #a78bfa;
-    --secondary-color: #06b6d4;
-    --secondary-dark: #0891b2;
-    --accent-color: #f59e0b;
+    --primary-color: #2563eb;
+    --primary-dark: #1d4ed8;
+    --primary-light: #60a5fa;
+    --secondary-color: #3b82f6;
+    --secondary-dark: #2563eb;
+    --accent-color: #0ea5e9;
     --text-primary: #0f172a;
     --text-secondary: #64748b;
     --text-light: #94a3b8;
@@ -16,10 +16,10 @@
     --shadow-md: 0 4px 12px -1px rgb(0 0 0 / 0.12);
     --shadow-lg: 0 10px 25px -3px rgb(0 0 0 / 0.15);
     --shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    --gradient-bg: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    --gradient-secondary: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+    --gradient-accent: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+    --gradient-bg: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
 }
 
 * {
@@ -168,23 +168,23 @@ body {
 .btn-primary {
     background: var(--gradient-primary);
     color: white;
-    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
 }
 
 .btn-primary:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
+    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
 }
 
 .btn-secondary {
     background: rgba(255, 255, 255, 0.9);
     color: var(--primary-color);
-    border: 2px solid rgba(124, 58, 237, 0.2);
+    border: 2px solid rgba(37, 99, 235, 0.2);
     backdrop-filter: blur(10px);
 }
 
 .btn-secondary:hover {
-    background: rgba(124, 58, 237, 0.1);
+    background: rgba(37, 99, 235, 0.1);
     border-color: var(--primary-color);
     transform: translateY(-2px);
 }
@@ -213,7 +213,7 @@ body {
 /* Hero Section */
 .hero {
     padding: 140px 0 100px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background: url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
     position: relative;
     overflow: hidden;
     min-height: 90vh;
@@ -228,9 +228,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 800"><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:rgba(255,255,255,0.1)"/><stop offset="100%" style="stop-color:rgba(255,255,255,0)"/></linearGradient></defs><circle cx="200" cy="150" r="300" fill="url(%23grad)"/><circle cx="1200" cy="600" r="400" fill="url(%23grad)"/></svg>');
-    opacity: 0.6;
-    animation: float 20s ease-in-out infinite;
+    background: rgba(15, 23, 42, 0.7);
 }
 
 @keyframes float {
@@ -767,7 +765,7 @@ body {
 
 .close:hover {
     color: var(--primary-color);
-    background: rgba(124, 58, 237, 0.1);
+    background: rgba(37, 99, 235, 0.1);
     transform: rotate(90deg);
 }
 
@@ -813,7 +811,7 @@ body {
     outline: none;
     border-color: var(--primary-color);
     background: white;
-    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
     transform: translateY(-2px);
 }
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
