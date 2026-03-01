@@ -100,12 +100,12 @@
             <div class="stats-grid">
                 <div class="stat-card-dash">
                     <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                        <i class="fas fa-dollar-sign"></i>
+                        <i class="fas fa-rupee-sign"></i>
                     </div>
                     <div class="stat-details">
                         <span class="stat-label">Total Sales</span>
-                        <span class="stat-value" id="totalSales">$0</span>
-                        <span class="stat-change positive" id="salesChange">+0%</span>
+                        <span class="stat-value" id="totalSales">₹0.00</span>
+                        <span class="stat-change neutral" id="salesChange">--</span>
                     </div>
                 </div>
 
@@ -115,8 +115,8 @@
                     </div>
                     <div class="stat-details">
                         <span class="stat-label">Total Profit</span>
-                        <span class="stat-value" id="totalProfit">$0</span>
-                        <span class="stat-change positive" id="profitChange">+0%</span>
+                        <span class="stat-value" id="totalProfit">₹0.00</span>
+                        <span class="stat-change neutral" id="profitChange">--</span>
                     </div>
                 </div>
 
@@ -126,8 +126,8 @@
                     </div>
                     <div class="stat-details">
                         <span class="stat-label">Total Expenses</span>
-                        <span class="stat-value" id="totalExpenses">$0</span>
-                        <span class="stat-change negative" id="expenseChange">+0%</span>
+                        <span class="stat-value" id="totalExpenses">₹0.00</span>
+                        <span class="stat-change neutral" id="expenseChange">--</span>
                     </div>
                 </div>
 
@@ -216,16 +216,16 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="sales">Sales ($)</label>
+                        <label for="sales">Sales (₹)</label>
                         <input type="number" id="sales" step="0.01" required placeholder="0.00">
                     </div>
                     <div class="form-group">
-                        <label for="expenses">Expenses ($)</label>
+                        <label for="expenses">Expenses (₹)</label>
                         <input type="number" id="expenses" step="0.01" required placeholder="0.00">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="profit">Profit ($)</label>
+                    <label for="profit">Profit (₹)</label>
                     <input type="number" id="profit" step="0.01" required placeholder="0.00" readonly>
                 </div>
                 <button type="submit" class="btn btn-primary btn-full">Add Data</button>

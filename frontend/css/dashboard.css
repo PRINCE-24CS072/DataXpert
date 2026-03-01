@@ -420,6 +420,16 @@
     color: var(--text-secondary);
 }
 
+.no-data-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    min-height: 150px;
+}
+
 /* Teams Section */
 .teams-section {
     margin-top: 2rem;

@@ -113,33 +113,83 @@ async function loadDashboardData() {
     }
 }
 
-// Update stats
+// Update stats - shows only real user data
 function updateStats(stats) {
-    document.getElementById('totalSales').textContent = `$${formatNumber(stats.total_sales || 0)}`;
-    document.getElementById('totalProfit').textContent = `$${formatNumber(stats.total_profit || 0)}`;
-    document.getElementById('totalExpenses').textContent = `$${formatNumber(stats.total_expenses || 0)}`;
-    document.getElementById('dataCount').textContent = stats.data_count || 0;
+    const totalSales = stats.total_sales || 0;
+    const totalProfit = stats.total_profit || 0;
+    const totalExpenses = stats.total_expenses || 0;
+    const dataCount = stats.data_count || 0;
+    
+    document.getElementById('totalSales').textContent = `₹${formatNumber(totalSales)}`;
+    document.getElementById('totalProfit').textContent = `₹${formatNumber(totalProfit)}`;
+    document.getElementById('totalExpenses').textContent = `₹${formatNumber(totalExpenses)}`;
+    document.getElementById('dataCount').textContent = dataCount;
+    
+    // Update change indicators based on actual data
+    const salesChangeEl = document.getElementById('salesChange');
+    const profitChangeEl = document.getElementById('profitChange');
+    const expenseChangeEl = document.getElementById('expenseChange');
+    
+    if (dataCount === 0) {
+        // No data yet - show neutral state
+        salesChangeEl.textContent = '--';
+        salesChangeEl.className = 'stat-change neutral';
+        profitChangeEl.textContent = '--';
+        profitChangeEl.className = 'stat-change neutral';
+        expenseChangeEl.textContent = '--';
+        expenseChangeEl.className = 'stat-change neutral';
+    } else {
+        // Show actual values
+        salesChangeEl.textContent = totalSales > 0 ? 'Active' : '--';
+        salesChangeEl.className = totalSales > 0 ? 'stat-change positive' : 'stat-change neutral';
+        
+        profitChangeEl.textContent = totalProfit > 0 ? 'Positive' : (totalProfit < 0 ? 'Negative' : '--');
+        profitChangeEl.className = totalProfit > 0 ? 'stat-change positive' : (totalProfit < 0 ? 'stat-change negative' : 'stat-change neutral');
+        
+        expenseChangeEl.textContent = totalExpenses > 0 ? 'Tracked' : '--';
+        expenseChangeEl.className = 'stat-change neutral';
+    }
 }
 
-// Update recent data
+// Update recent data - shows only user's actual data
 function updateRecentData(recentData) {
     const container = document.getElementById('recentData');
     
     if (!recentData || recentData.length === 0) {
-        container.innerHTML = '<p class="no-data">No recent activity</p>';
+        container.innerHTML = `
+            <div class="no-data-state">
+                <i class="fas fa-inbox" style="font-size: 32px; color: #9CA3AF; margin-bottom: 10px;"></i>
+                <p class="no-data">No recent activity</p>
+                <p style="color: #9CA3AF; font-size: 12px;">Upload data to see your activity here</p>
+            </div>
+        `;
         return;
     }
 
-    container.innerHTML = recentData.map(item => `
+    // Only show valid user data (filter out any legacy/dummy entries)
+    const validData = recentData.filter(item => item && item.sales !== undefined);
+    
+    if (validData.length === 0) {
+        container.innerHTML = `
+            <div class="no-data-state">
+                <i class="fas fa-inbox" style="font-size: 32px; color: #9CA3AF; margin-bottom: 10px;"></i>
+                <p class="no-data">No recent activity</p>
+                <p style="color: #9CA3AF; font-size: 12px;">Upload data to see your activity here</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = validData.slice(0, 5).map(item => `
         <div class="data-item">
             <div class="data-info">
                 <span class="data-category">${item.category || 'General'}</span>
                 <span class="data-date">${formatDate(item.record_date)}</span>
             </div>
             <div class="data-values">
-                <span class="data-sales">Sales: $${formatNumber(item.sales)}</span>
-                <span class="data-profit ${item.profit >= 0 ? 'positive' : 'negative'}">
-                    Profit: $${formatNumber(item.profit)}
+                <span class="data-sales">Sales: ₹${formatNumber(item.sales || 0)}</span>
+                <span class="data-profit ${(item.profit || 0) >= 0 ? 'positive' : 'negative'}">
+                    Profit: ₹${formatNumber(item.profit || 0)}
                 </span>
             </div>
         </div>
@@ -149,10 +199,11 @@ function updateRecentData(recentData) {
 // Render charts
 function renderCharts(chartsData) {
     // Sales Chart
-    if (chartsData.sales && chartsData.sales.labels.length > 0) {
-        const salesCtx = document.getElementById('salesChart').getContext('2d');
-        if (charts.sales) charts.sales.destroy();
-        
+    const salesCtx = document.getElementById('salesChart').getContext('2d');
+    if (charts.sales) charts.sales.destroy();
+    
+    if (chartsData.sales && chartsData.sales.labels && chartsData.sales.labels.length > 0 && 
+        chartsData.sales.datasets && chartsData.sales.datasets[0] && chartsData.sales.datasets[0].data.some(v => v > 0)) {
         charts.sales = new Chart(salesCtx, {
             type: 'line',
             data: chartsData.sales,
@@ -167,13 +218,17 @@ function renderCharts(chartsData) {
                 }
             }
         });
+    } else {
+        // Show empty state message
+        showEmptyChartState(salesCtx, 'No sales data yet');
     }
 
     // Profit vs Expense Chart
-    if (chartsData.profitExpense && chartsData.profitExpense.labels.length > 0) {
-        const profitExpenseCtx = document.getElementById('profitExpenseChart').getContext('2d');
-        if (charts.profitExpense) charts.profitExpense.destroy();
-        
+    const profitExpenseCtx = document.getElementById('profitExpenseChart').getContext('2d');
+    if (charts.profitExpense) charts.profitExpense.destroy();
+    
+    if (chartsData.profitExpense && chartsData.profitExpense.labels && chartsData.profitExpense.labels.length > 0 &&
+        chartsData.profitExpense.datasets && chartsData.profitExpense.datasets.some(ds => ds.data && ds.data.some(v => v !== 0))) {
         charts.profitExpense = new Chart(profitExpenseCtx, {
             type: 'bar',
             data: chartsData.profitExpense,
@@ -188,13 +243,16 @@ function renderCharts(chartsData) {
                 }
             }
         });
+    } else {
+        showEmptyChartState(profitExpenseCtx, 'No profit/expense data yet');
     }
 
     // Category Chart
-    if (chartsData.category && chartsData.category.labels && chartsData.category.labels.length > 0) {
-        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-        if (charts.category) charts.category.destroy();
-        
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    if (charts.category) charts.category.destroy();
+    
+    if (chartsData.category && chartsData.category.labels && chartsData.category.labels.length > 0 &&
+        chartsData.category.datasets && chartsData.category.datasets[0] && chartsData.category.datasets[0].data.some(v => v > 0)) {
         charts.category = new Chart(categoryCtx, {
             type: 'doughnut',
             data: chartsData.category,
@@ -206,7 +264,20 @@ function renderCharts(chartsData) {
                 }
             }
         });
+    } else {
+        showEmptyChartState(categoryCtx, 'No category data yet');
     }
+}
+
+// Show empty state message in chart canvas
+function showEmptyChartState(ctx, message) {
+    const canvas = ctx.canvas;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#9CA3AF';
+    ctx.font = '14px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+    ctx.fillText('Upload data to see visualizations', canvas.width / 2, canvas.height / 2 + 25);
 }
 
 // Setup event listeners
@@ -292,7 +363,7 @@ async function handleAddData(event) {
 
 // Utility functions
 function formatNumber(num) {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     }).format(num);

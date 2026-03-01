@@ -742,11 +742,29 @@ def analyze_uploaded_file(current_user):
         # Get graph suggestions
         graph_suggestions = data_processor.suggest_graph_types(df)
         
+        # Convert preview data to JSON-safe types (handle numpy int64/float64)
+        preview = df.head(5).to_dict(orient='records')
+        import numpy as np
+        def convert_to_native(obj):
+            if isinstance(obj, dict):
+                return {k: convert_to_native(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_to_native(item) for item in obj]
+            elif isinstance(obj, (np.integer, np.int64, np.int32)):
+                return int(obj)
+            elif isinstance(obj, (np.floating, np.float64, np.float32)):
+                return float(obj)
+            elif pd.isna(obj):
+                return None
+            return obj
+        
+        preview = convert_to_native(preview)
+        
         return jsonify({
             'success': True,
             'analysis': analysis,
             'graph_suggestions': graph_suggestions,
-            'preview': df.head(5).to_dict(orient='records')
+            'preview': preview
         }), 200
         
     except Exception as e:

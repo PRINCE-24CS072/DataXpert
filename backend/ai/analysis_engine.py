@@ -27,19 +27,20 @@ class AnalysisEngine:
             'customer': self.analyze_customers,
             'trend': self.analyze_trends,
             'comparison': self.analyze_comparison,
-            'forecast': self.forecast_data
+            'forecast': self.forecast_data,
+            'generic': self.analyze_generic_data
         }
         self.ml_enabled = ML_AVAILABLE
         self.scaler = StandardScaler() if ML_AVAILABLE else None
     
     def analyze(self, intent, entities, business_data):
-        """Main analysis function"""
+        """Main analysis function - works with any data type"""
         try:
             if not business_data:
                 return {
-                    'summary': 'No business data available for analysis.',
+                    'summary': 'No data available for analysis. Please upload a file first.',
                     'insights': [],
-                    'recommendations': ['Start by adding your business data'],
+                    'recommendations': ['Upload a CSV or Excel file to get started'],
                     'anomaly_score': 0.0,
                     'insight_level': 'low'
                 }
@@ -47,25 +48,159 @@ class AnalysisEngine:
             # Convert to DataFrame for easier analysis
             df = pd.DataFrame(business_data)
             
+            # Check if this is business data or generic data
+            is_business_data = all(col in df.columns for col in ['sales', 'profit', 'expenses'])
+            
             # Determine analysis type
             analysis_type = self._determine_analysis_type(intent, entities)
+            
+            # If not business data, use generic analysis
+            if not is_business_data and analysis_type not in ['trend', 'forecast']:
+                return self.analyze_generic_data(df, intent, entities)
             
             # Perform analysis
             if analysis_type in self.analysis_types:
                 result = self.analysis_types[analysis_type](df, entities)
             else:
-                result = self.general_analysis(df)
+                result = self.analyze_generic_data(df, intent, entities) if not is_business_data else self.general_analysis(df)
             
             return result
         except Exception as e:
             print(f"Analysis error: {e}")
             return {
-                'summary': f'Analysis error: {str(e)}',
+                'summary': f'Analysis completed with notes: {str(e)}',
                 'insights': [],
                 'recommendations': [],
                 'anomaly_score': 0.0,
                 'insight_level': 'low'
             }
+    
+    def analyze_generic_data(self, df, intent='', entities=None):
+        """Analyze any type of data dynamically"""
+        entities = entities or {}
+        
+        # Get column info
+        numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+        categorical_cols = df.select_dtypes(include=['object', 'category']).columns.tolist()
+        
+        insights = []
+        recommendations = []
+        summary_parts = []
+        
+        # Basic stats
+        insights.append(f"Dataset contains {len(df)} records with {len(df.columns)} columns")
+        
+        # Analyze numeric columns
+        for col in numeric_cols[:5]:  # Limit to first 5 numeric columns
+            col_mean = df[col].mean()
+            col_std = df[col].std()
+            col_min = df[col].min()
+            col_max = df[col].max()
+            
+            insights.append(f"{col}: avg {col_mean:,.2f}, range {col_min:,.2f}-{col_max:,.2f}")
+            
+            # Detect trends if there's enough data
+            if len(df) >= 5:
+                first_half = df[col].iloc[:len(df)//2].mean()
+                second_half = df[col].iloc[len(df)//2:].mean()
+                if first_half > 0:
+                    trend = ((second_half - first_half) / first_half) * 100
+                    if abs(trend) > 10:
+                        trend_dir = "increasing" if trend > 0 else "decreasing"
+                        insights.append(f"📈 {col} is {trend_dir} by {abs(trend):.1f}%")
+        
+        # Analyze categorical columns
+        for col in categorical_cols[:3]:  # Limit to first 3 categorical columns
+            unique_count = df[col].nunique()
+            top_value = df[col].mode().iloc[0] if len(df[col].mode()) > 0 else 'N/A'
+            insights.append(f"{col}: {unique_count} unique values, most common: '{top_value}'")
+        
+        # Generate recommendations based on data characteristics
+        if len(numeric_cols) >= 2:
+            recommendations.append("Try correlation analysis between numeric columns")
+        if len(df) >= 10:
+            recommendations.append("Sufficient data for trend analysis and forecasting")
+        if len(categorical_cols) > 0:
+            recommendations.append("Group data by categories for deeper insights")
+        
+        # Build summary
+        summary = f"Data Analysis: {len(df)} records analyzed"
+        if numeric_cols:
+            main_col = numeric_cols[0]
+            total = df[main_col].sum()
+            summary += f". Total {main_col}: {total:,.2f}"
+        
+        return {
+            'summary': summary,
+            'insights': insights,
+            'recommendations': recommendations if recommendations else ['Upload more data for advanced analysis'],
+            'data': {
+                'total_records': int(len(df)),
+                'numeric_columns': numeric_cols,
+                'categorical_columns': categorical_cols,
+                'column_stats': {col: {'mean': float(df[col].mean()), 'sum': float(df[col].sum())} for col in numeric_cols[:5]}
+            },
+            'anomaly_score': self._detect_generic_anomalies(df, numeric_cols),
+            'insight_level': 'high' if len(insights) > 3 else 'medium',
+            'chart_data': self._generate_generic_charts(df, numeric_cols, categorical_cols)
+        }
+    
+    def _detect_generic_anomalies(self, df, numeric_cols):
+        """Detect anomalies in generic data"""
+        max_score = 0.0
+        for col in numeric_cols[:5]:
+            mean = df[col].mean()
+            std = df[col].std()
+            if std > 0:
+                z_scores = np.abs((df[col] - mean) / std)
+                max_z = z_scores.max()
+                if max_z > max_score:
+                    max_score = max_z
+        return min(float(max_score), 10.0)
+    
+    def _generate_generic_charts(self, df, numeric_cols, categorical_cols):
+        """Generate chart data for generic datasets"""
+        charts = {}
+        
+        # Time series or index-based chart for numeric data
+        if numeric_cols:
+            main_col = numeric_cols[0]
+            charts['main'] = {
+                'labels': [f"Entry {i+1}" for i in range(min(len(df), 50))],
+                'datasets': [{
+                    'label': main_col,
+                    'data': df[main_col].head(50).tolist(),
+                    'borderColor': 'rgb(99, 102, 241)',
+                    'backgroundColor': 'rgba(99, 102, 241, 0.2)',
+                    'fill': True
+                }]
+            }
+        
+        # Category breakdown if available
+        if categorical_cols and numeric_cols:
+            cat_col = categorical_cols[0]
+            num_col = numeric_cols[0]
+            category_data = df.groupby(cat_col)[num_col].sum()
+            charts['category'] = {
+                'labels': category_data.index.tolist()[:10],
+                'datasets': [{
+                    'data': category_data.values.tolist()[:10],
+                    'backgroundColor': [
+                        'rgba(99, 102, 241, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(245, 87, 108, 0.8)',
+                        'rgba(251, 191, 36, 0.8)',
+                        'rgba(139, 92, 246, 0.8)',
+                        'rgba(14, 165, 233, 0.8)',
+                        'rgba(236, 72, 153, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(249, 115, 22, 0.8)',
+                        'rgba(168, 85, 247, 0.8)'
+                    ]
+                }]
+            }
+        
+        return charts
     
     def _determine_analysis_type(self, intent, entities):
         """Determine what type of analysis to perform"""
@@ -106,10 +241,10 @@ class AnalysisEngine:
             growth = 0
         
         insights = [
-            f"Total sales: ${total_sales:,.2f}",
-            f"Average sales per entry: ${avg_sales:,.2f}",
-            f"Highest sales: ${max_sales:,.2f}",
-            f"Lowest sales: ${min_sales:,.2f}"
+            f"Total sales: ₹{total_sales:,.2f}",
+            f"Average sales per entry: ₹{avg_sales:,.2f}",
+            f"Highest sales: ₹{max_sales:,.2f}",
+            f"Lowest sales: ₹{min_sales:,.2f}"
         ]
         
         if growth != 0:
@@ -125,7 +260,7 @@ class AnalysisEngine:
             recommendations.append("High sales volatility detected. Focus on consistency.")
         
         return {
-            'summary': f"Sales Analysis: Total revenue of ${total_sales:,.2f} with {len(df)} data points.",
+            'summary': f"Sales Analysis: Total revenue of ₹{total_sales:,.2f} with {len(df)} data points.",
             'insights': insights,
             'recommendations': recommendations,
             'data': {
@@ -144,8 +279,8 @@ class AnalysisEngine:
         profit_margin = (total_profit / df['sales'].sum() * 100) if df['sales'].sum() > 0 else 0
         
         insights = [
-            f"Total profit: ${total_profit:,.2f}",
-            f"Average profit: ${avg_profit:,.2f}",
+            f"Total profit: ₹{total_profit:,.2f}",
+            f"Average profit: ₹{avg_profit:,.2f}",
             f"Profit margin: {profit_margin:.1f}%"
         ]
         
@@ -165,7 +300,7 @@ class AnalysisEngine:
             recommendations.append("High frequency of losses. Immediate cost reduction needed.")
         
         return {
-            'summary': f"Profit Analysis: ${total_profit:,.2f} total profit with {profit_margin:.1f}% margin.",
+            'summary': f"Profit Analysis: ₹{total_profit:,.2f} total profit with {profit_margin:.1f}% margin.",
             'insights': insights,
             'recommendations': recommendations,
             'data': {
@@ -184,8 +319,8 @@ class AnalysisEngine:
         expense_ratio = (total_expenses / df['sales'].sum() * 100) if df['sales'].sum() > 0 else 0
         
         insights = [
-            f"Total expenses: ${total_expenses:,.2f}",
-            f"Average expenses: ${avg_expenses:,.2f}",
+            f"Total expenses: ₹{total_expenses:,.2f}",
+            f"Average expenses: ₹{avg_expenses:,.2f}",
             f"Expense ratio: {expense_ratio:.1f}% of sales"
         ]
         
@@ -206,7 +341,7 @@ class AnalysisEngine:
             recommendations.append("High expense variability. Standardize cost management.")
         
         return {
-            'summary': f"Expense Analysis: ${total_expenses:,.2f} total expenses ({expense_ratio:.1f}% of sales).",
+            'summary': f"Expense Analysis: ₹{total_expenses:,.2f} total expenses ({expense_ratio:.1f}% of sales).",
             'insights': insights,
             'recommendations': recommendations,
             'data': {
@@ -225,12 +360,12 @@ class AnalysisEngine:
         
         insights = [
             f"Loss periods: {len(loss_periods)}/{len(df)}",
-            f"Total losses: ${total_loss:,.2f}"
+            f"Total losses: ₹{total_loss:,.2f}"
         ]
         
         if len(loss_periods) > 0:
             avg_loss = loss_periods['profit'].mean()
-            insights.append(f"Average loss per period: ${abs(avg_loss):,.2f}")
+            insights.append(f"Average loss per period: ₹{abs(avg_loss):,.2f}")
             
             # Analyze loss patterns
             if 'category' in df.columns:
@@ -246,7 +381,7 @@ class AnalysisEngine:
             recommendations.append("Significant losses. Consider cost restructuring.")
         
         return {
-            'summary': f"Loss Analysis: {len(loss_periods)} loss periods with ${total_loss:,.2f} total losses.",
+            'summary': f"Loss Analysis: {len(loss_periods)} loss periods with ₹{total_loss:,.2f} total losses.",
             'insights': insights,
             'recommendations': recommendations,
             'data': {
@@ -321,13 +456,13 @@ class AnalysisEngine:
             forecast = np.mean(sales_values) + (sales_values[-1] - sales_values[0]) / len(sales_values)
             
             insights = [
-                f"Forecast next period sales: ${forecast:,.2f}",
+                f"Forecast next period sales: ₹{forecast:,.2f}",
                 f"Based on last {len(sales_values)} periods",
                 "⚠️ Simple forecast - add more data for ML predictions"
             ]
             
             return {
-                'summary': f"Sales forecast for next period: ${forecast:,.2f}",
+                'summary': f"Sales forecast for next period: ₹{forecast:,.2f}",
                 'insights': insights,
                 'recommendations': ['Monitor actual vs forecast regularly', 'Add more data for advanced ML forecasting'],
                 'data': {'forecast': float(forecast)},
@@ -342,12 +477,12 @@ class AnalysisEngine:
         total_expenses = df['expenses'].sum()
         
         return {
-            'summary': f"Business Overview: ${total_sales:,.2f} in sales, ${total_profit:,.2f} profit.",
+            'summary': f"Business Overview: ₹{total_sales:,.2f} in sales, ₹{total_profit:,.2f} profit.",
             'insights': [
                 f"Total entries: {len(df)}",
-                f"Total sales: ${total_sales:,.2f}",
-                f"Total profit: ${total_profit:,.2f}",
-                f"Total expenses: ${total_expenses:,.2f}"
+                f"Total sales: ₹{total_sales:,.2f}",
+                f"Total profit: ₹{total_profit:,.2f}",
+                f"Total expenses: ₹{total_expenses:,.2f}"
             ],
             'recommendations': ['Ask specific questions for detailed insights'],
             'data': {
@@ -413,36 +548,59 @@ class AnalysisEngine:
         }
     
     def prepare_chart_data(self, business_data):
-        """Prepare data for charts"""
+        """Prepare data for charts - handles empty data gracefully"""
         if not business_data:
-            return {}
+            return {
+                'sales': {'labels': [], 'datasets': []},
+                'profitExpense': {'labels': [], 'datasets': []},
+                'category': {'labels': [], 'datasets': []}
+            }
         
         df = pd.DataFrame(business_data)
         
+        # Helper to convert numpy types to native Python
+        def to_native(val):
+            if isinstance(val, (np.integer, np.int64, np.int32)):
+                return int(val)
+            elif isinstance(val, (np.floating, np.float64, np.float32)):
+                return float(val)
+            elif pd.isna(val):
+                return 0
+            return val
+        
         # Sales over time
+        sales_data = []
+        labels = []
+        for i, item in enumerate(business_data[:20]):
+            labels.append(str(item.get('record_date', f"Entry {i}")))
+            sales_data.append(to_native(item.get('sales', 0)))
+        
         sales_chart = {
-            'labels': [item.get('record_date', f"Entry {i}") for i, item in enumerate(business_data[:20])],
+            'labels': labels,
             'datasets': [{
                 'label': 'Sales',
-                'data': df.head(20)['sales'].tolist(),
+                'data': sales_data,
                 'borderColor': 'rgb(75, 192, 192)',
                 'backgroundColor': 'rgba(75, 192, 192, 0.2)'
             }]
         }
         
         # Profit vs Expenses
+        profit_data = [to_native(item.get('profit', 0)) for item in business_data[:20]]
+        expenses_data = [to_native(item.get('expenses', 0)) for item in business_data[:20]]
+        
         profit_expense_chart = {
-            'labels': [item.get('record_date', f"Entry {i}") for i, item in enumerate(business_data[:20])],
+            'labels': labels,
             'datasets': [
                 {
                     'label': 'Profit',
-                    'data': df.head(20)['profit'].tolist(),
+                    'data': profit_data,
                     'borderColor': 'rgb(54, 162, 235)',
                     'backgroundColor': 'rgba(54, 162, 235, 0.2)'
                 },
                 {
                     'label': 'Expenses',
-                    'data': df.head(20)['expenses'].tolist(),
+                    'data': expenses_data,
                     'borderColor': 'rgb(255, 99, 132)',
                     'backgroundColor': 'rgba(255, 99, 132, 0.2)'
                 }
@@ -450,13 +608,13 @@ class AnalysisEngine:
         }
         
         # Category breakdown (if available)
-        category_chart = {}
+        category_chart = {'labels': [], 'datasets': []}
         if 'category' in df.columns:
             category_sales = df.groupby('category')['sales'].sum()
             category_chart = {
-                'labels': category_sales.index.tolist(),
+                'labels': [str(label) for label in category_sales.index.tolist()],
                 'datasets': [{
-                    'data': category_sales.values.tolist(),
+                    'data': [to_native(val) for val in category_sales.values.tolist()],
                     'backgroundColor': [
                         'rgba(255, 99, 132, 0.8)',
                         'rgba(54, 162, 235, 0.8)',
@@ -702,8 +860,8 @@ class AnalysisEngine:
                 accuracy = 95.0
             
             insights = [
-                f"🤖 ML Forecast (Next Period): ${forecasts[0]:,.2f}",
-                f"📊 3-Period Forecast: ${forecasts[0]:,.0f}, ${forecasts[1]:,.0f}, ${forecasts[2]:,.0f}",
+                f"🤖 ML Forecast (Next Period): ₹{forecasts[0]:,.2f}",
+                f"📊 3-Period Forecast: ₹{forecasts[0]:,.0f}, ₹{forecasts[1]:,.0f}, ₹{forecasts[2]:,.0f}",
                 f"🎯 Model Accuracy: {accuracy:.1f}%",
                 f"📈 Trend: {'Upward' if forecasts[1] > forecasts[0] else 'Downward'}",
                 "✨ Using Random Forest + Linear Regression ensemble"
@@ -716,7 +874,7 @@ class AnalysisEngine:
                 recommendations.append("Strong growth predicted - prepare for scaling")
             
             return {
-                'summary': f"🤖 ML Forecast: ${forecasts[0]:,.2f} for next period (Accuracy: {accuracy:.1f}%)",
+                'summary': f"🤖 ML Forecast: ₹{forecasts[0]:,.2f} for next period (Accuracy: {accuracy:.1f}%)",
                 'insights': insights,
                 'recommendations': recommendations if recommendations else ['Monitor predictions vs actuals'],
                 'data': {
@@ -734,8 +892,8 @@ class AnalysisEngine:
             sales_values = df['sales'].values[-10:]
             forecast = np.mean(sales_values)
             return {
-                'summary': f"Forecast: ${forecast:,.2f}",
-                'insights': [f"Simple forecast: ${forecast:,.2f}"],
+                'summary': f"Forecast: ₹{forecast:,.2f}",
+                'insights': [f"Simple forecast: ₹{forecast:,.2f}"],
                 'recommendations': ['ML model error - using simple average'],
                 'data': {'forecast': float(forecast)},
                 'anomaly_score': 0.0,
@@ -818,7 +976,7 @@ class AnalysisEngine:
             return {
                 'detected': len(anomalies) > 0,
                 'count': len(anomalies),
-                'anomalies': [f"Anomaly at entry {a['index']}: ${a['sales']:,.0f} sales, ${a['profit']:,.0f} profit" for a in anomalies],
+                'anomalies': [f"Anomaly at entry {a['index']}: ₹{a['sales']:,.0f} sales, ₹{a['profit']:,.0f} profit" for a in anomalies],
                 'method': 'isolation_forest',
                 'details': anomalies
             }
@@ -837,7 +995,7 @@ class AnalysisEngine:
                     z_scores = np.abs((df[col] - mean) / std)
                     anomaly_indices = np.where(z_scores > 3)[0]
                     for idx in anomaly_indices:
-                        anomalies.append(f"Unusual {col} at entry {idx}: ${df.iloc[idx][col]:,.0f}")
+                        anomalies.append(f"Unusual {col} at entry {idx}: ₹{df.iloc[idx][col]:,.0f}")
         
         return {
             'detected': len(anomalies) > 0,

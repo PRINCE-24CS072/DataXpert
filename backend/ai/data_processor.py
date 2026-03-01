@@ -392,21 +392,21 @@ class DataProcessor:
             if missing > 0:
                 analysis['missing_values'][col] = {
                     'count': int(missing),
-                    'percentage': round(missing / len(df) * 100, 2)
+                    'percentage': float(round(missing / len(df) * 100, 2))
                 }
         
         # Data types
         analysis['data_types'] = {col: str(dtype) for col, dtype in df.dtypes.items()}
         
-        # Statistics for numeric columns
+        # Statistics for numeric columns - convert to native Python types for JSON
         numeric_cols = df.select_dtypes(include=[np.number]).columns
         for col in numeric_cols:
             analysis['statistics'][col] = {
-                'mean': round(df[col].mean(), 2),
-                'median': round(df[col].median(), 2),
-                'std': round(df[col].std(), 2),
-                'min': round(df[col].min(), 2),
-                'max': round(df[col].max(), 2)
+                'mean': float(df[col].mean()) if not pd.isna(df[col].mean()) else 0.0,
+                'median': float(df[col].median()) if not pd.isna(df[col].median()) else 0.0,
+                'std': float(df[col].std()) if not pd.isna(df[col].std()) else 0.0,
+                'min': float(df[col].min()) if not pd.isna(df[col].min()) else 0.0,
+                'max': float(df[col].max()) if not pd.isna(df[col].max()) else 0.0
             }
         
         # Generate recommendations
