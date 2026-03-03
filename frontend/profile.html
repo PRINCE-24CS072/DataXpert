@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile - DataXpert</title>
+    <title>Profile - DataXpert</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -56,70 +56,60 @@
                 <button class="menu-toggle" id="menuToggle">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1>My Profile</h1>
+                <h1>Profile</h1>
             </div>
             <div class="topbar-right">
-                <div class="user-info">
-                    <span id="userName">Loading...</span>
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="theme-toggle" onclick="openSearchModal()" title="Search (Ctrl+K)" style="margin-left: 8px;">
+                    <i class="fas fa-search"></i>
+                </button>
+                <a href="profile.html" class="header-profile" style="text-decoration: none; color: inherit; margin-left: 15px;">
                     <div class="user-avatar">
                         <img id="userAvatar" src="" alt="Profile" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                         <i class="fas fa-user" id="avatarFallback"></i>
                     </div>
-                </div>
+                    <div class="user-details">
+                        <span id="userName" class="user-name">Loading...</span>
+                        <span id="userEmail" class="user-email"></span>
+                    </div>
+                </a>
             </div>
         </header>
 
         <!-- Profile Content -->
         <div class="dashboard-container">
-            <!-- Profile Header Card -->
-            <div class="profile-header-card" id="profileHeaderCard">
-                <div class="profile-header-content">
-                    <div class="profile-name-section">
-                        <h2 id="profileDisplayName"></h2>
-                        <p id="profileDisplayEmail"></p>
-                        <p class="profile-business-name" id="profileDisplayBusiness"></p>
-                    </div>
-                    <div class="profile-photo-section">
-                        <div class="profile-photo-wrapper">
-                            <img id="profilePhoto" src="" alt="Profile Photo" class="profile-photo">
-                            <div class="profile-photo-overlay">
-                                <button class="btn-photo-change" onclick="document.getElementById('profileImageInput').click()">
-                                    <i class="fas fa-camera"></i>
-                                    <span>Change Photo</span>
-                                </button>
+            <div class="profile-simple-grid">
+                <!-- Profile Photo Card -->
+                <div class="chart-card profile-photo-card">
+                    <div class="profile-photo-center">
+                        <div class="profile-photo-wrapper-large">
+                            <img id="profilePhoto" src="" alt="Profile Photo" class="profile-photo-large">
+                            <div class="photo-overlay" onclick="document.getElementById('profileImageInput').click()">
+                                <i class="fas fa-camera"></i>
+                                <span>Change Photo</span>
                             </div>
                         </div>
                         <input type="file" id="profileImageInput" accept="image/*" style="display:none;">
+                        <p class="photo-hint">Click to change photo</p>
                     </div>
                 </div>
-            </div>
 
-            <!-- Profile Details Card -->
-            <div class="profile-cards-grid">
+                <!-- Change Name Card -->
                 <div class="chart-card">
                     <div class="chart-header">
-                        <h3><i class="fas fa-user-edit"></i> Profile Information</h3>
+                        <h3><i class="fas fa-user-edit"></i> Change Name</h3>
                     </div>
-                    <div class="profile-form-container">
-                        <form id="updateProfileForm">
-                            <div class="form-group">
-                                <label for="profileName">Full Name</label>
-                                <input type="text" id="profileName" required placeholder="Your Name">
-                            </div>
-                            <div class="form-group">
-                                <label for="profileEmail">Email Address</label>
-                                <input type="email" id="profileEmail" readonly style="background-color: #f7fafc; cursor: not-allowed;">
-                                <small class="form-hint">Email cannot be changed</small>
-                            </div>
-                            <div class="form-group">
-                                <label for="profileBusinessName">Business Name</label>
-                                <input type="text" id="profileBusinessName" placeholder="Your Business">
-                            </div>
-                            <button type="submit" class="btn btn-blue">
-                                <i class="fas fa-save"></i> Save Changes
-                            </button>
-                        </form>
-                    </div>
+                    <form id="updateNameForm" class="simple-form">
+                        <div class="form-group">
+                            <label for="profileName">Full Name</label>
+                            <input type="text" id="profileName" required placeholder="Enter your name">
+                        </div>
+                        <button type="submit" class="btn btn-blue btn-full">
+                            <i class="fas fa-save"></i> Save Name
+                        </button>
+                    </form>
                 </div>
 
                 <!-- Change Password Card -->
@@ -127,509 +117,412 @@
                     <div class="chart-header">
                         <h3><i class="fas fa-lock"></i> Change Password</h3>
                     </div>
-                    <div class="profile-form-container">
-                        <form id="changePasswordForm">
-                            <div class="form-group">
-                                <label for="currentPassword">Current Password</label>
-                                <div class="password-input-wrapper">
-                                    <input type="password" id="currentPassword" required>
-                                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('currentPassword')">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                </div>
+                    <form id="changePasswordForm" class="simple-form">
+                        <div class="form-group">
+                            <label for="currentPassword">Current Password</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="currentPassword" required placeholder="Enter current password">
+                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('currentPassword')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
                             </div>
-                            <div class="form-group">
-                                <label for="newPassword">New Password</label>
-                                <div class="password-input-wrapper">
-                                    <input type="password" id="newPassword" required minlength="6">
-                                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('newPassword')">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                </div>
-                                <small class="form-hint">At least 6 characters</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">New Password</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="newPassword" required minlength="6" placeholder="Enter new password">
+                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('newPassword')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
                             </div>
-                            <div class="form-group">
-                                <label for="confirmNewPassword">Confirm New Password</label>
-                                <div class="password-input-wrapper">
-                                    <input type="password" id="confirmNewPassword" required minlength="6">
-                                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmNewPassword')">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm New Password</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="confirmPassword" required minlength="6" placeholder="Confirm new password">
+                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmPassword')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
                             </div>
-                            <button type="submit" class="btn btn-blue">
-                                <i class="fas fa-key"></i> Update Password
-                            </button>
-                        </form>
+                        </div>
+                        <button type="submit" class="btn btn-blue btn-full">
+                            <i class="fas fa-key"></i> Update Password
+                        </button>
+                    </form>
+                    <div class="forgot-password-link">
+                        <a href="#" onclick="openForgotPasswordModal()">
+                            <i class="fas fa-question-circle"></i> Forgot your password?
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Message Toast -->
-    <div id="messageToast" class="message-toast"></div>
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeForgotPasswordModal()">&times;</span>
+            <h2><i class="fas fa-unlock-alt"></i> Reset Password</h2>
+            <p>Enter your email to receive a password reset link</p>
+            <form id="forgotPasswordForm">
+                <div class="form-group">
+                    <label for="resetEmail">Email Address</label>
+                    <input type="email" id="resetEmail" required placeholder="your@email.com">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">
+                    <i class="fas fa-paper-plane"></i> Send Reset Link
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Search Modal -->
+    <div id="searchModal" class="search-modal">
+        <div class="search-modal-content">
+            <div class="search-header">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search pages..." autofocus>
+                <kbd>ESC</kbd>
+            </div>
+            <div class="search-results">
+                <a href="dashboard.html" class="search-item"><i class="fas fa-th-large"></i> Dashboard</a>
+                <a href="analysis.html" class="search-item"><i class="fas fa-robot"></i> AI Analysis</a>
+                <a href="history.html" class="search-item"><i class="fas fa-history"></i> History</a>
+                <a href="profile.html" class="search-item"><i class="fas fa-user"></i> Profile</a>
+                <a href="docs/index.html" class="search-item"><i class="fas fa-book"></i> Documentation</a>
+            </div>
+        </div>
+    </div>
 
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/header-profile.js"></script>
     <script>
-        let currentUser = null;
-
-        // Immediately load user data from localStorage before DOM loads
-        (function() {
-            const userStr = localStorage.getItem('dataxpert_user');
-            if (userStr) {
-                try {
-                    const user = JSON.parse(userStr);
-                    currentUser = user;
-                    // Pre-populate will happen after DOM ready
-                } catch(e) {}
-            }
-        })();
-
-        // Check authentication
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Immediately populate from localStorage if available
-            if (currentUser) {
-                populateProfile(currentUser);
-                loadUserInfo();
-            }
-
+        // Check auth on load
+        document.addEventListener('DOMContentLoaded', () => {
             if (!isAuthenticated()) {
                 window.location.href = 'index.html';
                 return;
             }
-
-            const verified = await verifyAuth();
-            if (!verified) {
-                return;
-            }
-
-            loadUserInfo();
-            loadProfile();
-            setupEventListeners();
+            loadProfileData();
         });
 
-        // Load user information
-        function loadUserInfo() {
+        // Load profile data
+        function loadProfileData() {
             const userStr = localStorage.getItem(STORAGE_KEYS.USER);
-            if (userStr) {
-                const user = JSON.parse(userStr);
-                document.getElementById('userName').textContent = user.name || 'User';
-                
-                const avatarImg = document.getElementById('userAvatar');
-                const avatarFallback = document.getElementById('avatarFallback');
-                if (avatarImg) {
-                    const profileUrl = user.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=6366f1&color=fff&size=200`;
-                    avatarImg.src = profileUrl;
-                    avatarImg.style.display = 'block';
-                    if (avatarFallback) avatarFallback.style.display = 'none';
-                }
-            }
-        }
-
-        // Load profile
-        async function loadProfile() {
-            try {
-                // First try to load from localStorage (already done in DOMContentLoaded)
-                const userStr = localStorage.getItem(STORAGE_KEYS.USER);
-                if (userStr) {
-                    const user = JSON.parse(userStr);
-                    currentUser = user;
-                    populateProfile(user);
-                }
-
-                // Then fetch fresh data from server
-                const response = await fetch(API_ENDPOINTS.USER_PROFILE, {
-                    headers: getAuthHeaders()
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch profile');
-                }
-
-                const data = await response.json();
-
-                if (data.success && data.user) {
-                    currentUser = data.user;
-                    populateProfile(data.user);
-                    // Update localStorage with fresh data
-                    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
-                }
-            } catch (error) {
-                console.error('Error loading profile:', error);
-                // If we have cached data, we already displayed it, so just log the error
-                if (!currentUser) {
-                    showMessage('Unable to load profile. Please refresh the page.', 'error');
-                }
-            }
-        }
-
-        // Populate profile
-        function populateProfile(user) {
-            // Header
-            document.getElementById('profileDisplayName').textContent = user.name || 'User';
-            document.getElementById('profileDisplayEmail').textContent = user.email || '';
-            document.getElementById('profileDisplayBusiness').textContent = user.business_name || 'No business name set';
+            if (!userStr) return;
             
-            // Photo
-            const profilePhoto = document.getElementById('profilePhoto');
-            const photoUrl = user.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=6366f1&color=fff&size=400`;
-            profilePhoto.src = photoUrl;
-
-            // Form fields
+            const user = JSON.parse(userStr);
             document.getElementById('profileName').value = user.name || '';
-            document.getElementById('profileEmail').value = user.email || '';
-            document.getElementById('profileBusinessName').value = user.business_name || '';
-        }
-
-        // Setup event listeners
-        function setupEventListeners() {
-            // Profile form
-            document.getElementById('updateProfileForm').addEventListener('submit', handleUpdateProfile);
-
-            // Password form
-            document.getElementById('changePasswordForm').addEventListener('submit', handleChangePassword);
-
-            // Profile image upload
-            document.getElementById('profileImageInput').addEventListener('change', handleProfileImageUpload);
-
-            // Menu toggle
-            document.getElementById('menuToggle').addEventListener('click', () => {
-                document.querySelector('.sidebar').classList.toggle('collapsed');
-            });
-        }
-
-        // Handle update profile
-        async function handleUpdateProfile(event) {
-            event.preventDefault();
-
-            const name = document.getElementById('profileName').value.trim();
-            const businessName = document.getElementById('profileBusinessName').value.trim();
-
-            if (!name) {
-                showMessage('Name is required', 'error');
-                return;
+            document.getElementById('resetEmail').value = user.email || '';
+            
+            // Load profile photo
+            const photoEl = document.getElementById('profilePhoto');
+            if (user.profile_image) {
+                photoEl.src = user.profile_image;
+            } else {
+                photoEl.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23667eea"/><text x="50" y="60" text-anchor="middle" fill="white" font-size="40">' + (user.name ? user.name[0].toUpperCase() : 'U') + '</text></svg>';
             }
+        }
 
-            const submitButton = event.target.querySelector('button[type="submit"]');
-            const originalText = submitButton.innerHTML;
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-
+        // Update name form
+        document.getElementById('updateNameForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('profileName').value;
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            
             try {
-                const response = await fetch(API_ENDPOINTS.USER_PROFILE, {
+                const response = await fetch(`${API_ENDPOINTS.UPDATE_PROFILE}`, {
                     method: 'PUT',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({
-                        name: name,
-                        business_name: businessName
-                    })
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
                 });
-
-                const data = await response.json();
-
-                if (data.success && data.user) {
-                    // Update local storage
-                    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
-                    currentUser = data.user;
-                    populateProfile(data.user);
-                    loadUserInfo(); // Update topbar
-                    
-                    // If business name was added, clear profile completion flags
-                    if (businessName) {
-                        localStorage.removeItem('dataxpert_needs_profile_completion');
-                        localStorage.removeItem('dataxpert_profile_banner_dismissed');
-                    }
-                    
-                    showMessage('Profile updated successfully! ✓', 'success');
+                
+                const result = await response.json();
+                if (result.success) {
+                    // Update localStorage
+                    const user = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER));
+                    user.name = name;
+                    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+                    loadHeaderProfile();
+                    showMessage('Name updated successfully!', 'success');
                 } else {
-                    showMessage(data.message || 'Failed to update profile', 'error');
+                    showMessage(result.message || 'Failed to update name', 'error');
                 }
-            } catch (error) {
-                console.error('Error updating profile:', error);
-                showMessage('Error updating profile. Please try again.', 'error');
-            } finally {
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalText;
+            } catch (err) {
+                showMessage('Error updating name', 'error');
             }
-        }
+            
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Save Name';
+        });
 
-        // Handle change password
-        async function handleChangePassword(event) {
-            event.preventDefault();
-
+        // Change password form
+        document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
             const currentPassword = document.getElementById('currentPassword').value;
             const newPassword = document.getElementById('newPassword').value;
-            const confirmNewPassword = document.getElementById('confirmNewPassword').value;
-
-            if (newPassword !== confirmNewPassword) {
-                showMessage('New passwords do not match', 'error');
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (newPassword !== confirmPassword) {
+                showMessage('Passwords do not match', 'error');
                 return;
             }
-
-            if (newPassword.length < 6) {
-                showMessage('Password must be at least 6 characters', 'error');
-                return;
-            }
-
-            const submitButton = event.target.querySelector('button[type="submit"]');
-            const originalText = submitButton.innerHTML;
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Changing...';
-
+            
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+            
             try {
-                const response = await fetch(API_ENDPOINTS.CHANGE_PASSWORD, {
-                    method: 'POST',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({
-                        current_password: currentPassword,
-                        new_password: newPassword
-                    })
+                const response = await fetch(`${API_ENDPOINTS.CHANGE_PASSWORD}`, {
+                    method: 'PUT',
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
                 });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    document.getElementById('changePasswordForm').reset();
-                    showMessage('Password changed successfully! ✓', 'success');
+                
+                const result = await response.json();
+                if (result.success) {
+                    showMessage('Password updated successfully!', 'success');
+                    e.target.reset();
                 } else {
-                    showMessage(data.message || 'Failed to change password', 'error');
+                    showMessage(result.message || 'Failed to update password', 'error');
                 }
-            } catch (error) {
-                console.error('Error changing password:', error);
-                showMessage('Error changing password. Please try again.', 'error');
-            } finally {
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalText;
+            } catch (err) {
+                showMessage('Error updating password', 'error');
             }
-        }
+            
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-key"></i> Update Password';
+        });
 
-        // Handlevent.target.value = '';
-                return;
-            }
-
-            // Validate file size (5MB max)
-            if (file.size > 5 * 1024 * 1024) {
-                showMessage('Image size must be less than 5MB', 'error');
-                event.target.value = '';
-                return;
-            }
-
+        // Profile photo upload
+        document.getElementById('profileImageInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // Preview immediately
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                document.getElementById('profilePhoto').src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+            
+            // Upload to server
             const formData = new FormData();
             formData.append('profile_image', file);
-
+            
             try {
-                showMessage('Uploading image...', 'info');
-
-                const response = await fetch(API_ENDPOINTS.UPLOAD_PROFILE_IMAGE, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem(STORAGE_KEYS.TOKEN)}`
-                    },
+                const response = await fetch(`${API_ENDPOINTS.UPDATE_PROFILE}`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
                     body: formData
                 });
-
-                const data = await response.json();
-
-                if (data.success && data.profile_image) {
-                    // Update profile image in UI
-                    document.getElementById('profilePhoto').src = data.profile_image;
-                    
-                    // Update user in localStorage
-                    const userStr = localStorage.getItem(STORAGE_KEYS.USER);
-                    if (userStr) {
-                        const user = JSON.parse(userStr);
-                        user.profile_image = data.profile_image;
-                        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-                        loadUserInfo(); // Update topbar
-                    }
-
-                    showMessage('Profile photo updated successfully! ✓', 'success');
-                } else {
-                    showMessage(data.message || 'Failed to upload image', 'error');
+                
+                const result = await response.json();
+                if (result.success && result.data.profile_image) {
+                    const user = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER));
+                    user.profile_image = result.data.profile_image;
+                    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+                    loadHeaderProfile();
+                    showMessage('Photo updated!', 'success');
                 }
-            } catch (error) {
-                console.error('Error uploading image:', error);
-                showMessage('Error uploading image. Please try again.', 'error');
-            } finally {
-                event.target.value = ''; // Clear file input
-
-                    showMessage('Profile photo updated successfully!', 'success');
-                } else {
-                    showMessage(data.message || 'Failed to upload image', 'error');
-                }
-            } catch (error) {
-                console.error('Error uploading image:', error);
-                showMessage('Error uploading image', 'error');
+            } catch (err) {
+                showMessage('Error uploading photo', 'error');
             }
-        }
+        });
 
         // Toggle password visibility
         function togglePasswordVisibility(inputId) {
             const input = document.getElementById(inputId);
-            const button = input.parentElement.querySelector('.toggle-password i');
-            
+            const icon = input.nextElementSibling?.querySelector('i') || input.parentElement.querySelector('.toggle-password i');
             if (input.type === 'password') {
                 input.type = 'text';
-                button.classList.remove('fa-eye');
-                button.classList.add('fa-eye-slash');
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
             } else {
                 input.type = 'password';
-                button.classList.remove('fa-eye-slash');
-                button.classList.add('fa-eye');
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
             }
         }
 
-        // Show message
-        function showMessage(message, type = 'info') {
-            const toast = document.getElementById('messageToast');
-            toast.textContent = message;
-            toast.className = `message-toast ${type} show`;
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
+        // Forgot password modal
+        function openForgotPasswordModal() {
+            document.getElementById('forgotPasswordModal').style.display = 'block';
         }
+        
+        function closeForgotPasswordModal() {
+            document.getElementById('forgotPasswordModal').style.display = 'none';
+        }
+
+        document.getElementById('forgotPasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('resetEmail').value;
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                
+                showMessage('If your email exists, you will receive a reset link', 'success');
+                closeForgotPasswordModal();
+            } catch (err) {
+                showMessage('Error sending reset link', 'error');
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Reset Link';
+        });
+
+        // Search modal
+        function openSearchModal() {
+            document.getElementById('searchModal').classList.add('active');
+            document.getElementById('searchInput').focus();
+        }
+        
+        function closeSearchModal() {
+            document.getElementById('searchModal').classList.remove('active');
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                openSearchModal();
+            }
+            if (e.key === 'Escape') closeSearchModal();
+        });
+        
+        document.getElementById('searchModal').addEventListener('click', (e) => {
+            if (e.target.classList.contains('search-modal')) closeSearchModal();
+        });
+
+        // Message display
+        function showMessage(msg, type) {
+            const existing = document.querySelector('.toast-message');
+            if (existing) existing.remove();
+            
+            const toast = document.createElement('div');
+            toast.className = `toast-message toast-${type}`;
+            toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${msg}`;
+            toast.style.cssText = 'position:fixed;top:20px;right:20px;padding:15px 25px;border-radius:8px;z-index:9999;animation:slideIn .3s ease;';
+            toast.style.background = type === 'success' ? '#10b981' : '#ef4444';
+            toast.style.color = 'white';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Menu toggle
+        document.getElementById('menuToggle').addEventListener('click', () => {
+            document.querySelector('.sidebar').classList.toggle('active');
+        });
     </script>
 
     <style>
-        .profile-header-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 15px;
-            padding: 40px;
-            margin-bottom: 30px;
-            color: white;
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        .profile-simple-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
         }
 
-        .profile-header-content {
+        .profile-photo-card {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
-            gap: 40px;
+            padding: 40px;
         }
 
-        .profile-name-section {
-            flex: 1;
+        .profile-photo-center {
+            text-align: center;
         }
 
-        .profile-name-section h2 {
-            margin: 0 0 10px 0;
-            font-size: 32px;
-            font-weight: 700;
-        }
-
-        .profile-name-section p {
-            margin: 5px 0;
-            opacity: 0.9;
-            font-size: 16px;
-        }
-
-        .profile-business-name {
-            font-weight: 500;
-            margin-top: 10px !important;
-        }
-
-        .profile-photo-section {
-            flex-shrink: 0;
-        }
-
-        .profile-photo-wrapper {
+        .profile-photo-wrapper-large {
             position: relative;
             width: 150px;
             height: 150px;
-        }
-
-        .profile-photo {
-            width: 150px;
-            height: 150px;
+            margin: 0 auto;
             border-radius: 50%;
-            object-fit: cover;
-            border: 5px solid rgba(255,255,255,0.3);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-            transition: all 0.3s;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
         }
 
-        .profile-photo-overlay {
+        .profile-photo-large {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-overlay {
             position: absolute;
             top: 0;
             left: 0;
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            background: rgba(0,0,0,0.7);
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
             display: flex;
-            align-items: center;
+            flex-direction: column;
             justify-content: center;
+            align-items: center;
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: opacity .3s;
+            color: white;
         }
 
-        .profile-photo-wrapper:hover .profile-photo-overlay {
+        .profile-photo-wrapper-large:hover .photo-overlay {
             opacity: 1;
         }
 
-        .btn-photo-change {
-            background: none;
-            border: 2px solid white;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s;
+        .photo-overlay i {
+            font-size: 24px;
+            margin-bottom: 5px;
         }
 
-        .btn-photo-change:hover {
-            background: white;
-            color: #667eea;
+        .photo-overlay span {
+            font-size: 12px;
         }
 
-        .profile-cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-            gap: 30px;
+        .photo-hint {
+            margin-top: 15px;
+            color: var(--text-secondary);
+            font-size: 13px;
         }
 
-        .profile-form-container {
+        .simple-form {
             padding: 20px;
         }
 
-        .form-group {
+        .simple-form .form-group {
             margin-bottom: 20px;
         }
 
-        .form-group label {
+        .simple-form label {
             display: block;
             margin-bottom: 8px;
-            font-weight: 600;
-            color: #2d3748;
+            font-weight: 500;
+            color: var(--text-primary);
         }
 
-        .form-group input {
+        .simple-form input {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 14px;
-            transition: all 0.3s;
+            transition: border-color .2s, box-shadow .2s;
         }
 
-        .form-group input:focus {
+        .simple-form input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .form-hint {
-            display: block;
-            margin-top: 5px;
-            font-size: 12px;
-            color: #718096;
         }
 
         .password-input-wrapper {
@@ -642,119 +535,35 @@
 
         .toggle-password {
             position: absolute;
-            right: 10px;
+            right: 12px;
             top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
-            color: #718096;
-            cursor: pointer;
-            padding: 5px 10px;
-            font-size: 16px;
-        }
-
-        .toggle-password:hover {
-            color: #667eea;
-        }
-
-        .message-toast {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            padding: 16px 24px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.3s;
-            z-index: 10000;
-        }
-
-        .message-toast.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .message-toast.success {
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-        }
-
-        .message-toast.error {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        }
-
-        .message-toast.info {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .btn {
-            transition: all 0.3s ease;
+            color: var(--text-secondary);
             cursor: pointer;
         }
 
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none !important;
+        .forgot-password-link {
+            text-align: center;
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
         }
 
-        .btn:not(:disabled):hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        .forgot-password-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
         }
 
-        .btn:not(:disabled):active {
-            transform: translateY(0);
+        .forgot-password-link a:hover {
+            text-decoration: underline;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 16px;
+        .btn-full {
+            width: 100%;
         }
 
-        .btn-secondary {
-            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-            color: #2d3748;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 16px;
-        }
-
-        .fa-spinner {
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        /* Logout button - Red */
-        .btn-logout {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 16px;
-        }
-
-        .btn-logout:hover {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-        }
-
-        /* Blue button for Save Changes & Update Password */
         .btn-blue {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
@@ -762,27 +571,46 @@
             padding: 12px 24px;
             border-radius: 8px;
             font-weight: 600;
-            font-size: 16px;
+            cursor: pointer;
         }
 
         .btn-blue:hover {
             background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
         }
 
-        /* Profile header loading state - blue */
-        .profile-header-card.loading {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        /* Header profile styles */
+        .header-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-email {
+            font-size: 11px;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         @media (max-width: 768px) {
-            .profile-header-content {
-                flex-direction: column-reverse;
-                text-align: center;
-            }
-
-            .profile-cards-grid {
-                grid-template-columns: 1fr;
+            .user-details {
+                display: none;
             }
         }
     </style>

@@ -67,23 +67,22 @@
                 <h1>Dashboard</h1>
             </div>
             <div class="topbar-right">
-                <div class="last-login-info" id="lastLoginInfo" style="display: none;">
-                    <i class="fas fa-clock"></i>
-                    <span id="lastLoginTime">Last login: --</span>
-                </div>
                 <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark mode">
                     <i class="fas fa-moon"></i>
                 </button>
-                <button class="theme-toggle" id="searchBtn" onclick="openSearchModal()" title="Search (Ctrl+K)" style="margin-left: 10px;">
+                <button class="theme-toggle" onclick="openSearchModal()" title="Search (Ctrl+K)" style="margin-left: 8px;">
                     <i class="fas fa-search"></i>
                 </button>
-                <div class="user-info" style="margin-left: 15px;">
-                    <span id="userName">Loading...</span>
+                <a href="profile.html" class="header-profile" style="text-decoration: none; color: inherit; margin-left: 15px;">
                     <div class="user-avatar">
                         <img id="userAvatar" src="" alt="Profile" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                         <i class="fas fa-user" id="avatarFallback"></i>
                     </div>
-                </div>
+                    <div class="user-details">
+                        <span id="userName" class="user-name">Loading...</span>
+                        <span id="userEmail" class="user-email"></span>
+                    </div>
+                </a>
             </div>
         </header>
 
@@ -110,6 +109,25 @@
 
         <!-- Dashboard Content -->
         <div class="dashboard-container">
+            <!-- Action Buttons Bar -->
+            <div class="action-buttons-bar" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding: 15px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <button class="btn btn-primary btn-small" id="addDataBtn" title="Add data manually">
+                    <i class="fas fa-plus"></i> Add Data
+                </button>
+                <button class="btn btn-success btn-small" id="uploadDataBtn" title="Upload Excel/CSV file">
+                    <i class="fas fa-file-upload"></i> Upload File
+                </button>
+                <button class="btn btn-small" style="background: #06b6d4; color: white;" onclick="openExportModal()" title="Export data to CSV/Excel/PDF">
+                    <i class="fas fa-file-export"></i> Export
+                </button>
+                <button class="btn btn-small" style="background: #f59e0b; color: white;" onclick="openComparisonModal()" title="Compare different time periods">
+                    <i class="fas fa-balance-scale"></i> Compare
+                </button>
+                <button class="btn btn-danger btn-small" id="clearDataBtn" title="Clear all data">
+                    <i class="fas fa-trash"></i> Clear Data
+                </button>
+            </div>
+
             <!-- Stats Cards -->
             <div class="stats-grid">
                 <div class="stat-card-dash">
@@ -162,26 +180,6 @@
                 <div class="chart-card">
                     <div class="chart-header">
                         <h3>Sales Overview</h3>
-                        <div class="chart-actions" style="flex-wrap: wrap; gap: 8px;">
-                            <button class="btn btn-primary btn-small" id="addDataBtn" title="Add data manually">
-                                <i class="fas fa-plus"></i> Add Data
-                            </button>
-                            <button class="btn btn-success btn-small" id="uploadDataBtn" title="Upload Excel/CSV file">
-                                <i class="fas fa-file-upload"></i> Upload File
-                            </button>
-                            <button class="btn btn-small" style="background: #8b5cf6; color: white;" onclick="openImportModal()" title="Import data from CSV/Excel">
-                                <i class="fas fa-file-import"></i> Import
-                            </button>
-                            <button class="btn btn-small" style="background: #06b6d4; color: white;" onclick="openExportModal()" title="Export data to CSV/Excel/PDF">
-                                <i class="fas fa-file-export"></i> Export
-                            </button>
-                            <button class="btn btn-small" style="background: #f59e0b; color: white;" onclick="openComparisonModal()" title="Compare different time periods">
-                                <i class="fas fa-balance-scale"></i> Compare
-                            </button>
-                            <button class="btn btn-danger btn-small" id="clearDataBtn" title="Clear all data">
-                                <i class="fas fa-trash"></i> Clear Data
-                            </button>
-                        </div>
                     </div>
                     <canvas id="salesChart"></canvas>
                 </div>
@@ -533,6 +531,7 @@
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/theme.js"></script>
+    <script src="js/header-profile.js"></script>
     <script src="js/data-import-export.js"></script>
     <script src="js/comparison-analysis.js"></script>
     <script src="js/dashboard.js"></script>
@@ -595,5 +594,34 @@
         // Call on page load
         document.addEventListener('DOMContentLoaded', displayLastLogin);
     </script>
+    <style>
+        .header-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .user-email {
+            font-size: 11px;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        @media (max-width: 768px) {
+            .user-details { display: none; }
+        }
+    </style>
 </body>
 </html>

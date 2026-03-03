@@ -64,12 +64,22 @@
                 <h1>AI Analysis</h1>
             </div>
             <div class="topbar-right">
-                <div class="user-info">
-                    <span id="userName">Loading...</span>
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="theme-toggle" onclick="openSearchModal()" title="Search (Ctrl+K)" style="margin-left: 8px;">
+                    <i class="fas fa-search"></i>
+                </button>
+                <a href="profile.html" class="header-profile" style="text-decoration: none; color: inherit; margin-left: 15px;">
                     <div class="user-avatar">
-                        <i class="fas fa-user"></i>
+                        <img id="userAvatar" src="" alt="Profile" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                        <i class="fas fa-user" id="avatarFallback"></i>
                     </div>
-                </div>
+                    <div class="user-details">
+                        <span id="userName" class="user-name">Loading...</span>
+                        <span id="userEmail" class="user-email"></span>
+                    </div>
+                </a>
             </div>
         </header>
 
@@ -127,6 +137,51 @@
 
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/header-profile.js"></script>
     <script src="js/analysis.js"></script>
+    <script>
+        // Search Modal
+        function openSearchModal() {
+            document.getElementById('searchModal').classList.add('active');
+            document.getElementById('searchInput').focus();
+        }
+        function closeSearchModal() {
+            document.getElementById('searchModal').classList.remove('active');
+        }
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                openSearchModal();
+            }
+            if (e.key === 'Escape') closeSearchModal();
+        });
+    </script>
+    <style>
+        .header-profile { display: flex; align-items: center; gap: 10px; }
+        .user-details { display: flex; flex-direction: column; line-height: 1.2; }
+        .user-name { font-weight: 600; font-size: 14px; }
+        .user-email { font-size: 11px; color: var(--text-secondary); opacity: 0.8; }
+        .topbar-right { display: flex; align-items: center; gap: 8px; }
+        @media (max-width: 768px) { .user-details { display: none; } }
+    </style>
+
+    <!-- Search Modal -->
+    <div id="searchModal" class="search-modal">
+        <div class="search-modal-content">
+            <div class="search-header">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search pages..." autofocus>
+                <kbd>ESC</kbd>
+            </div>
+            <div class="search-results">
+                <a href="dashboard.html" class="search-item"><i class="fas fa-th-large"></i> Dashboard</a>
+                <a href="analysis.html" class="search-item"><i class="fas fa-robot"></i> AI Analysis</a>
+                <a href="history.html" class="search-item"><i class="fas fa-history"></i> History</a>
+                <a href="profile.html" class="search-item"><i class="fas fa-user"></i> Profile</a>
+                <a href="docs/index.html" class="search-item"><i class="fas fa-book"></i> Documentation</a>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
