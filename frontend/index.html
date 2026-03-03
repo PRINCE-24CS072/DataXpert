@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DataXpert - AI-Powered Business Analytics</title>
+    <!-- Preload Google Sign-In for faster auth -->
+    <link rel="preconnect" href="https://accounts.google.com">
+    <link rel="preconnect" href="https://apis.google.com">
+    <link rel="dns-prefetch" href="https://accounts.google.com">
+    <script src="https://accounts.google.com/gsi/client" async></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -24,6 +29,9 @@
                 <li><a href="#contact">Contact</a></li>
             </ul>
             <div class="nav-buttons">
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark mode" style="margin-right: 10px;">
+                    <i class="fas fa-moon"></i>
+                </button>
                 <button class="btn btn-secondary" id="loginBtn">Login</button>
                 <button class="btn btn-primary" id="signupBtn">Sign Up</button>
             </div>
@@ -177,6 +185,13 @@
                     <label for="loginPassword">Password</label>
                     <input type="password" id="loginPassword" required placeholder="••••••••">
                 </div>
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-password" id="forgotPasswordLink">Forgot password?</a>
+                </div>
                 <button type="submit" class="btn btn-primary btn-full">Login</button>
             </form>
 
@@ -227,6 +242,55 @@
         </div>
     </div>
 
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-modal="forgotPasswordModal">&times;</span>
+            <h2>Reset Password</h2>
+            <p>Enter your email and we'll send you a reset link</p>
+            
+            <form id="forgotPasswordForm">
+                <div class="form-group">
+                    <label for="forgotEmail">Email Address</label>
+                    <input type="email" id="forgotEmail" required placeholder="your@email.com">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Send Reset Link</button>
+            </form>
+
+            <p class="modal-footer">Remember your password? <a href="#" id="backToLogin">Back to Login</a></p>
+        </div>
+    </div>
+
+    <!-- Profile Setup Modal (after signup) -->
+    <div id="profileSetupModal" class="modal">
+        <div class="modal-content">
+            <h2>Complete Your Profile</h2>
+            <p>Welcome! Add your full name and a profile photo to personalize your account.</p>
+            
+            <form id="profileSetupForm">
+                <!-- Profile Photo Upload -->
+                <div class="form-group" style="text-align: center; margin-bottom: 20px;">
+                    <div style="position: relative; display: inline-block;">
+                        <img id="setupProfilePreview" src="https://ui-avatars.com/api/?name=User&background=3b82f6&color=fff&size=200" alt="Profile" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid #3b82f6; cursor: pointer;" onclick="document.getElementById('setupProfileImageInput').click()">
+                        <div style="position: absolute; bottom: 5px; right: 5px; background: #3b82f6; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('setupProfileImageInput').click()">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                    </div>
+                    <input type="file" id="setupProfileImageInput" accept="image/*" style="display: none;">
+                    <p style="font-size: 13px; color: #666; margin-top: 10px;">Click to add a profile photo</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="setupFullName">Full Name <span style="color: red;">*</span></label>
+                    <input type="text" id="setupFullName" required placeholder="Your full name">
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-full">Save & Continue</button>
+                <button type="button" class="btn btn-secondary btn-full" onclick="skipProfileSetup()" style="margin-top: 10px;">Skip for Now</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Google Profile Completion Modal -->
     <div id="googleProfileModal" class="modal">
         <div class="modal-content">
@@ -270,10 +334,77 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Scripts (Google script already loaded in head for faster auth) -->
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/theme.js"></script>
     <script src="js/main.js"></script>
+    <script>
+        // Forgot Password Modal Handlers
+        document.getElementById('forgotPasswordLink')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('forgotPasswordModal').style.display = 'block';
+        });
+        
+        document.getElementById('backToLogin')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('forgotPasswordModal').style.display = 'none';
+            document.getElementById('loginModal').style.display = 'block';
+        });
+        
+        document.getElementById('forgotPasswordForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('forgotEmail').value.trim();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            
+            try {
+                const response = await fetch(API_ENDPOINTS.BASE + '/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('Password reset link sent to your email!', 'success');
+                    document.getElementById('forgotPasswordModal').style.display = 'none';
+                } else {
+                    showMessage(data.message || 'Failed to send reset link', 'error');
+                }
+            } catch (error) {
+                showMessage('Error sending reset link. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
+        
+        // Remember Me Handler
+        document.getElementById('loginForm')?.addEventListener('submit', function() {
+            const rememberMe = document.getElementById('rememberMe')?.checked;
+            if (rememberMe) {
+                localStorage.setItem('dataxpert_remember_email', document.getElementById('loginEmail').value);
+            } else {
+                localStorage.removeItem('dataxpert_remember_email');
+            }
+        });
+        
+        // Auto-fill remembered email
+        document.addEventListener('DOMContentLoaded', () => {
+            const rememberedEmail = localStorage.getItem('dataxpert_remember_email');
+            if (rememberedEmail) {
+                const emailInput = document.getElementById('loginEmail');
+                const rememberCheckbox = document.getElementById('rememberMe');
+                if (emailInput) emailInput.value = rememberedEmail;
+                if (rememberCheckbox) rememberCheckbox.checked = true;
+            }
+        });
+    </script>
 </body>
 </html>

@@ -41,7 +41,7 @@
         </nav>
 
         <div class="sidebar-footer">
-            <button class="btn btn-secondary btn-full" onclick="logout()">
+            <button class="btn btn-logout btn-full" onclick="logout()">
                 <i class="fas fa-sign-out-alt"></i>
                 Logout
             </button>
@@ -72,12 +72,12 @@
         <!-- Profile Content -->
         <div class="dashboard-container">
             <!-- Profile Header Card -->
-            <div class="profile-header-card">
+            <div class="profile-header-card" id="profileHeaderCard">
                 <div class="profile-header-content">
                     <div class="profile-name-section">
-                        <h2 id="profileDisplayName">Loading...</h2>
-                        <p id="profileDisplayEmail">email@example.com</p>
-                        <p class="profile-business-name" id="profileDisplayBusiness">Business Name</p>
+                        <h2 id="profileDisplayName"></h2>
+                        <p id="profileDisplayEmail"></p>
+                        <p class="profile-business-name" id="profileDisplayBusiness"></p>
                     </div>
                     <div class="profile-photo-section">
                         <div class="profile-photo-wrapper">
@@ -115,7 +115,7 @@
                                 <label for="profileBusinessName">Business Name</label>
                                 <input type="text" id="profileBusinessName" placeholder="Your Business">
                             </div>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-blue">
                                 <i class="fas fa-save"></i> Save Changes
                             </button>
                         </form>
@@ -157,7 +157,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-secondary">
+                            <button type="submit" class="btn btn-blue">
                                 <i class="fas fa-key"></i> Update Password
                             </button>
                         </form>
@@ -175,8 +175,26 @@
     <script>
         let currentUser = null;
 
+        // Immediately load user data from localStorage before DOM loads
+        (function() {
+            const userStr = localStorage.getItem('dataxpert_user');
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    currentUser = user;
+                    // Pre-populate will happen after DOM ready
+                } catch(e) {}
+            }
+        })();
+
         // Check authentication
         document.addEventListener('DOMContentLoaded', async () => {
+            // Immediately populate from localStorage if available
+            if (currentUser) {
+                populateProfile(currentUser);
+                loadUserInfo();
+            }
+
             if (!isAuthenticated()) {
                 window.location.href = 'index.html';
                 return;
@@ -213,7 +231,7 @@
         // Load profile
         async function loadProfile() {
             try {
-                // First try to load from localStorage
+                // First try to load from localStorage (already done in DOMContentLoaded)
                 const userStr = localStorage.getItem(STORAGE_KEYS.USER);
                 if (userStr) {
                     const user = JSON.parse(userStr);
@@ -718,6 +736,43 @@
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
+        }
+
+        /* Logout button - Red */
+        .btn-logout {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .btn-logout:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Blue button for Save Changes & Update Password */
+        .btn-blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .btn-blue:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Profile header loading state - blue */
+        .profile-header-card.loading {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
         }
 
         @media (max-width: 768px) {

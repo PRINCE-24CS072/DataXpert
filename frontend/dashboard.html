@@ -11,6 +11,10 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS for Excel import/export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <!-- html2pdf for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body class="dashboard-page">
     <!-- Sidebar -->
@@ -45,7 +49,7 @@
         </nav>
 
         <div class="sidebar-footer">
-            <button class="btn btn-secondary btn-full" onclick="logout()">
+            <button class="btn btn-logout btn-full" onclick="logout()">
                 <i class="fas fa-sign-out-alt"></i>
                 Logout
             </button>
@@ -63,7 +67,17 @@
                 <h1>Dashboard</h1>
             </div>
             <div class="topbar-right">
-                <div class="user-info">
+                <div class="last-login-info" id="lastLoginInfo" style="display: none;">
+                    <i class="fas fa-clock"></i>
+                    <span id="lastLoginTime">Last login: --</span>
+                </div>
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="theme-toggle" id="searchBtn" onclick="openSearchModal()" title="Search (Ctrl+K)" style="margin-left: 10px;">
+                    <i class="fas fa-search"></i>
+                </button>
+                <div class="user-info" style="margin-left: 15px;">
                     <span id="userName">Loading...</span>
                     <div class="user-avatar">
                         <img id="userAvatar" src="" alt="Profile" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
@@ -148,12 +162,21 @@
                 <div class="chart-card">
                     <div class="chart-header">
                         <h3>Sales Overview</h3>
-                        <div class="chart-actions">
+                        <div class="chart-actions" style="flex-wrap: wrap; gap: 8px;">
                             <button class="btn btn-primary btn-small" id="addDataBtn" title="Add data manually">
                                 <i class="fas fa-plus"></i> Add Data
                             </button>
                             <button class="btn btn-success btn-small" id="uploadDataBtn" title="Upload Excel/CSV file">
                                 <i class="fas fa-file-upload"></i> Upload File
+                            </button>
+                            <button class="btn btn-small" style="background: #8b5cf6; color: white;" onclick="openImportModal()" title="Import data from CSV/Excel">
+                                <i class="fas fa-file-import"></i> Import
+                            </button>
+                            <button class="btn btn-small" style="background: #06b6d4; color: white;" onclick="openExportModal()" title="Export data to CSV/Excel/PDF">
+                                <i class="fas fa-file-export"></i> Export
+                            </button>
+                            <button class="btn btn-small" style="background: #f59e0b; color: white;" onclick="openComparisonModal()" title="Compare different time periods">
+                                <i class="fas fa-balance-scale"></i> Compare
                             </button>
                             <button class="btn btn-danger btn-small" id="clearDataBtn" title="Clear all data">
                                 <i class="fas fa-trash"></i> Clear Data
@@ -474,8 +497,103 @@
         </div>
     </div>
 
+    <!-- Search Modal (Ctrl+K) -->
+    <div class="search-modal" id="searchModal">
+        <div class="search-container">
+            <div class="search-input-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" class="search-input" id="searchInput" placeholder="Search pages, features..." autofocus>
+                <span class="search-shortcut">ESC</span>
+            </div>
+            <div class="search-results" id="searchResults">
+                <a href="dashboard.html" class="search-result-item">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="analysis.html" class="search-result-item">
+                    <i class="fas fa-robot"></i>
+                    <span>AI Analysis</span>
+                </a>
+                <a href="history.html" class="search-result-item">
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
+                </a>
+                <a href="profile.html" class="search-result-item">
+                    <i class="fas fa-user"></i>
+                    <span>Profile Settings</span>
+                </a>
+                <a href="docs/index.html" class="search-result-item">
+                    <i class="fas fa-book"></i>
+                    <span>Documentation</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/data-import-export.js"></script>
+    <script src="js/comparison-analysis.js"></script>
     <script src="js/dashboard.js"></script>
+    <script>
+        // Search Modal Functions
+        function openSearchModal() {
+            document.getElementById('searchModal').classList.add('active');
+            document.getElementById('searchInput').focus();
+        }
+        
+        function closeSearchModal() {
+            document.getElementById('searchModal').classList.remove('active');
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+K or Cmd+K to open search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                openSearchModal();
+            }
+            // ESC to close search
+            if (e.key === 'Escape') {
+                closeSearchModal();
+            }
+        });
+        
+        // Close search modal when clicking outside
+        document.getElementById('searchModal').addEventListener('click', (e) => {
+            if (e.target.classList.contains('search-modal')) {
+                closeSearchModal();
+            }
+        });
+        
+        // Display last login time
+        function displayLastLogin() {
+            const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                if (user.last_login) {
+                    const lastLogin = new Date(user.last_login);
+                    const now = new Date();
+                    const diffMs = now - lastLogin;
+                    const diffMins = Math.floor(diffMs / 60000);
+                    const diffHours = Math.floor(diffMs / 3600000);
+                    const diffDays = Math.floor(diffMs / 86400000);
+                    
+                    let timeText;
+                    if (diffMins < 1) timeText = 'Just now';
+                    else if (diffMins < 60) timeText = `${diffMins}m ago`;
+                    else if (diffHours < 24) timeText = `${diffHours}h ago`;
+                    else timeText = `${diffDays}d ago`;
+                    
+                    document.getElementById('lastLoginTime').textContent = `Last login: ${timeText}`;
+                    document.getElementById('lastLoginInfo').style.display = 'flex';
+                }
+            }
+        }
+        
+        // Call on page load
+        document.addEventListener('DOMContentLoaded', displayLastLogin);
+    </script>
 </body>
 </html>

@@ -2,7 +2,8 @@
 
 // Google Auth retry counter
 let googleAuthRetries = 0;
-const MAX_GOOGLE_AUTH_RETRIES = 10;
+const MAX_GOOGLE_AUTH_RETRIES = 20;
+const GOOGLE_RETRY_INTERVAL = 100; // Fast retry interval (100ms)
 
 // Track current Google action - determined by which modal is open
 function getCurrentGoogleAction() {
@@ -45,7 +46,7 @@ function initGoogleAuth() {
     } else {
         googleAuthRetries++;
         if (googleAuthRetries < MAX_GOOGLE_AUTH_RETRIES) {
-            setTimeout(initGoogleAuth, 500); // Retry after 500ms
+            setTimeout(initGoogleAuth, GOOGLE_RETRY_INTERVAL); // Fast retry
         } else {
             console.warn('Google Sign-In not available. Email/password authentication is still working.');
         }
@@ -162,30 +163,28 @@ async function handleGoogleCallback(response) {
             document.getElementById('loginModal').style.display = 'none';
             document.getElementById('signupModal').style.display = 'none';
             
-            // Redirect to dashboard after 1.5 seconds
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 1500);
+            // Redirect to dashboard immediately (fast redirect)
+            window.location.href = 'dashboard.html';
         } else {
             // Handle different error scenarios
             if (data.need_signup) {
                 // LOGIN attempt with non-existent account → Prompt to signup
                 showMessage('⚠ No account found. Please sign up first', 'error');
                 
-                // Switch to signup modal after 2 seconds
+                // Switch to signup modal quickly
                 setTimeout(() => {
                     document.getElementById('loginModal').style.display = 'none';
                     document.getElementById('signupModal').style.display = 'block';
-                }, 2000);
+                }, 800);
             } else if (data.already_exists) {
                 // SIGNUP attempt with existing account → Prompt to login
                 showMessage('⚠ Account already exists. Please login instead', 'error');
                 
-                // Switch to login modal after 2 seconds
+                // Switch to login modal quickly
                 setTimeout(() => {
                     document.getElementById('signupModal').style.display = 'none';
                     document.getElementById('loginModal').style.display = 'block';
-                }, 2000);
+                }, 800);
             } else {
                 // Generic error
                 showMessage(data.message || 'Google authentication failed', 'error');
@@ -294,10 +293,11 @@ async function handleSignup(event) {
                 localStorage.setItem('dataxpert_needs_profile_completion', 'true');
             }
             
-            showMessage('Account created successfully! ✓ Redirecting...', 'success');
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 1000);
+            showMessage('Account created successfully! ✓', 'success');
+            
+            // Close signup modal and show profile setup modal
+            document.getElementById('signupModal').style.display = 'none';
+            showProfileSetupModal(data.user);
         } else {
             // Show the specific error message from backend
             console.error('Signup failed:', data.message);
@@ -368,21 +368,20 @@ async function handleLogin(event) {
                 localStorage.setItem('dataxpert_cached_stats', JSON.stringify(data.stats));
             }
             
-            showMessage('Login successful! ✓ Redirecting...', 'success');
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 1000);
+            showMessage('Login successful! ✓', 'success');
+            // Immediate redirect for fast login
+            window.location.href = 'dashboard.html';
         } else {
             // Check if user needs to sign up first
             if (data.need_signup) {
                 showMessage('No account found with this email. Please sign up first', 'error');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnText;
-                // Optionally switch to signup modal after 2 seconds
+                // Quick switch to signup modal
                 setTimeout(() => {
                     closeModal('loginModal');
                     openModal('signupModal');
-                }, 2500);
+                }, 800);
             } else if (data.profile_incomplete) {
                 showMessage('Please complete your signup first', 'error');
                 submitBtn.disabled = false;
@@ -543,10 +542,9 @@ async function handleGoogleProfileCompletion(event) {
             // Remove profile completion flag
             localStorage.removeItem('dataxpert_needs_profile_completion');
             
-            showMessage('Profile completed! Redirecting...', 'success');
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 1000);
+            showMessage('Profile completed! ✓', 'success');
+            // Immediate redirect
+            window.location.href = 'dashboard.html';
         } else {
             showMessage(data.message || 'Failed to complete profile', 'error');
         }
@@ -568,9 +566,8 @@ function skipProfileCompletion() {
     // User already has token from Google signup, just redirect
     document.getElementById('googleProfileModal').style.display = 'none';
     showMessage('You can complete your profile anytime from settings', 'info');
-    setTimeout(() => {
-        window.location.href = 'dashboard.html';
-    }, 1000);
+    // Immediate redirect
+    window.location.href = 'dashboard.html';
 }
 
 // Close all modals utility
@@ -581,6 +578,150 @@ function closeAllModals() {
     });
 }
 
+// Show Profile Setup Modal (after signup)
+let profileSetupImageFile = null;
+
+function showProfileSetupModal(user) {
+    const modal = document.getElementById('profileSetupModal');
+    if (!modal) {
+        // If modal doesn't exist, redirect to dashboard
+        window.location.href = 'dashboard.html';
+        return;
+    }
+    
+    // Pre-fill name if available
+    const fullNameInput = document.getElementById('setupFullName');
+    if (fullNameInput && user && user.name) {
+        fullNameInput.value = user.name;
+    }
+    
+    // Update preview image
+    const previewImg = document.getElementById('setupProfilePreview');
+    if (previewImg && user && user.name) {
+        previewImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff&size=200`;
+    }
+    
+    modal.style.display = 'block';
+}
+
+// Handle profile image preview
+function setupProfileImagePreview() {
+    const fileInput = document.getElementById('setupProfileImageInput');
+    const previewImg = document.getElementById('setupProfilePreview');
+    
+    if (fileInput && previewImg) {
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    showMessage('Please select an image file', 'error');
+                    return;
+                }
+                
+                // Validate file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    showMessage('Image must be less than 5MB', 'error');
+                    return;
+                }
+                
+                profileSetupImageFile = file;
+                
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImg.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+}
+
+// Handle Profile Setup Form Submission
+async function handleProfileSetup(event) {
+    event.preventDefault();
+    
+    const fullName = document.getElementById('setupFullName').value.trim();
+    
+    if (!fullName) {
+        showMessage('Full name is required', 'error');
+        return;
+    }
+    
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    
+    try {
+        // First update the profile name
+        const profileResponse = await fetch(API_ENDPOINTS.USER_PROFILE, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+                name: fullName
+            })
+        });
+        
+        const profileData = await profileResponse.json();
+        
+        if (!profileData.success) {
+            showMessage(profileData.message || 'Failed to update profile', 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            return;
+        }
+        
+        // Update local storage with new name
+        let user = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || '{}');
+        user.name = fullName;
+        
+        // If there's a profile image to upload
+        if (profileSetupImageFile) {
+            const formData = new FormData();
+            formData.append('profile_image', profileSetupImageFile);
+            
+            const imageResponse = await fetch(API_ENDPOINTS.UPLOAD_PROFILE_IMAGE, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem(STORAGE_KEYS.TOKEN)}`
+                },
+                body: formData
+            });
+            
+            const imageData = await imageResponse.json();
+            
+            if (imageData.success && imageData.profile_image) {
+                user.profile_image = imageData.profile_image;
+            }
+        }
+        
+        // Save updated user to localStorage
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+        
+        showMessage('Profile setup complete! ✓', 'success');
+        
+        // Close modal and redirect immediately
+        document.getElementById('profileSetupModal').style.display = 'none';
+        window.location.href = 'dashboard.html';
+        
+    } catch (error) {
+        console.error('Profile setup error:', error);
+        showMessage('Error setting up profile. Please try again.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+// Skip profile setup
+function skipProfileSetup() {
+    document.getElementById('profileSetupModal').style.display = 'none';
+    showMessage('You can complete your profile anytime from settings', 'info');
+    // Immediate redirect
+    window.location.href = 'dashboard.html';
+}
+
 // Initialize auth when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     
@@ -588,6 +729,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
     const googleProfileForm = document.getElementById('googleProfileForm');
+    const profileSetupForm = document.getElementById('profileSetupForm');
 
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
@@ -600,23 +742,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (googleProfileForm) {
         googleProfileForm.addEventListener('submit', handleGoogleProfileCompletion);
     }
+    
+    if (profileSetupForm) {
+        profileSetupForm.addEventListener('submit', handleProfileSetup);
+        setupProfileImagePreview();
+    }
 
-    // Initialize Google Auth (with retry mechanism)
+    // Initialize Google Auth immediately (script preloaded in head)
     initGoogleAuth();
     
-    // Also try to initialize when modal opens (in case library loads late)
+    // Also render buttons when modal opens (in case Google loads late)
     const loginBtn = document.getElementById('loginBtn');
     const signupBtn = document.getElementById('signupBtn');
     
     if (loginBtn) {
         loginBtn.addEventListener('click', () => {
-            setTimeout(renderGoogleButtons, 100);
+            renderGoogleButtons(); // No delay - render immediately
         });
     }
     
     if (signupBtn) {
         signupBtn.addEventListener('click', () => {
-            setTimeout(renderGoogleButtons, 100);
+            renderGoogleButtons(); // No delay - render immediately
         });
     }
 });
