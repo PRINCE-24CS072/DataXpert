@@ -1,5 +1,8 @@
 // API Configuration
-const API_BASE_URL = 'https://dataxpert-5twp.onrender.com/api';
+// Update this to your Vercel backend URL once deployed
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000/api'
+    : 'https://dataxpert-backend.vercel.app/api'; // Change to your actual Vercel backend URL
 
 // Google OAuth Configuration
 const GOOGLE_CLIENT_ID = '72842356502-l4np4rfm963i89r17f8dlk7v7bmtrg6a.apps.googleusercontent.com';
