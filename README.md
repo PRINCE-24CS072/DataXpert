@@ -293,7 +293,7 @@ Contributions are welcome! Please:
 24CS072 - Prince Patel
 24CS076 - Srujal Patel
 
-## 📞 Contact
+## 📞 Contact Us
 
 Have a question, an idea, or just want to say hi?  
 I’m always open to connecting!
@@ -304,7 +304,7 @@ I’m always open to connecting!
 Feel free to reach out — I’d love to hear from you! 😊
 
 --
-**Made with ❤️ by SGP Group**
+**Made with ❤️ by DataXpert**
 
 *Last Updated: February 25, 2026 (Optimized Version)*
 
