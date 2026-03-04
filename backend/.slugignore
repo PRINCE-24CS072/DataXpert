@@ -1,0 +1,24 @@
+# Files to ignore during Render deployment
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.env.example
+.git/
+.gitignore
+*.md
+docs/
+tests/
+*.log
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
