@@ -1,5 +1,7 @@
+-- ============================================
 -- DataXpert Database Setup Script
--- Run this in Supabase SQL Editor to create all required tables
+-- Run this in Supabase SQL Editor
+-- ============================================
 
 -- ============================================
 -- 1. USERS TABLE
@@ -17,7 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Create index on email for faster lookups
+-- Create indexes on email and google_id for faster lookups
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id);
 
@@ -31,7 +33,6 @@ CREATE TABLE IF NOT EXISTS teams (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Create index on owner_id
 CREATE INDEX IF NOT EXISTS idx_teams_owner ON teams(owner_id);
 
 -- ============================================
@@ -46,7 +47,6 @@ CREATE TABLE IF NOT EXISTS team_members (
     UNIQUE(team_id, user_id)
 );
 
--- Create indexes for faster lookups
 CREATE INDEX IF NOT EXISTS idx_team_members_team ON team_members(team_id);
 CREATE INDEX IF NOT EXISTS idx_team_members_user ON team_members(user_id);
 
@@ -63,7 +63,6 @@ CREATE TABLE IF NOT EXISTS business_data (
     category VARCHAR(100)
 );
 
--- Create indexes for faster queries
 CREATE INDEX IF NOT EXISTS idx_business_data_user ON business_data(user_id);
 CREATE INDEX IF NOT EXISTS idx_business_data_date ON business_data(record_date);
 CREATE INDEX IF NOT EXISTS idx_business_data_category ON business_data(category);
@@ -79,7 +78,6 @@ CREATE TABLE IF NOT EXISTS chats (
     timestamp TIMESTAMP DEFAULT NOW()
 );
 
--- Create index on user_id
 CREATE INDEX IF NOT EXISTS idx_chats_user ON chats(user_id);
 
 -- ============================================
@@ -94,42 +92,22 @@ CREATE TABLE IF NOT EXISTS analysis_results (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Create index on chat_id
 CREATE INDEX IF NOT EXISTS idx_analysis_results_chat ON analysis_results(chat_id);
 
 -- ============================================
--- VERIFICATION QUERIES
+-- DATABASE VERIFICATION
 -- ============================================
--- Run these to verify all tables were created:
-
+-- Verify all tables were created
 SELECT table_name 
 FROM information_schema.tables 
-WHERE table_schema = 'public' a
+WHERE table_schema = 'public'
 AND table_type = 'BASE TABLE'
 ORDER BY table_name;
-
--- ============================================
--- SAMPLE DATA (OPTIONAL - for testing)
--- ============================================
--- Uncomment below to insert sample test data
-
-/*
--- Insert test user
-INSERT INTO users (name, email, password, role) 
-VALUES ('Test User', 'test@dataxpert.com', 'test123', 'user');
-
--- Insert test business data
-INSERT INTO business_data (user_id, record_date, sales, expenses, profit, category)
-VALUES 
-    (1, '2026-01-01', 5000.00, 3000.00, 2000.00, 'Retail'),
-    (1, '2026-01-02', 6000.00, 3500.00, 2500.00, 'Services'),
-    (1, '2026-01-03', 4500.00, 2800.00, 1700.00, 'Retail');
-*/
 
 -- ============================================
 -- SUCCESS MESSAGE
 -- ============================================
 DO $$
 BEGIN
-    RAISE NOTICE 'DataXpert database tables created successfully!';
+    RAISE NOTICE '✓ DataXpert database created successfully!';
 END $$;

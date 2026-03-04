@@ -65,19 +65,17 @@
 
 4. **Setup Database**
    
-   Run the SQL setup script in your Supabase SQL Editor:
+   Run the simplified SQL setup script in your Supabase SQL Editor:
    ```bash
-   # Copy contents of database_setup.sql and run in Supabase
+   # Copy contents of database.sql and run in Supabase
    ```
    
-   Or manually create tables (see `database_setup.sql` for complete schema):
+   Or manually create tables (see `database.sql` for complete schema):
    - `users` - User accounts with Google OAuth support
    - `business_data` - Business metrics and records
    - `chats` - AI chat conversation history
    - `analysis_results` - AI-generated insights
-   - `teams` - Team management (optional)
-   - `upload_history` - File upload tracking
-   - `activity_log` - User activity audit trail
+   - `teams` - Team management
 
 5. **Run Backend**
    ```bash
@@ -111,23 +109,81 @@
    - Backend API: `http://localhost:5000`
    - Documentation: Open `documentation/index.html`
 
-## 📁 Project Structure
+## 📁 Project Structure (Optimized)
 
 ```
 DataXpert/
-├──assets
-├── backend/              # Flask backend
-│   ├── ai/              # AI analysis modules
-│   ├── auth/            # Authentication
-│   ├── database/        # Database operations
-│   └── app.py           # Main application
-├── frontend/            # Frontend application
-│   ├── css/            # Stylesheets
-│   ├── js/             # JavaScript files
-│   └── *.html          # HTML pages
-└── documentation/       # Documentation website
-    └── *.html          # Documentation pages
+├── assets/              # Static assets (logo, images)
+├── backend/             # Flask backend application
+│   ├── ai/             # AI analysis modules
+│   │   ├── analysis_engine.py    # Business data analysis
+│   │   ├── anomaly_detector.py   # Anomaly detection
+│   │   ├── data_processor.py     # Data processing
+│   │   └── nlp_processor.py      # NLP for chat
+│   ├── auth/           # Authentication service
+│   │   └── auth_service.py       # Auth logic
+│   ├── database/       # Database operations
+│   │   └── supabase_client.py    # DB client
+│   ├── app.py          # Main Flask application
+│   ├── requirements.txt # Python dependencies
+│   ├── .env            # Environment variables (create from .env.example)
+│   └── .env.example    # Environment template
+├── frontend/           # Frontend application
+│   ├── css/           # Stylesheets
+│   │   ├── style.css
+│   │   ├── dashboard.css
+│   │   └── analysis.css
+│   ├── js/            # JavaScript modules
+│   │   ├── auth.js            # Authentication
+│   │   ├── config.js          # Configuration
+│   │   ├── dashboard.js       # Dashboard logic
+│   │   ├── analysis.js        # AI analysis
+│   │   ├── theme.js           # Theme switcher
+│   │   ├── header-profile.js  # Profile component
+│   │   ├── data-import-export.js  # Data operations
+│   │   └── comparison-analysis.js # Comparisons
+│   ├── docs/          # Documentation
+│   │   ├── api/       # API documentation
+│   │   │   └── swagger.yaml
+│   │   ├── css/       # Docs styles
+│   │   ├── js/        # Docs scripts
+│   │   ├── index.html # Docs home
+│   │   ├── setup.html # Setup guide
+│   │   ├── workflow.html # Workflow diagram
+│   │   ├── er-diagram.html # DB schema
+│   │   └── folder-structure.html # Structure
+│   ├── index.html     # Login/signup page
+│   ├── dashboard.html # Main dashboard
+│   ├── analysis.html  # AI analysis
+│   ├── history.html   # Activity history
+│   └── profile.html   # User profile
+├── database.sql       # Complete database setup
+└── README.md          # This file
 ```
+
+## 🔧 Optimization Changes
+
+This version includes the following optimizations:
+
+### Backend Optimization
+- ✅ **Removed duplicate code** - Fixed duplicate `complete_profile` function
+- ✅ **Streamlined environment** - Consolidated multiple .env files into one
+- ✅ **Unified requirements** - Merged development and production dependencies
+- ✅ **Removed cache files** - Cleaned all `__pycache__` directories
+
+### Frontend Optimization
+- ✅ **Consolidated config** - Removed redundant config.development.js and config.production.js
+- ✅ **Merged documentation** - Combined docs folder into frontend/docs
+- ✅ **Organized structure** - Better file organization and naming
+
+### Database Optimization
+- ✅ **Single SQL file** - Combined database_setup.sql and migration files into database.sql
+- ✅ **Simplified schema** - Removed unnecessary tables for core functionality
+
+### Documentation Cleanup
+- ✅ **Removed unnecessary files** - Cleaned up CHANGELOG, TESTING_GUIDE, OPTIMIZATION_REPORT, etc.
+- ✅ **Kept only README** - Single source of truth for project documentation
+- ✅ **Integrated docs** - All documentation now in frontend/docs folder
 
 ## 🛠️ Technology Stack
 
@@ -210,16 +266,16 @@ GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
 
 ## 📚 Documentation
 
-Complete documentation is available in the `documentation` folder:
+Complete documentation is available in the `frontend/docs` folder:
 
 - **Overview**: System architecture and features
 - **Setup Guide**: Detailed installation instructions
 - **Workflow**: Application workflow and data flow
 - **ER Diagram**: Database schema and relationships
 - **Folder Structure**: Project organization
-- **API Documentation**: API endpoints and usage
+- **API Documentation**: Swagger YAML in docs/api/
 
-Access documentation by opening `documentation/index.html` in a browser.
+Access documentation by opening `frontend/docs/index.html` in a browser.
 
 ## 🎯 Usage
 
@@ -268,14 +324,16 @@ Access documentation by opening `documentation/index.html` in a browser.
 
 ## 🚧 Future Enhancements
 
+- [x] CSV/Excel data import (Already implemented!)
 - [ ] Email notifications
-- [ ] CSV/Excel data import
 - [ ] PDF report generation
 - [ ] Advanced forecasting models
 - [ ] Mobile responsive improvements
 - [ ] Real-time collaboration
 - [ ] More chart types
 - [ ] Multi-language support
+- [ ] Data export functionality
+- [ ] Advanced team permissions
 
 ## 🤝 Contributing
 
@@ -306,16 +364,4 @@ Feel free to reach out — I’d love to hear from you! 😊
 --
 **Made with ❤️ by DataXpert**
 
-*Last Updated: February 25, 2026 (Optimized Version)*
-
-## ⚡ Performance Optimizations
-
-This version includes significant performance improvements:
-- ✅ Removed 50+ debug print statements from backend
-- ✅ Optimized database error handling
-- ✅ Cleaned frontend console.log statements
-- ✅ Improved query response times
-- ✅ Reduced debugging overhead for production use
-- ✅ Streamlined code for faster execution
-
-See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
+*Last Updated: March 4, 2026 (Optimized & Streamlined)*

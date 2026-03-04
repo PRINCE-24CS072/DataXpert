@@ -317,30 +317,6 @@ def complete_profile():
             
     except Exception as e:
         return jsonify({'message': f'Profile completion error: {str(e)}', 'success': False}), 500
-        
-        if len(password) < 6:
-            return jsonify({'message': 'Password must be at least 6 characters long', 'success': False}), 400
-        
-        result = auth_service.complete_profile(user_id, business_name, password, profile_image)
-        
-        if result['success']:
-            # Generate JWT token
-            token = jwt.encode({
-                'user_id': result['user']['id'],
-                'exp': datetime.utcnow() + timedelta(days=7)
-            }, app.config['JWT_SECRET_KEY'], algorithm="HS256")
-            
-            return jsonify({
-                'message': 'Profile completed successfully',
-                'success': True,
-                'token': token,
-                'user': result['user']
-            }), 200
-        else:
-            return jsonify(result), 400
-            
-    except Exception as e:
-        return jsonify({'message': f'Profile completion error: {str(e)}', 'success': False}), 500
 
 # ==================== USER ROUTES ====================
 
