@@ -26,11 +26,12 @@ function toggleTheme() {
 
 // Update toggle button appearance
 function updateThemeToggle(theme) {
-    const toggleBtn = document.getElementById('themeToggle');
-    if (toggleBtn) {
-        const icon = toggleBtn.querySelector('i');
-        if (icon) {
-            icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    const icon = document.querySelector('.theme-toggle-icon');
+    if (icon) {
+        if (theme === 'dark') {
+            icon.className = 'theme-toggle-icon fas fa-moon';
+        } else {
+            icon.className = 'theme-toggle-icon fas fa-sun';
         }
     }
 }

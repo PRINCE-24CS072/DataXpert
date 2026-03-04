@@ -29,11 +29,15 @@
                 <li><a href="#contact">Contact</a></li>
             </ul>
             <div class="nav-buttons">
-                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark mode" style="margin-right: 10px;">
-                    <i class="fas fa-moon"></i>
-                </button>
                 <button class="btn btn-secondary" id="loginBtn">Login</button>
                 <button class="btn btn-primary" id="signupBtn">Sign Up</button>
+                <div class="theme-toggle-wrapper" style="margin-left: 15px;">
+                    <button class="theme-toggle-switch" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark mode">
+                        <span class="theme-toggle-slider">
+                            <i class="theme-toggle-icon fas fa-sun"></i>
+                        </span>
+                    </button>
+                </div>
             </div>
         </div>
     </nav>
@@ -161,9 +165,10 @@
             <div class="footer-bottom">
                 <p>&copy; 2026 DataXpert. All rights reserved.</p>
                 <div class="social-links">
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-linkedin"></i></a>
-                    <a href="#"><i class="fab fa-github"></i></a>
+                    <a href="mailto:dataxpert677276@gmail.com" title="Email us"><i class="fas fa-envelope"></i></a>
+                    <a href="https://www.instagram.com/dataxpert677276" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="https://x.com/DataXpert677276" target="_blank" title="X"><i class="fab fa-twitter"></i></a>
+                    <a href="https://github.com/dataXpert-677276/DataXpert" target="_blank" title="GitHub"><i class="fab fa-github"></i></a>
                 </div>
             </div>
         </div>

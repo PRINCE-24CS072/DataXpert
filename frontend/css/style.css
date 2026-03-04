@@ -114,7 +114,132 @@
     flex: 1;
 }
 
-/* Theme Toggle Button */
+/* Theme Toggle Switch - Beautiful Design */
+.theme-toggle-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.theme-toggle-switch {
+    position: relative;
+    width: 70px;
+    height: 34px;
+    background: linear-gradient(135deg, #5ea3f5 0%, #4a90e2 100%);
+    border-radius: 34px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+    border: none;
+    overflow: hidden;
+}
+
+.theme-toggle-switch:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform: scale(1.05);
+}
+
+.theme-toggle-slider {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 28px;
+    height: 28px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-toggle-icon {
+    font-size: 14px;
+    color: #f59e0b;
+    transition: all 0.4s ease;
+}
+
+/* Sun decoration dots */
+.theme-toggle-switch::before {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    top: 8px;
+    right: 12px;
+    transition: all 0.4s ease;
+}
+
+.theme-toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    top: 18px;
+    right: 18px;
+    transition: all 0.4s ease;
+}
+
+/* Dark mode styles */
+[data-theme="dark"] .theme-toggle-switch {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+}
+
+[data-theme="dark"] .theme-toggle-slider {
+    transform: translateX(36px);
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+}
+
+[data-theme="dark"] .theme-toggle-icon {
+    color: #fbbf24;
+}
+
+/* Moon and stars decoration */
+[data-theme="dark"] .theme-toggle-switch::before {
+    width: 3px;
+    height: 3px;
+    top: 8px;
+    left: 14px;
+    right: auto;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="dark"] .theme-toggle-switch::after {
+    width: 2px;
+    height: 2px;
+    top: 20px;
+    left: 10px;
+    right: auto;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+/* Additional stars for dark mode */
+[data-theme="dark"] .theme-toggle-slider::before {
+    content: '✦';
+    position: absolute;
+    font-size: 6px;
+    color: white;
+    top: -12px;
+    right: -8px;
+    opacity: 0.8;
+}
+
+[data-theme="dark"] .theme-toggle-slider::after {
+    content: '✦';
+    position: absolute;
+    font-size: 4px;
+    color: white;
+    bottom: -10px;
+    left: -6px;
+    opacity: 0.6;
+}
+
+/* Regular icon buttons (search, etc) */
 .theme-toggle {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
@@ -132,7 +257,7 @@
 .theme-toggle:hover {
     background: var(--primary-color);
     color: white;
-    transform: rotate(180deg);
+    transform: scale(1.1);
 }
 
 * {
@@ -1276,6 +1401,43 @@ body {
 
 [data-theme="dark"] .about {
     background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .features {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .floating-card {
+    background: var(--card-bg);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .floating-card span {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .section-title {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .section-subtitle {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .btn-white {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+}
+
+[data-theme="dark"] .btn-white:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+[data-theme="dark"] .about-text p {
+    color: var(--text-secondary);
 }
 
 [data-theme="dark"] .btn-google {

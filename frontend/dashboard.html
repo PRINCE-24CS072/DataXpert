@@ -67,12 +67,16 @@
                 <h1>Dashboard</h1>
             </div>
             <div class="topbar-right">
-                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark mode">
-                    <i class="fas fa-moon"></i>
-                </button>
-                <button class="theme-toggle" onclick="openSearchModal()" title="Search (Ctrl+K)" style="margin-left: 8px;">
+                <button class="theme-toggle" onclick="openSearchModal()" title="Search (Ctrl+K)">
                     <i class="fas fa-search"></i>
                 </button>
+                <div class="theme-toggle-wrapper" style="margin-left: 12px;">
+                    <button class="theme-toggle-switch" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark mode">
+                        <span class="theme-toggle-slider">
+                            <i class="theme-toggle-icon fas fa-sun"></i>
+                        </span>
+                    </button>
+                </div>
                 <a href="profile.html" class="header-profile" style="text-decoration: none; color: inherit; margin-left: 15px;">
                     <div class="user-avatar">
                         <img id="userAvatar" src="" alt="Profile" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">

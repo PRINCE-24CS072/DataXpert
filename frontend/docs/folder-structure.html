@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Folder Structure - DataXpert Documentation</title>
+    <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="css/docs.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -13,20 +14,44 @@
             <div class="logo">
                 <span>DataXpert Docs</span>
             </div>
-            <a href="../index.html" class="back-link">
-                <i class="fas fa-arrow-left"></i> Back to App
-            </a>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="theme-toggle-wrapper">
+                    <button class="theme-toggle-switch" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark mode">
+                        <span class="theme-toggle-slider">
+                            <i class="theme-toggle-icon fas fa-sun"></i>
+                        </span>
+                    </button>
+                </div>
+                <a href="../index.html" class="back-link">
+                    <i class="fas fa-arrow-left"></i> Back to App
+                </a>
+            </div>
         </div>
     </nav>
 
     <div class="docs-layout">
         <aside class="docs-sidebar">
             <div class="sidebar-section">
+                <h3>Getting Started</h3>
+                <ul>
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="setup.html">Setup Guide</a></li>
+                    <li><a href="workflow.html">Workflow</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
                 <h3>Architecture</h3>
                 <ul>
-                    <li><a href="architecture.html">System Architecture</a></li>
+                    <li><a href="system-architecture.html">System Architecture</a></li>
                     <li><a href="er-diagram.html">ER Diagram</a></li>
                     <li><a href="folder-structure.html" class="active">Folder Structure</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <h3>About</h3>
+                <ul>
+                    <li><a href="index.html#sgp-group">SGP Group</a></li>
+                    <li><a href="index.html#contact">Contact</a></li>
                 </ul>
             </div>
         </aside>
@@ -40,12 +65,17 @@
                 <div class="code-block">
                     <pre><code>DataXpert/
 │
+├── assets/                     # Project assets
+│   ├── logo.png               # DataXpert logo
+│   └── 2.png                   # Additional assets
+│
 ├── backend/                    # Backend application
 │   ├── ai/                     # AI and analysis modules
 │   │   ├── __init__.py
 │   │   ├── analysis_engine.py  # Main analysis engine
 │   │   ├── nlp_processor.py    # NLP processing
-│   │   └── anomaly_detector.py # Anomaly detection
+│   │   ├── anomaly_detector.py # Anomaly detection
+│   │   └── data_processor.py   # Data preprocessing
 │   │
 │   ├── auth/                   # Authentication module
 │   │   ├── __init__.py
@@ -61,38 +91,39 @@
 │
 ├── frontend/                   # Frontend application
 │   ├── css/                    # Stylesheets
-│   │   ├── style.css           # Main styles
+│   │   ├── style.css           # Main styles with theme system
 │   │   ├── dashboard.css       # Dashboard styles
 │   │   └── analysis.css        # Analysis page styles
 │   │
 │   ├── js/                     # JavaScript files
 │   │   ├── config.js           # Configuration & API endpoints
 │   │   ├── auth.js             # Authentication logic
+│   │   ├── theme.js            # Theme toggle functionality
 │   │   ├── main.js             # Homepage logic
 │   │   ├── dashboard.js        # Dashboard logic
-│   │   └── analysis.js         # AI analysis logic
+│   │   ├── analysis.js         # AI analysis logic
+│   │   └── header-profile.js   # User profile header component
 │   │
-│   ├── index.html              # Homepage
+│   ├── docs/                   # Documentation website
+│   │   ├── css/
+│   │   │   └── docs.css        # Documentation styles
+│   │   ├── js/
+│   │   │   └── docs.js         # Documentation scripts
+│   │   ├── index.html          # Documentation home
+│   │   ├── setup.html          # Setup guide
+│   │   ├── workflow.html       # Workflow documentation
+│   │   ├── system-architecture.html  # System architecture
+│   │   ├── er-diagram.html     # Database schema
+│   │   └── folder-structure.html     # This file
+│   │
+│   ├── index.html              # Landing page
 │   ├── dashboard.html          # Dashboard page
-│   └── analysis.html           # AI analysis page
+│   ├── analysis.html           # AI analysis page
+│   ├── history.html            # Activity history page
+│   └── profile.html            # User profile page
 │
-└── documentation/              # Documentation website
-    ├── css/                    # Documentation styles
-    │   └── docs.css
-    │
-    ├── js/                     # Documentation scripts
-    │   └── docs.js
-    │
-    ├── images/                 # Documentation images
-    │   ├── er-diagram.png
-    │   └── flow-diagram.png
-    │
-    ├── index.html              # Documentation home
-    ├── workflow.html           # Workflow documentation
-    ├── er-diagram.html         # Database schema
-    ├── folder-structure.html   # This file
-    ├── architecture.html       # System architecture
-    └── setup.html              # Setup guide</code></pre>
+├── database.sql                # Complete database setup script
+└── README.md                   # Project documentation</code></pre>
                 </div>
             </section>
 
@@ -104,6 +135,7 @@
                     <li><code>analysis_engine.py</code> - Core analysis logic, performs statistical analysis, generates insights</li>
                     <li><code>nlp_processor.py</code> - Natural language processing, intent extraction, entity recognition</li>
                     <li><code>anomaly_detector.py</code> - Anomaly detection using Z-scores and IQR methods</li>
+                    <li><code>data_processor.py</code> - Data preprocessing and validation</li>
                 </ul>
 
                 <h3>Auth Module (<code>backend/auth/</code>)</h3>
@@ -133,34 +165,38 @@
                     <li><code>index.html</code> - Landing page with login/signup modals</li>
                     <li><code>dashboard.html</code> - Main dashboard with charts and stats</li>
                     <li><code>analysis.html</code> - AI chat interface for data analysis</li>
+                    <li><code>history.html</code> - Activity history and data management</li>
+                    <li><code>profile.html</code> - User profile management</li>
                 </ul>
 
                 <h3>CSS Files</h3>
                 <ul>
-                    <li><code>style.css</code> - Global styles, components, utilities</li>
+                    <li><code>style.css</code> - Global styles, theme system, components</li>
                     <li><code>dashboard.css</code> - Dashboard-specific styles</li>
                     <li><code>analysis.css</code> - AI analysis page styles</li>
                 </ul>
 
                 <h3>JavaScript Files</h3>
                 <ul>
-                    <li><code>config.js</code> - API configuration, endpoints, helpers</li>
+                    <li><code>config.js</code> - API configuration, endpoints, storage keys</li>
                     <li><code>auth.js</code> - Authentication logic, Google OAuth integration</li>
+                    <li><code>theme.js</code> - Dark/light theme toggle functionality</li>
                     <li><code>main.js</code> - Homepage interactivity, modal management</li>
                     <li><code>dashboard.js</code> - Dashboard data loading, chart rendering</li>
                     <li><code>analysis.js</code> - AI chat functionality, analysis display</li>
+                    <li><code>header-profile.js</code> - User profile header component</li>
                 </ul>
             </section>
 
             <section class="doc-section">
                 <h2>Documentation Structure</h2>
-                <p>The documentation website is completely separate from the main application and provides comprehensive guides:</p>
+                <p>The documentation website is located at <code>frontend/docs/</code> and provides comprehensive guides:</p>
                 <ul>
                     <li><strong>Getting Started:</strong> Overview, setup guide, workflow</li>
-                    <li><strong>Architecture:</strong> System design, database schema, folder structure</li>
-                    <li><strong>Features:</strong> Detailed feature documentation</li>
-                    <li><strong>About:</strong> SGP Group info, contact details</li>
+                    <li><strong>Architecture:</strong> System architecture, database schema, folder structure</li>
+                    <li><strong>About:</strong> Team info, social media links</li>
                 </ul>
+                <p>All documentation pages include dark/light theme support and responsive navigation.</p>
             </section>
 
             <section class="doc-section">
@@ -172,10 +208,10 @@
                     <ul>
                         <li>Authentication endpoints (<code>/api/auth/*</code>)</li>
                         <li>User management (<code>/api/user/*</code>)</li>
-                        <li>Team operations (<code>/api/teams/*</code>)</li>
-                        <li>Business data (<code>/api/business/*</code>)</li>
+                        <li>Business data (<code>/api/business/*</code>, <code>/api/business-data/*</code>)</li>
                         <li>AI analysis (<code>/api/ai/*</code>)</li>
-                        <li>Dashboard (<code>/api/dashboard/*</code>)</li>
+                        <li>Activity history (<code>/api/history/*</code>)</li>
+                        <li>Dashboard stats (<code>/api/dashboard/*</code>)</li>
                     </ul>
                 </div>
 
@@ -232,11 +268,12 @@
             </section>
 
             <footer class="docs-footer">
-                <p>&copy; 2024 DataXpert by SGP Group. All rights reserved.</p>
+                <p>&copy; 2026 DataXpert by SGP Group. All rights reserved.</p>
             </footer>
         </main>
     </div>
 
+    <script src="../js/theme.js"></script>
     <script src="js/docs.js"></script>
 </body>
 </html>

@@ -8,6 +8,21 @@
     --border-color: #e5e7eb;
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --card-bg: #ffffff;
+}
+
+/* Dark Mode Variables */
+[data-theme="dark"] {
+    --primary-color: #6366f1;
+    --primary-dark: #4f46e5;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --border-color: #334155;
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 12px -1px rgb(0 0 0 / 0.4);
+    --card-bg: #1e293b;
 }
 
 * {
@@ -433,12 +448,387 @@ body {
     color: var(--primary-color);
 }
 
+/* Team Cards */
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin: 2rem 0;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 968px) {
+    .team-grid {
+        grid-template-columns: 1fr;
+        max-width: 400px;
+    }
+}
+
+.team-card {
+    background: var(--bg-secondary);
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 2px solid var(--border-color);
+}
+
+.team-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.15);
+    border-color: var(--primary-color);
+}
+
+.team-avatar {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 1.5rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    color: white;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.team-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0.5rem 0;
+}
+
+.team-id {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    margin: 0.5rem 0;
+    letter-spacing: 1px;
+}
+
+.team-role {
+    font-size: 1rem;
+    color: var(--primary-color);
+    font-weight: 600;
+    margin: 1rem 0 0.5rem;
+}
+
+.team-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Social Media Cards */
+.social-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin: 2rem 0;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 1024px) {
+    .social-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .social-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.social-card {
+    background: var(--bg-secondary);
+    padding: 2rem 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 2px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+.social-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary-color);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.15);
+}
+
+.social-card i {
+    font-size: 3rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.social-card h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.social-card p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    word-break: break-word;
+}
+
+.social-card:hover i {
+    transform: scale(1.1);
+    transition: transform 0.3s ease;
+}
+
+/* Specific Social Media Colors */
+.social-card:nth-child(1) i {
+    color: #EA4335; /* Gmail Red */
+}
+
+.social-card:nth-child(2) i {
+    color: #333; /* GitHub Dark */
+}
+
+.social-card:nth-child(3) i {
+    color: #E4405F; /* Instagram Pink */
+}
+
+.social-card:nth-child(4) i {
+    color: #000000; /* X Black */
+}
+
+[data-theme="dark"] .social-card:nth-child(2) i {
+    color: #ffffff; /* GitHub White in dark mode */
+}
+
+[data-theme="dark"] .social-card:nth-child(4) i {
+    color: #ffffff; /* X White in dark mode */
+}
+
 /* Footer */
 .docs-footer {
     margin-top: 4rem;
     padding-top: 2rem;
     border-top: 1px solid var(--border-color);
     text-align: center;
+    color: var(--text-secondary);
+}
+
+/* Dark Mode Styles for Docs */
+[data-theme="dark"] body {
+    background: var(--bg-primary);
+}
+
+[data-theme="dark"] .docs-nav {
+    background: var(--card-bg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .docs-sidebar {
+    background: var(--card-bg);
+}
+
+[data-theme="dark"] .docs-content {
+    background: var(--card-bg);
+}
+
+[data-theme="dark"] .sidebar-section a {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .sidebar-section a.active,
+[data-theme="dark"] .sidebar-section a:hover {
+    color: var(--primary-color);
+    background: rgba(99, 102, 241, 0.1);
+}
+
+[data-theme="dark"] .code-block {
+    background: var(--bg-primary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] pre {
+    background: var(--bg-primary);
+}
+
+[data-theme="dark"] code {
+    background: var(--bg-primary);
+    color: #e879f9;
+}
+
+[data-theme="dark"] .info-box {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: var(--primary-color);
+}
+
+[data-theme="dark"] .warning-box {
+    background: rgba(234, 179, 8, 0.1);
+    border-color: #eab308;
+}
+
+[data-theme="dark"] .feature-box {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .feature-box:hover {
+    border-color: var(--primary-color);
+    background: rgba(99, 102, 241, 0.05);
+}
+
+[data-theme="dark"] .tech-badge {
+    background: var(--bg-primary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] table {
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] th {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] td {
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .doc-table {
+    background: var(--card-bg);
+}
+
+[data-theme="dark"] .doc-table th {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .doc-table td {
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .doc-table code {
+    background: var(--bg-primary);
+    color: #e879f9;
+}
+
+[data-theme="dark"] .workflow-step {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .workflow-step h3 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .workflow-step p {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .journey-step {
+    background: var(--bg-primary);
+}
+
+[data-theme="dark"] .journey-step h3 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .journey-step p,
+[data-theme="dark"] .journey-step li {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .diagram-caption {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .table-doc h3 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .contact-card {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .team-card {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .team-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+}
+
+[data-theme="dark"] .team-name {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .team-id {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .team-description {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .social-card {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .social-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+}
+
+[data-theme="dark"] .social-card h4 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .social-card p {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .docs-footer {
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .alert {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: var(--primary-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .alert-info {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .step-content h3 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .step-content p {
     color: var(--text-secondary);
 }
 

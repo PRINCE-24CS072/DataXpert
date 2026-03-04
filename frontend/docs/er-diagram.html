@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ER Diagram - DataXpert Documentation</title>
+    <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="css/docs.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -13,20 +14,44 @@
             <div class="logo">
                 <span>DataXpert Docs</span>
             </div>
-            <a href="../index.html" class="back-link">
-                <i class="fas fa-arrow-left"></i> Back to App
-            </a>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="theme-toggle-wrapper">
+                    <button class="theme-toggle-switch" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark mode">
+                        <span class="theme-toggle-slider">
+                            <i class="theme-toggle-icon fas fa-sun"></i>
+                        </span>
+                    </button>
+                </div>
+                <a href="../index.html" class="back-link">
+                    <i class="fas fa-arrow-left"></i> Back to App
+                </a>
+            </div>
         </div>
     </nav>
 
     <div class="docs-layout">
         <aside class="docs-sidebar">
             <div class="sidebar-section">
+                <h3>Getting Started</h3>
+                <ul>
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="setup.html">Setup Guide</a></li>
+                    <li><a href="workflow.html">Workflow</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
                 <h3>Architecture</h3>
                 <ul>
-                    <li><a href="architecture.html">System Architecture</a></li>
+                    <li><a href="system-architecture.html">System Architecture</a></li>
                     <li><a href="er-diagram.html" class="active">ER Diagram</a></li>
                     <li><a href="folder-structure.html">Folder Structure</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <h3>About</h3>
+                <ul>
+                    <li><a href="index.html#sgp-group">SGP Group</a></li>
+                    <li><a href="index.html#contact">Contact</a></li>
                 </ul>
             </div>
         </aside>
@@ -37,9 +62,10 @@
 
             <section class="doc-section">
                 <h2>Database Structure</h2>
-                <div class="diagram-box">
-                    <img src="../images/er-diagram.png" alt="ER Diagram" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                    <p class="diagram-caption">Complete database schema showing all tables and relationships</p>
+                <div class="info-box">
+                    <h3>Database Schema Overview</h3>
+                    <p>The DataXpert database consists of 4 main tables that manage user authentication, business data storage, and AI analysis results. All relationships are defined with foreign keys to maintain data integrity.</p>
+                    <p style="margin-top: 1rem;"><strong>Main Entities:</strong> Users, Business Data, Chats, Analysis Results</p>
                 </div>
             </section>
 
@@ -105,93 +131,7 @@
                 </div>
 
                 <div class="table-doc">
-                    <h3>2. TEAMS</h3>
-                    <table class="doc-table">
-                        <thead>
-                            <tr>
-                                <th>Column</th>
-                                <th>Type</th>
-                                <th>Constraints</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>id</code></td>
-                                <td>int</td>
-                                <td>PK, AUTO_INCREMENT</td>
-                                <td>Unique team identifier</td>
-                            </tr>
-                            <tr>
-                                <td><code>team_name</code></td>
-                                <td>string</td>
-                                <td>NOT NULL</td>
-                                <td>Name of the team</td>
-                            </tr>
-                            <tr>
-                                <td><code>owner_id</code></td>
-                                <td>int</td>
-                                <td>FK (users.id)</td>
-                                <td>Team owner reference</td>
-                            </tr>
-                            <tr>
-                                <td><code>created_at</code></td>
-                                <td>datetime</td>
-                                <td>DEFAULT NOW()</td>
-                                <td>Team creation timestamp</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="table-doc">
-                    <h3>3. TEAM_MEMBERS</h3>
-                    <table class="doc-table">
-                        <thead>
-                            <tr>
-                                <th>Column</th>
-                                <th>Type</th>
-                                <th>Constraints</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>id</code></td>
-                                <td>int</td>
-                                <td>PK, AUTO_INCREMENT</td>
-                                <td>Unique membership identifier</td>
-                            </tr>
-                            <tr>
-                                <td><code>team_id</code></td>
-                                <td>int</td>
-                                <td>FK (teams.id)</td>
-                                <td>Team reference</td>
-                            </tr>
-                            <tr>
-                                <td><code>user_id</code></td>
-                                <td>int</td>
-                                <td>FK (users.id)</td>
-                                <td>User reference</td>
-                            </tr>
-                            <tr>
-                                <td><code>role</code></td>
-                                <td>string</td>
-                                <td>DEFAULT 'member'</td>
-                                <td>Member role (owner/admin/member)</td>
-                            </tr>
-                            <tr>
-                                <td><code>joined_at</code></td>
-                                <td>datetime</td>
-                                <td>DEFAULT NOW()</td>
-                                <td>Join timestamp</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="table-doc">
-                    <h3>4. BUSINESS_DATA</h3>
+                    <h3>2. BUSINESS_DATA</h3>
                     <table class="doc-table">
                         <thead>
                             <tr>
@@ -249,7 +189,7 @@
                 </div>
 
                 <div class="table-doc">
-                    <h3>5. CHATS</h3>
+                    <h3>3. CHATS</h3>
                     <table class="doc-table">
                         <thead>
                             <tr>
@@ -295,7 +235,7 @@
                 </div>
 
                 <div class="table-doc">
-                    <h3>6. ANALYSIS_RESULTS</h3>
+                    <h3>4. ANALYSIS_RESULTS</h3>
                     <table class="doc-table">
                         <thead>
                             <tr>
@@ -350,9 +290,6 @@
             <section class="doc-section">
                 <h2>Relationships</h2>
                 <ul>
-                    <li><strong>Users → Teams:</strong> One-to-Many (A user can create multiple teams)</li>
-                    <li><strong>Users → Team_Members:</strong> One-to-Many (A user can be in multiple teams)</li>
-                    <li><strong>Teams → Team_Members:</strong> One-to-Many (A team has multiple members)</li>
                     <li><strong>Users → Business_Data:</strong> One-to-Many (A user has multiple data entries)</li>
                     <li><strong>Users → Chats:</strong> One-to-Many (A user has multiple chat sessions)</li>
                     <li><strong>Chats → Analysis_Results:</strong> One-to-Many (A chat can have multiple analysis results)</li>
@@ -360,11 +297,12 @@
             </section>
 
             <footer class="docs-footer">
-                <p>&copy; 2024 DataXpert by SGP Group. All rights reserved.</p>
+                <p>&copy; 2026 DataXpert by SGP Group. All rights reserved.</p>
             </footer>
         </main>
     </div>
 
+    <script src="../js/theme.js"></script>
     <script src="js/docs.js"></script>
 </body>
 </html>

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Architecture - DataXpert Documentation</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="css/docs.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="docs-nav">
+        <div class="container">
+            <div class="logo">
+                <span>DataXpert Docs</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="theme-toggle-wrapper">
+                    <button class="theme-toggle-switch" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark mode">
+                        <span class="theme-toggle-slider">
+                            <i class="theme-toggle-icon fas fa-sun"></i>
+                        </span>
+                    </button>
+                </div>
+                <a href="../index.html" class="back-link">
+                    <i class="fas fa-arrow-left"></i> Back to App
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-section">
+                <h3>Getting Started</h3>
+                <ul>
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="setup.html">Setup Guide</a></li>
+                    <li><a href="workflow.html">Workflow</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <h3>Architecture</h3>
+                <ul>
+                    <li><a href="system-architecture.html" class="active">System Architecture</a></li>
+                    <li><a href="er-diagram.html">ER Diagram</a></li>
+                    <li><a href="folder-structure.html">Folder Structure</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <h3>About</h3>
+                <ul>
+                    <li><a href="index.html#sgp-group">SGP Group</a></li>
+                    <li><a href="index.html#contact">Contact</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <h1><i class="fas fa-project-diagram"></i> System Architecture</h1>
+            <p class="lead">Complete technical architecture of the DataXpert platform</p>
+
+            <!-- Overview -->
+            <section class="doc-section">
+                <h2>Architecture Overview</h2>
+                <p>DataXpert follows a modern three-tier architecture with a clear separation of concerns:</p>
+                
+                <div class="features-grid-doc">
+                    <div class="feature-box">
+                        <i class="fas fa-desktop"></i>
+                        <h4>Frontend Layer</h4>
+                        <p>Vanilla JavaScript with HTML5/CSS3 for responsive user interface</p>
+                    </div>
+                    <div class="feature-box">
+                        <i class="fas fa-server"></i>
+                        <h4>Backend Layer</h4>
+                        <p>Flask REST API with JWT authentication and CORS support</p>
+                    </div>
+                    <div class="feature-box">
+                        <i class="fas fa-database"></i>
+                        <h4>Data Layer</h4>
+                        <p>Supabase (PostgreSQL) for scalable data storage</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Flow -->
+            <section class="doc-section">
+                <h2>Data Flow Architecture</h2>
+                <div class="code-block">
+                    <pre><code>┌─────────────┐
+│   Frontend  │ ← User Interface (HTML/CSS/JS)
+│  (Client)   │   • Chart.js for visualizations
+└──────┬──────┘   • LocalStorage for auth tokens
+       │
+       ↓ REST API (HTTP/HTTPS)
+       │
+┌──────┴──────┐
+│   Backend   │ ← Flask Application (Python)
+│  (Server)   │   • JWT Authentication
+└──────┬──────┘   • Business Logic
+       │           • AI Analysis Engine
+       ↓
+┌──────┴──────┐
+│  Database   │ ← Supabase (PostgreSQL)
+│  (Storage)  │   • User Data
+└─────────────┘   • Business Metrics
+                  • Analysis Results</code></pre>
+                </div>
+            </section>
+
+            <!-- Component Architecture -->
+            <section class="doc-section">
+                <h2>Component Architecture</h2>
+                
+                <h3><i class="fas fa-layer-group"></i> Frontend Components</h3>
+                <div class="info-box">
+                    <h4>Core Modules:</h4>
+                    <ul>
+                        <li><strong>auth.js</strong> - Handles authentication (email + Google OAuth)</li>
+                        <li><strong>config.js</strong> - API endpoints and configuration</li>
+                        <li><strong>dashboard.js</strong> - Dashboard data loading and chart rendering</li>
+                        <li><strong>analysis.js</strong> - AI chat interface and analysis display</li>
+                        <li><strong>theme.js</strong> - Dark/light theme management</li>
+                        <li><strong>header-profile.js</strong> - User profile component</li>
+                    </ul>
+                </div>
+
+                <h3><i class="fas fa-cogs"></i> Backend Components</h3>
+                <div class="code-block">
+                    <pre><code>backend/
+├── app.py                      # Main Flask application
+│   ├── Auth Routes (/api/auth/*)
+│   ├── User Routes (/api/user/*)
+│   ├── Business Data Routes (/api/business/*)
+│   └── AI Analysis Routes (/api/ai/*)
+│
+├── auth/auth_service.py        # Authentication Service
+│   ├── signup()
+│   ├── login()
+│   ├── google_auth()
+│   └── change_password()
+│
+├── database/supabase_client.py # Database Operations
+│   ├── CRUD operations
+│   ├── User management
+│   └── Business data queries
+│
+└── ai/                         # AI & Analysis
+    ├── analysis_engine.py      # Business analysis
+    ├── nlp_processor.py        # Natural language processing
+    ├── anomaly_detector.py     # Anomaly detection (Z-score)
+    └── data_processor.py       # Data preprocessing</code></pre>
+                </div>
+            </section>
+
+            <!-- API Architecture -->
+            <section class="doc-section">
+                <h2>API Architecture</h2>
+                <p>RESTful API with consistent response format:</p>
+
+                <h3>Response Format</h3>
+                <div class="code-block">
+                    <pre><code>// Success Response
+{
+  "success": true,
+  "data": { ... },
+  "message": "Operation successful"
+}
+
+// Error Response
+{
+  "success": false,
+  "message": "Error description"
+}</code></pre>
+                </div>
+
+                <h3>Protected Routes</h3>
+                <p>All protected routes use the <code>@token_required</code> decorator:</p>
+                <div class="code-block">
+                    <pre><code>@app.route('/api/resource', methods=['GET'])
+@token_required
+def get_resource(current_user):
+    # current_user automatically injected
+    # Contains: id, name, email, etc.
+    return jsonify({'success': True, 'data': result})</code></pre>
+                </div>
+            </section>
+
+            <!-- Authentication Flow -->
+            <section class="doc-section">
+                <h2>Authentication Architecture</h2>
+                
+                <h3>Dual Authentication System</h3>
+                <div class="features-grid-doc">
+                    <div class="feature-box">
+                        <i class="fas fa-envelope"></i>
+                        <h4>Email/Password</h4>
+                        <p>Traditional authentication with hashed passwords (SHA-256)</p>
+                    </div>
+                    <div class="feature-box">
+                        <i class="fab fa-google"></i>
+                        <h4>Google OAuth</h4>
+                        <p>OAuth 2.0 integration for seamless sign-in</p>
+                    </div>
+                </div>
+
+                <h3>JWT Token Flow</h3>
+                <div class="code-block">
+                    <pre><code>1. User Login/Signup
+   ↓
+2. Backend validates credentials
+   ↓
+3. JWT token generated (7-day expiry)
+   ↓
+4. Token sent to frontend
+   ↓
+5. Frontend stores in localStorage
+   ↓
+6. Token included in Authorization header
+   ↓
+7. Backend validates token on each request</code></pre>
+                </div>
+            </section>
+
+            <!-- AI Analysis Pipeline -->
+            <section class="doc-section">
+                <h2>AI Analysis Pipeline</h2>
+                
+                <div class="info-box">
+                    <h3>Analysis Workflow:</h3>
+                    <ol>
+                        <li><strong>User Query</strong> → Natural language question from chat</li>
+                        <li><strong>NLP Processing</strong> → Extract intent and entities</li>
+                        <li><strong>Data Retrieval</strong> → Fetch relevant business data</li>
+                        <li><strong>Analysis Engine</strong> → Perform calculations and analysis</li>
+                        <li><strong>Anomaly Detection</strong> → Check for outliers (Z-score)</li>
+                        <li><strong>Response Generation</strong> → Format insights and recommendations</li>
+                        <li><strong>Storage</strong> → Save to analysis_results table</li>
+                    </ol>
+                </div>
+
+                <h3>Analysis Types</h3>
+                <div class="code-block">
+                    <pre><code>analysis_types = {
+    'sales': analyze_sales,
+    'profit': analyze_profit,
+    'expenses': analyze_expenses,
+    'trend': analyze_trends,
+    'forecast': forecast_data,
+    'comparison': analyze_comparison
+}</code></pre>
+                </div>
+            </section>
+
+            <!-- Security Architecture -->
+            <section class="doc-section">
+                <h2>Security Architecture</h2>
+                
+                <div class="features-grid-doc">
+                    <div class="feature-box">
+                        <i class="fas fa-shield-alt"></i>
+                        <h4>Password Security</h4>
+                        <p>SHA-256 hashing with salt</p>
+                    </div>
+                    <div class="feature-box">
+                        <i class="fas fa-key"></i>
+                        <h4>JWT Tokens</h4>
+                        <p>HS256 algorithm, 7-day expiry</p>
+                    </div>
+                    <div class="feature-box">
+                        <i class="fas fa-lock"></i>
+                        <h4>CORS Protection</h4>
+                        <p>Configured origins only</p>
+                    </div>
+                    <div class="feature-box">
+                        <i class="fas fa-database"></i>
+                        <h4>SQL Injection</h4>
+                        <p>Protected via Supabase ORM</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Performance Optimization -->
+            <section class="doc-section">
+                <h2>Performance Optimizations</h2>
+                
+                <ul>
+                    <li><strong>Frontend:</strong> Lazy loading, code splitting, localStorage caching</li>
+                    <li><strong>Backend:</strong> Efficient database queries, response compression</li>
+                    <li><strong>Database:</strong> Indexed columns (email, user_id, dates)</li>
+                    <li><strong>API:</strong> Batch operations, pagination support</li>
+                </ul>
+            </section>
+
+            <!-- Scalability -->
+            <section class="doc-section">
+                <h2>Scalability Considerations</h2>
+                
+                <div class="warning-box">
+                    <h3>Current Architecture Supports:</h3>
+                    <ul>
+                        <li>Horizontal scaling of Flask backend (stateless design)</li>
+                        <li>Supabase handles database scaling automatically</li>
+                        <li>CDN deployment for static frontend assets</li>
+                        <li>Load balancer ready (no session state)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="docs-footer">
+                <p>&copy; 2026 DataXpert by SGP Group. All rights reserved.</p>
+            </footer>
+        </main>
+    </div>
+
+    <script src="../js/theme.js"></script>
+    <script src="js/docs.js"></script>
+</body>
+</html>

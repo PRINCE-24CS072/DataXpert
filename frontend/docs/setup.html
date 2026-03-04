@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Setup Guide - DataXpert Documentation</title>
+    <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="css/docs.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -13,9 +14,18 @@
             <div class="logo">
                 <span>DataXpert Docs</span>
             </div>
-            <a href="../index.html" class="back-link">
-                <i class="fas fa-arrow-left"></i> Back to App
-            </a>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="theme-toggle-wrapper">
+                    <button class="theme-toggle-switch" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark mode">
+                        <span class="theme-toggle-slider">
+                            <i class="theme-toggle-icon fas fa-sun"></i>
+                        </span>
+                    </button>
+                </div>
+                <a href="../index.html" class="back-link">
+                    <i class="fas fa-arrow-left"></i> Back to App
+                </a>
+            </div>
         </div>
     </nav>
 
@@ -27,6 +37,21 @@
                     <li><a href="index.html">Overview</a></li>
                     <li><a href="setup.html" class="active">Setup Guide</a></li>
                     <li><a href="workflow.html">Workflow</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <h3>Architecture</h3>
+                <ul>
+                    <li><a href="system-architecture.html">System Architecture</a></li>
+                    <li><a href="er-diagram.html">ER Diagram</a></li>
+                    <li><a href="folder-structure.html">Folder Structure</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <h3>About</h3>
+                <ul>
+                    <li><a href="index.html#sgp-group">SGP Group</a></li>
+                    <li><a href="index.html#contact">Contact</a></li>
                 </ul>
             </div>
         </aside>
@@ -343,11 +368,12 @@ python -m http.server 5500</code></pre>
             </section>
 
             <footer class="docs-footer">
-                <p>&copy; 2024 DataXpert by SGP Group. All rights reserved.</p>
+                <p>&copy; 2026 DataXpert by SGP Group. All rights reserved.</p>
             </footer>
         </main>
     </div>
 
+    <script src="../js/theme.js"></script>
     <script src="js/docs.js"></script>
 </body>
 </html>

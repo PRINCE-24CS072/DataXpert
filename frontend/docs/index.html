@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DataXpert Documentation</title>
+    <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="css/docs.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -14,9 +15,18 @@
             <div class="logo">
                 <span>DataXpert Docs</span>
             </div>
-            <a href="../index.html" class="back-link">
-                <i class="fas fa-arrow-left"></i> Back to App
-            </a>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="theme-toggle-wrapper">
+                    <button class="theme-toggle-switch" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark mode">
+                        <span class="theme-toggle-slider">
+                            <i class="theme-toggle-icon fas fa-sun"></i>
+                        </span>
+                    </button>
+                </div>
+                <a href="../index.html" class="back-link">
+                    <i class="fas fa-arrow-left"></i> Back to App
+                </a>
+            </div>
         </div>
     </nav>
 
@@ -35,18 +45,9 @@
             <div class="sidebar-section">
                 <h3>Architecture</h3>
                 <ul>
-                    <li><a href="architecture.html">System Architecture</a></li>
+                    <li><a href="system-architecture.html">System Architecture</a></li>
                     <li><a href="er-diagram.html">ER Diagram</a></li>
                     <li><a href="folder-structure.html">Folder Structure</a></li>
-                </ul>
-            </div>
-            <div class="sidebar-section">
-                <h3>Features</h3>
-                <ul>
-                    <li><a href="authentication.html">Authentication</a></li>
-                    <li><a href="dashboard.html">Dashboard</a></li>
-                    <li><a href="ai-analysis.html">AI Analysis</a></li>
-                    <li><a href="teams.html">Teams</a></li>
                 </ul>
             </div>
             <div class="sidebar-section">
@@ -96,14 +97,14 @@
                         <p>Chat-based interface for intelligent data analysis</p>
                     </div>
                     <div class="feature-box">
-                        <i class="fas fa-users"></i>
-                        <h4>Team Management</h4>
-                        <p>Create and manage business teams</p>
+                        <i class="fas fa-file-import"></i>
+                        <h4>Data Import/Export</h4>
+                        <p>Upload CSV files and export business data seamlessly</p>
                     </div>
                     <div class="feature-box">
                         <i class="fas fa-bell"></i>
                         <h4>Anomaly Detection</h4>
-                        <p>Automatic detection of unusual patterns</p>
+                        <p>Automatic detection of unusual patterns in data</p>
                     </div>
                     <div class="feature-box">
                         <i class="fas fa-brain"></i>
@@ -151,16 +152,26 @@
                         <span class="tech-tag">Pandas</span>
                         <span class="tech-tag">NumPy</span>
                         <span class="tech-tag">SciPy</span>
-                        <span class="tech-tag">NLP</span>
+                        <span class="tech-tag">Python Statistics</span>
                     </div>
                 </div>
 
                 <div class="tech-category">
-                    <h3>Authentication</h3>
+                    <h3>Authentication & Security</h3>
                     <div class="tech-tags">
                         <span class="tech-tag">Google OAuth 2.0</span>
-                        <span class="tech-tag">JWT</span>
-                        <span class="tech-tag">SHA-256</span>
+                        <span class="tech-tag">JWT (PyJWT)</span>
+                        <span class="tech-tag">SHA-256 Hashing</span>
+                        <span class="tech-tag">Google Auth Library</span>
+                    </div>
+                </div>
+
+                <div class="tech-category">
+                    <h3>Additional Libraries</h3>
+                    <div class="tech-tags">
+                        <span class="tech-tag">python-dotenv</span>
+                        <span class="tech-tag">gunicorn</span>
+                        <span class="tech-tag">openpyxl</span>
                     </div>
                 </div>
             </section>
@@ -200,53 +211,82 @@ python -m http.server 5500</code></pre>
 
             <!-- SGP Group -->
             <section id="sgp-group" class="doc-section">
-                <h2><i class="fas fa-building"></i> About SGP Group</h2>
-                <p>SGP Group is led by a dedicated trio of passionate technologists: <strong>Prince Patel</strong>, <strong>Srujal Patel</strong>, and <strong>Manav Patel</strong>. Together, they bring a wealth of experience in software development, data science, and business strategy to create innovative solutions that transform how organizations leverage their data.</p>
-                
-                <h3>Meet Our Team</h3>
-                <ul>
-                    <li><strong>Prince Patel:</strong> Co-founder and strategic visionary, specializing in product innovation and business development. Prince drives our mission to democratize data analytics for businesses worldwide.</li>
-                    <li><strong>Srujal Patel:</strong> Co-founder and technical architect, focusing on building scalable, secure infrastructure and AI-powered analytics engines. Srujal ensures DataXpert remains at the cutting edge of technology.</li>
-                    <li><strong>Manav Patel:</strong> Co-founder and operations lead, overseeing team management, product strategy, and market expansion. Manav ensures seamless execution of our vision and sustainable growth.</li>
-                </ul>
+                <h2><i class="fas fa-users"></i> Meet Our Team</h2>
+                <p class="lead" style="text-align: center; margin-bottom: 3rem;">The passionate technologists behind DataXpert</p>
+                <div class="team-grid">
+                    <div class="team-card">
+                        <div class="team-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <h3 class="team-name">Manav Patel</h3>
+                        <p class="team-id">ID: 24CS067</p>
+                        <p class="team-role">Product Designer & Tester</p>
+                        <p class="team-description">UI/UX design, feature planning, and system testing</p>
+                    </div>
 
-                <h3>Group Management & Vision</h3>
-                <p>Our collaborative leadership model ensures that strategic decisions, technical excellence, and operational efficiency work in harmony. The team collectively drives innovation while maintaining a clear focus on delivering value to our clients. We believe in transparent communication, continuous improvement, and fostering a culture of excellence within our organization.</p>
+                    <div class="team-card">
+                        <div class="team-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <h3 class="team-name">Prince Patel</h3>
+                        <p class="team-id">ID: 24CS072</p>
+                        <p class="team-role">System Developer</p>
+                        <p class="team-description">Core system development, backend logic, and AI integration</p>
+                    </div>
 
-                <h3>Product Creation Philosophy</h3>
-                <p>At SGP Group, we create products that solve real business problems. Our approach combines cutting-edge AI and machine learning with intuitive user interfaces, making advanced analytics accessible to businesses of all sizes. We prioritize customer feedback, iterate rapidly, and maintain the highest standards of data security and privacy in every product we develop.</p>
+                    <div class="team-card">
+                        <div class="team-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <h3 class="team-name">Srujal Patel</h3>
+                        <p class="team-id">ID: 24CS076</p>
+                        <p class="team-role">Implementation & Deployment</p>
+                        <p class="team-description">Feature implementation, deployment, cloud infrastructure, and performance optimization</p>
+                    </div>
+                </div>
             </section>
 
             <!-- Contact -->
             <section id="contact" class="doc-section">
-                <h2><i class="fas fa-envelope"></i> Contact & Support</h2>
-                <div class="contact-grid">
-                    <div class="contact-card">
-                        <i class="fas fa-question-circle"></i>
-                        <h4>Support</h4>
-                        <p>support@dataxpert.com</p>
-                    </div>
-                    <div class="contact-card">
-                        <i class="fas fa-briefcase"></i>
-                        <h4>Business</h4>
-                        <p>business@sgpgroup.com</p>
-                    </div>
-                    <div class="contact-card">
-                        <i class="fas fa-code"></i>
-                        <h4>Development</h4>
-                        <p>dev@dataxpert.com</p>
-                    </div>
+                <h2><i class="fas fa-share-alt"></i> Connect With Us</h2>
+                <p class="lead" style="text-align: center; margin-bottom: 3rem;">Follow us on social media and reach out</p>
+                
+                <div class="social-grid">
+                    <a href="mailto:dataxpert677276@gmail.com" class="social-card" target="_blank">
+                        <i class="fas fa-envelope"></i>
+                        <h4>Gmail</h4>
+                        <p>dataxpert677276@gmail.com</p>
+                    </a>
+
+                    <a href="https://github.com/dataXpert-677276/DataXpert" class="social-card" target="_blank">
+                        <i class="fab fa-github"></i>
+                        <h4>GitHub</h4>
+                        <p>@dataXpert-677276</p>
+                    </a>
+
+                    <a href="https://www.instagram.com/dataxpert677276" class="social-card" target="_blank">
+                        <i class="fab fa-instagram"></i>
+                        <h4>Instagram</h4>
+                        <p>@dataxpert677276</p>
+                    </a>
+
+                    <a href="https://x.com/DataXpert677276" class="social-card" target="_blank">
+                        <i class="fab fa-twitter"></i>
+                        <h4>X</h4>
+                        <p>@DataXpert677276</p>
+                    </a>
                 </div>
             </section>
 
             <!-- Footer -->
             <footer class="docs-footer">
-                <p>&copy; 2025 DataXpert by SGP Group. All rights reserved.</p>
-                <p>Last updated: <span id="lastUpdated">February 2025</span></p>
+                <p>&copy; 2026 DataXpert by SGP Group. All rights reserved.</p>
+                <p>Last updated: <span id="lastUpdated">March 2026</span></p>
             </footer>
         </main>
     </div>
 
+    <script src="../js/theme.js"></script>
     <script src="js/docs.js"></script>
 </body>
 </html>

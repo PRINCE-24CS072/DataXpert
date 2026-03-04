@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Workflow - DataXpert Documentation</title>
+    <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="css/docs.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -13,9 +14,18 @@
             <div class="logo">
                 <span>DataXpert Docs</span>
             </div>
-            <a href="../index.html" class="back-link">
-                <i class="fas fa-arrow-left"></i> Back to App
-            </a>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="theme-toggle-wrapper">
+                    <button class="theme-toggle-switch" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark mode">
+                        <span class="theme-toggle-slider">
+                            <i class="theme-toggle-icon fas fa-sun"></i>
+                        </span>
+                    </button>
+                </div>
+                <a href="../index.html" class="back-link">
+                    <i class="fas fa-arrow-left"></i> Back to App
+                </a>
+            </div>
         </div>
     </nav>
 
@@ -32,9 +42,16 @@
             <div class="sidebar-section">
                 <h3>Architecture</h3>
                 <ul>
-                    <li><a href="architecture.html">System Architecture</a></li>
+                    <li><a href="system-architecture.html">System Architecture</a></li>
                     <li><a href="er-diagram.html">ER Diagram</a></li>
                     <li><a href="folder-structure.html">Folder Structure</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <h3>About</h3>
+                <ul>
+                    <li><a href="index.html#sgp-group">SGP Group</a></li>
+                    <li><a href="index.html#contact">Contact</a></li>
                 </ul>
             </div>
         </aside>
@@ -141,12 +158,12 @@
                     <div class="workflow-step">
                         <div class="step-number">7</div>
                         <div class="step-content">
-                            <h3>Team Collaboration</h3>
-                            <p>Share insights with team members</p>
+                            <h3>Activity History</h3>
+                            <p>View and manage all data activities</p>
                             <ul>
-                                <li>Create teams</li>
-                                <li>Add members</li>
-                                <li>Share reports</li>
+                                <li>Track data uploads</li>
+                                <li>View analysis history</li>
+                                <li>Backup and restore data</li>
                             </ul>
                         </div>
                     </div>
@@ -187,9 +204,18 @@ User Response</code></pre>
 
             <section class="doc-section">
                 <h2>Data Flow Diagram</h2>
-                <div class="diagram-box">
-                    <img src="../images/flow-diagram.png" alt="Data Flow Diagram" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                    <p class="diagram-caption">Complete data flow from user input to AI-generated insights</p>
+                <div class="info-box">
+                    <h3>Data Flow Architecture</h3>
+                    <p>The complete data flow in DataXpert follows this sequence:</p>
+                    <ol>
+                        <li><strong>User Input:</strong> Login/Signup → Authentication → JWT Token</li>
+                        <li><strong>Dashboard:</strong> Fetch Business Data → Process Statistics → Render Charts</li>
+                        <li><strong>Data Entry:</strong> CSV Upload / Manual Entry → Validation → Database Storage</li>
+                        <li><strong>AI Query:</strong> User Question → NLP Processing → Intent Recognition</li>
+                        <li><strong>Analysis:</strong> Data Retrieval → Statistical Analysis → Anomaly Detection</li>
+                        <li><strong>Results:</strong> Generate Insights → Format Response → Display to User</li>
+                        <li><strong>History:</strong> Log Activity → Store Analysis → Enable Backup/Restore</li>
+                    </ol>
                 </div>
             </section>
 
@@ -231,23 +257,25 @@ User Response</code></pre>
                 </div>
 
                 <div class="journey-step">
-                    <h3>4. Team Management</h3>
+                    <h3>4. Data Import/Export</h3>
                     <ol>
-                        <li>Go to "Teams" section</li>
-                        <li>Click "Create Team"</li>
-                        <li>Enter team name</li>
-                        <li>Invite members (future feature)</li>
-                        <li>Collaborate on insights</li>
+                        <li>Navigate to "Dashboard" page</li>
+                        <li>Click "Upload Data" button</li>
+                        <li>Select CSV file with business data</li>
+                        <li>System validates and imports data</li>
+                        <li>View imported data in dashboard charts</li>
+                        <li>Export data anytime for backup</li>
                     </ol>
                 </div>
             </section>
 
             <footer class="docs-footer">
-                <p>&copy; 2024 DataXpert by SGP Group. All rights reserved.</p>
+                <p>&copy; 2026 DataXpert by SGP Group. All rights reserved.</p>
             </footer>
         </main>
     </div>
 
+    <script src="../js/theme.js"></script>
     <script src="js/docs.js"></script>
 </body>
 </html>
