@@ -47,19 +47,28 @@ function loadUserInfo() {
 
 // Check if profile needs completion and show banner
 function checkProfileCompletion() {
-    const needsCompletion = localStorage.getItem('dataxpert_needs_profile_completion');
-    const bannerDismissed = localStorage.getItem('dataxpert_profile_banner_dismissed');
-    const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+    const showBanner = localStorage.getItem('dataxpert_show_banner');
+    const bannerDismissed = sessionStorage.getItem('dataxpert_banner_dismissed');
     
-    if (userStr) {
-        const user = JSON.parse(userStr);
+    if (showBanner && !bannerDismissed) {
         const banner = document.getElementById('profileCompletionBanner');
         
-        // Show banner if:
-        // 1. Flag is set OR user doesn't have business name
-        // 2. Banner hasn't been dismissed
-        if (banner && !bannerDismissed && (needsCompletion || !user.business_name)) {
+        if (banner) {
+            // Show banner
             banner.style.display = 'block';
+            
+            // Auto-hide after 12 seconds (between 10-15 as requested)
+            setTimeout(() => {
+                banner.style.transition = 'opacity 0.5s ease-out';
+                banner.style.opacity = '0';
+                
+                setTimeout(() => {
+                    banner.style.display = 'none';
+                    // Clear the flag after auto-hide
+                    localStorage.removeItem('dataxpert_show_banner');
+                    sessionStorage.setItem('dataxpert_banner_dismissed', 'true');
+                }, 500);
+            }, 12000); // 12 seconds
         }
     }
 }
@@ -68,25 +77,22 @@ function checkProfileCompletion() {
 function dismissProfileBanner() {
     const banner = document.getElementById('profileCompletionBanner');
     if (banner) {
-        banner.style.display = 'none';
-        // Remember dismissal for this session
-        localStorage.setItem('dataxpert_profile_banner_dismissed', 'true');
+        banner.style.transition = 'opacity 0.3s ease-out';
+        banner.style.opacity = '0';
+        
+        setTimeout(() => {
+            banner.style.display = 'none';
+            // Remember dismissal for this session
+            sessionStorage.setItem('dataxpert_banner_dismissed', 'true');
+            localStorage.removeItem('dataxpert_show_banner');
+        }, 300);
     }
 }
 
 // Load dashboard data
 async function loadDashboardData() {
     try {
-        // Check for cached stats from login
-        const cachedStats = localStorage.getItem('dataxpert_cached_stats');
-        if (cachedStats) {
-            const stats = JSON.parse(cachedStats);
-            updateStats(stats);
-            updateRecentData(stats.recent_data);
-            localStorage.removeItem('dataxpert_cached_stats'); // Clear cache after use
-        }
-
-        // Load stats (will update with fresh data)
+        // Load stats
         const statsResponse = await fetch(API_ENDPOINTS.DASHBOARD_STATS, {
             headers: getAuthHeaders()
         });

@@ -114,7 +114,7 @@ function showFallbackButton(container, action) {
     `;
 }
 
-// Handle Google OAuth Callback
+// Handle Google OAuth Callback - Fast simplified flow
 async function handleGoogleCallback(response) {
     // Determine action based on which modal is currently open
     const action = getCurrentGoogleAction();
@@ -127,7 +127,7 @@ async function handleGoogleCallback(response) {
             },
             body: JSON.stringify({
                 token: response.credential,
-                action: action  // Pass 'login' or 'signup' based on modal
+                action: action
             })
         });
 
@@ -138,56 +138,38 @@ async function handleGoogleCallback(response) {
             localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
             localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
             
-            // Cache initial stats if available
-            if (data.stats) {
-                localStorage.setItem('dataxpert_cached_stats', JSON.stringify(data.stats));
-            }
+            // Set flag to show profile completion banner
+            localStorage.setItem('dataxpert_show_banner', 'true');
             
-            // Check if profile needs completion (missing business name)
-            if (data.needs_profile_completion) {
-                // Store flag for profile completion banner
-                localStorage.setItem('dataxpert_needs_profile_completion', 'true');
-                
-                // Show appropriate message based on action
-                if (action === 'signup') {
-                    showMessage('✓ Account created! Please complete your profile (business name).', 'success');
-                } else {
-                    showMessage('✓ Welcome back! Please complete your profile (business name).', 'success');
-                }
-            } else {
-                // Profile is complete - show success message
-                showMessage(data.message || (action === 'signup' ? 'Account created successfully!' : 'Login successful!'), 'success');
-            }
-            
-            // Close any open modals
+            // Close modals
             document.getElementById('loginModal').style.display = 'none';
             document.getElementById('signupModal').style.display = 'none';
             
-            // Redirect to dashboard immediately (fast redirect)
-            window.location.href = 'dashboard.html';
+            // Show success message and redirect immediately
+            showMessage(data.message || 'Success! Redirecting...', 'success');
+            
+            // Fast redirect to dashboard
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 500);
         } else {
-            // Handle different error scenarios
+            // Handle error scenarios
             if (data.need_signup) {
-                // LOGIN attempt with non-existent account → Prompt to signup
-                showMessage('⚠ No account found. Please sign up first', 'error');
-                
-                // Switch to signup modal quickly
+                // LOGIN with non-existent account → Switch to signup
+                showMessage(data.message, 'error');
                 setTimeout(() => {
                     document.getElementById('loginModal').style.display = 'none';
                     document.getElementById('signupModal').style.display = 'block';
-                }, 800);
+                }, 1000);
             } else if (data.already_exists) {
-                // SIGNUP attempt with existing account → Prompt to login
-                showMessage('⚠ Account already exists. Please login instead', 'error');
-                
-                // Switch to login modal quickly
+                // SIGNUP with existing account → Switch to login
+                showMessage(data.message, 'error');
                 setTimeout(() => {
                     document.getElementById('signupModal').style.display = 'none';
                     document.getElementById('loginModal').style.display = 'block';
-                }, 800);
+                }, 1000);
             } else {
-                // Generic error
-                showMessage(data.message || 'Google authentication failed', 'error');
+                showMessage(data.message || 'Authentication failed', 'error');
             }
         }
     } catch (error) {
@@ -202,11 +184,10 @@ function setupGoogleButtons() {
     // Keeping for backwards compatibility
 }
 
-// Email/Password Signup
+// Email/Password Signup - Fast simplified flow
 async function handleSignup(event) {
     event.preventDefault();
     
-    // Clear any previous error messages
     clearMessages();
     
     const username = document.getElementById('signupUsername').value.trim();
@@ -218,11 +199,6 @@ async function handleSignup(event) {
     // Validate required fields
     if (!username) {
         showMessage('Username is required', 'error');
-        return;
-    }
-
-    if (!businessName) {
-        showMessage('Business name is required', 'error');
         return;
     }
 
@@ -246,7 +222,6 @@ async function handleSignup(event) {
         return;
     }
     
-    // Get submit button and add loading state
     const submitBtn = event.target.querySelector('button[type="submit"]');
     const originalBtnText = submitBtn.innerHTML;
     submitBtn.disabled = true;
@@ -267,47 +242,39 @@ async function handleSignup(event) {
             })
         });
         
-        // Parse JSON response regardless of status code
-        let data;
-        try {
-            data = await response.json();
-        } catch (e) {
-            console.error('Failed to parse response:', e);
-            showMessage('Server error. Please try again.', 'error');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
-            return;
-        }
+        const data = await response.json();
 
         if (data.success) {
             localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
             localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
             
-            // Cache initial stats to avoid extra API call
-            if (data.stats) {
-                localStorage.setItem('dataxpert_cached_stats', JSON.stringify(data.stats));
-            }
+            // Set flag to show profile completion banner
+            localStorage.setItem('dataxpert_show_banner', 'true');
             
-            // Check if business name is missing - suggest completing profile
-            if (!data.user.business_name) {
-                localStorage.setItem('dataxpert_needs_profile_completion', 'true');
-            }
+            showMessage('Account created successfully!', 'success');
             
-            showMessage('Account created successfully! ✓', 'success');
-            
-            // Close signup modal and show profile setup modal
+            // Close modal and redirect immediately
             document.getElementById('signupModal').style.display = 'none';
-            showProfileSetupModal(data.user);
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 500);
         } else {
-            // Show the specific error message from backend
-            console.error('Signup failed:', data.message);
-            showMessage(data.message || 'Signup failed. Please try again.', 'error');
+            // Handle errors
+            if (data.already_exists) {
+                showMessage(data.message, 'error');
+                // Redirect to login modal
+                setTimeout(() => {
+                    document.getElementById('signupModal').style.display = 'none';
+                    document.getElementById('loginModal').style.display = 'block';
+                }, 1500);
+            } else {
+                showMessage(data.message || 'Signup failed. Please try again.', 'error');
+            }
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtnText;
         }
     } catch (error) {
         console.error('Signup error:', error);
-        // Check if it's a network error
         if (error.message === 'Failed to fetch' || !navigator.onLine) {
             showMessage('Cannot connect to server. Please check your internet connection.', 'error');
         } else {
@@ -318,11 +285,10 @@ async function handleSignup(event) {
     }
 }
 
-// Email/Password Login
+// Email/Password Login - Fast simplified flow
 async function handleLogin(event) {
     event.preventDefault();
     
-    // Clear any previous error messages
     clearMessages();
     
     const email = document.getElementById('loginEmail').value.trim();
@@ -339,7 +305,6 @@ async function handleLogin(event) {
         return;
     }
 
-    // Get submit button and add loading state
     const submitBtn = event.target.querySelector('button[type="submit"]');
     const originalBtnText = submitBtn.innerHTML;
     submitBtn.disabled = true;
@@ -363,34 +328,30 @@ async function handleLogin(event) {
             localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
             localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
             
-            // Cache initial stats to avoid extra API call
-            if (data.stats) {
-                localStorage.setItem('dataxpert_cached_stats', JSON.stringify(data.stats));
-            }
+            // Set flag to show profile completion banner
+            localStorage.setItem('dataxpert_show_banner', 'true');
             
-            showMessage('Login successful! ✓', 'success');
-            // Immediate redirect for fast login
-            window.location.href = 'dashboard.html';
+            showMessage('Login successful!', 'success');
+            
+            // Close modal and redirect immediately
+            document.getElementById('loginModal').style.display = 'none';
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 500);
         } else {
-            // Check if user needs to sign up first
+            // Handle errors
             if (data.need_signup) {
-                showMessage('No account found with this email. Please sign up first', 'error');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalBtnText;
-                // Quick switch to signup modal
+                showMessage(data.message, 'error');
+                // Redirect to signup modal
                 setTimeout(() => {
-                    closeModal('loginModal');
-                    openModal('signupModal');
-                }, 800);
-            } else if (data.profile_incomplete) {
-                showMessage('Please complete your signup first', 'error');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalBtnText;
+                    document.getElementById('loginModal').style.display = 'none';
+                    document.getElementById('signupModal').style.display = 'block';
+                }, 1500);
             } else {
                 showMessage(data.message || 'Login failed. Please check your credentials.', 'error');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalBtnText;
             }
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
         }
     } catch (error) {
         console.error('Login error:', error);

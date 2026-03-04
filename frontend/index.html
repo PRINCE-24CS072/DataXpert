@@ -183,11 +183,11 @@
             
             <form id="loginForm">
                 <div class="form-group">
-                    <label for="loginEmail">Email</label>
+                    <label for="loginEmail">Email <span style="color: red;">*</span></label>
                     <input type="email" id="loginEmail" required placeholder="your@email.com">
                 </div>
                 <div class="form-group">
-                    <label for="loginPassword">Password</label>
+                    <label for="loginPassword">Password <span style="color: red;">*</span></label>
                     <input type="password" id="loginPassword" required placeholder="••••••••">
                 </div>
                 <div class="form-options">
@@ -217,24 +217,25 @@
             
             <form id="signupForm">
                 <div class="form-group">
-                    <label for="signupUsername">Username</label>
+                    <label for="signupUsername">Username <span style="color: red;">*</span></label>
                     <input type="text" id="signupUsername" required placeholder="johndoe">
                 </div>
                 <div class="form-group">
-                    <label for="signupBusinessName">Business Name</label>
-                    <input type="text" id="signupBusinessName" required placeholder="Your Company Ltd">
+                    <label for="signupBusinessName">Business Name <span style="color: #888;">(Optional)</span></label>
+                    <input type="text" id="signupBusinessName" placeholder="Your Company Ltd">
+                    <small style="color: #666; font-size: 12px;">You can add this later in your profile</small>
                 </div>
                 <div class="form-group">
-                    <label for="signupEmail">Email</label>
+                    <label for="signupEmail">Email <span style="color: red;">*</span></label>
                     <input type="email" id="signupEmail" required placeholder="your@email.com">
                 </div>
                 <div class="form-group">
-                    <label for="signupPassword">Password</label>
-                    <input type="password" id="signupPassword" required placeholder="••••••••">
+                    <label for="signupPassword">Password <span style="color: red;">*</span></label>
+                    <input type="password" id="signupPassword" required placeholder="••••••••" minlength="6">
                 </div>
                 <div class="form-group">
-                    <label for="confirmPassword">Confirm Password</label>
-                    <input type="password" id="confirmPassword" required placeholder="••••••••">
+                    <label for="confirmPassword">Confirm Password <span style="color: red;">*</span></label>
+                    <input type="password" id="confirmPassword" required placeholder="••••••••" minlength="6">
                 </div>
                 <button type="submit" class="btn btn-primary btn-full">Sign Up</button>
             </form>

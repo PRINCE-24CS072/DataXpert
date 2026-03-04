@@ -70,7 +70,7 @@ def token_required(f):
 
 @app.route('/api/auth/signup', methods=['POST'])
 def signup():
-    """Handle user signup with email/password"""
+    """Handle user signup with email/password - Fast flow"""
     try:
         data = request.get_json()
         username = data.get('username')
@@ -79,7 +79,7 @@ def signup():
         confirm_password = data.get('confirmPassword')
         business_name = data.get('businessName')
         
-        # Validate all required fields
+        # Validate required fields
         if not username or not username.strip():
             return jsonify({'message': 'Username is required', 'success': False}), 400
             
@@ -107,31 +107,23 @@ def signup():
                 'exp': datetime.utcnow() + timedelta(days=7)
             }, app.config['JWT_SECRET_KEY'], algorithm="HS256")
             
-            # Get initial dashboard stats to reduce subsequent API calls
-            stats = {
-                'total_sales': 0,
-                'total_profit': 0,
-                'total_expenses': 0,
-                'data_count': 0,
-                'recent_data': []
-            }
-            
             return jsonify({
-                'message': 'Signup successful',
+                'message': 'Account created successfully',
                 'success': True,
                 'token': token,
-                'user': result['user'],
-                'stats': stats  # Include stats to avoid extra API call
+                'user': result['user']
             }), 201
         else:
-            return jsonify(result), 400
+            # Check if user already exists to redirect to login
+            status_code = 409 if result.get('already_exists') else 400
+            return jsonify(result), status_code
             
     except Exception as e:
         return jsonify({'message': f'Signup error: {str(e)}', 'success': False}), 500
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
-    """Handle user login with email/password"""
+    """Handle user login with email/password - Fast flow"""
     try:
         data = request.get_json()
         email = data.get('email')
@@ -149,35 +141,11 @@ def login():
                 'exp': datetime.utcnow() + timedelta(days=7)
             }, app.config['JWT_SECRET_KEY'], algorithm="HS256")
             
-            # Get initial dashboard stats to reduce subsequent API calls
-            try:
-                business_data = db_client.get_user_business_data(result['user']['id'])
-                total_sales = sum(item.get('sales', 0) for item in business_data)
-                total_profit = sum(item.get('profit', 0) for item in business_data)
-                total_expenses = sum(item.get('expenses', 0) for item in business_data)
-                
-                stats = {
-                    'total_sales': total_sales,
-                    'total_profit': total_profit,
-                    'total_expenses': total_expenses,
-                    'data_count': len(business_data),
-                    'recent_data': business_data[:5] if business_data else []
-                }
-            except:
-                stats = {
-                    'total_sales': 0,
-                    'total_profit': 0,
-                    'total_expenses': 0,
-                    'data_count': 0,
-                    'recent_data': []
-                }
-            
             return jsonify({
                 'message': 'Login successful',
                 'success': True,
                 'token': token,
-                'user': result['user'],
-                'stats': stats  # Include stats to avoid extra API call
+                'user': result['user']
             }), 200
         else:
             return jsonify(result), 401
@@ -187,7 +155,7 @@ def login():
 
 @app.route('/api/auth/google', methods=['POST'])
 def google_auth():
-    """Handle Google OAuth authentication"""
+    """Handle Google OAuth authentication - Fast flow"""
     try:
         data = request.get_json()
         google_token = data.get('token')
@@ -199,45 +167,22 @@ def google_auth():
         result = auth_service.google_auth(google_token, action)
         
         if result['success']:
-            # Generate JWT token - user can login immediately even without business name
+            # Generate JWT token
             token = jwt.encode({
                 'user_id': result['user']['id'],
                 'exp': datetime.utcnow() + timedelta(days=7)
             }, app.config['JWT_SECRET_KEY'], algorithm="HS256")
             
-            # Get initial dashboard stats
-            try:
-                business_data = db_client.get_user_business_data(result['user']['id'])
-                total_sales = sum(item.get('sales', 0) for item in business_data)
-                total_profit = sum(item.get('profit', 0) for item in business_data)
-                total_expenses = sum(item.get('expenses', 0) for item in business_data)
-                
-                stats = {
-                    'total_sales': total_sales,
-                    'total_profit': total_profit,
-                    'total_expenses': total_expenses,
-                    'data_count': len(business_data),
-                    'recent_data': business_data[:5] if business_data else []
-                }
-            except:
-                stats = {
-                    'total_sales': 0,
-                    'total_profit': 0,
-                    'total_expenses': 0,
-                    'data_count': 0,
-                    'recent_data': []
-                }
-            
             return jsonify({
-                'message': result.get('message', 'Google authentication successful'),
+                'message': result.get('message', 'Authentication successful'),
                 'success': True,
                 'token': token,
-                'user': result['user'],
-                'stats': stats,
-                'needs_profile_completion': result.get('needs_profile_completion', False)
+                'user': result['user']
             }), 200
         else:
-            return jsonify(result), 401
+            # Check if user already exists to redirect to login
+            status_code = 409 if result.get('already_exists') else 401
+            return jsonify(result), status_code
             
     except Exception as e:
         return jsonify({'message': f'Google auth error: {str(e)}', 'success': False}), 500
