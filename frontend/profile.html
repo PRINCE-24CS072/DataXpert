@@ -235,7 +235,7 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
             
             try {
-                const response = await fetch(`${API_ENDPOINTS.UPDATE_PROFILE}`, {
+                const response = await fetch(`${API_ENDPOINTS.USER_PROFILE}`, {
                     method: 'PUT',
                     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name })
@@ -278,7 +278,7 @@
             
             try {
                 const response = await fetch(`${API_ENDPOINTS.CHANGE_PASSWORD}`, {
-                    method: 'PUT',
+                    method: 'POST',
                     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                     body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
                 });
@@ -315,19 +315,22 @@
             formData.append('profile_image', file);
             
             try {
-                const response = await fetch(`${API_ENDPOINTS.UPDATE_PROFILE}`, {
-                    method: 'PUT',
-                    headers: getAuthHeaders(),
+                const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+                const response = await fetch(`${API_ENDPOINTS.UPLOAD_PROFILE_IMAGE}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
                 });
                 
                 const result = await response.json();
-                if (result.success && result.data.profile_image) {
+                if (result.success && result.profile_image) {
                     const user = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER));
-                    user.profile_image = result.data.profile_image;
+                    user.profile_image = result.profile_image;
                     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
                     loadHeaderProfile();
                     showMessage('Photo updated!', 'success');
+                } else {
+                    showMessage(result.message || 'Failed to upload photo', 'error');
                 }
             } catch (err) {
                 showMessage('Error uploading photo', 'error');
