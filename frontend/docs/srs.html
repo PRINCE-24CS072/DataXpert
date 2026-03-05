@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRS Document - DataXpert Documentation</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="css/docs.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="docs-nav">
+        <div class="container">
+            <div class="logo">
+                <span>DataXpert Docs</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="theme-toggle-wrapper">
+                    <button class="theme-toggle-switch" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark mode">
+                        <span class="theme-toggle-slider">
+                            <i class="theme-toggle-icon fas fa-sun"></i>
+                        </span>
+                    </button>
+                </div>
+                <a href="../index.html" class="back-link">
+                    <i class="fas fa-arrow-left"></i> Back to App
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-section">
+                <h3>Getting Started</h3>
+                <ul>
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="setup.html">Setup Guide</a></li>
+                    <li><a href="workflow.html">Workflow</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <h3>Architecture</h3>
+                <ul>
+                    <li><a href="system-architecture.html">System Architecture</a></li>
+                    <li><a href="er-diagram.html">ER Diagram</a></li>
+                    <li><a href="folder-structure.html">Folder Structure</a></li>
+                    <li><a href="srs.html" class="active">SRS Document</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <h3>About</h3>
+                <ul>
+                    <li><a href="index.html#sgp-group">SGP Group</a></li>
+                    <li><a href="index.html#contact">Contact</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <h1><i class="fas fa-file-contract"></i> Software Requirements Specification (SRS)</h1>
+            <p class="lead">Comprehensive specification document for DataXpert - AI-Assisted Business Data Analytics & Management System (Version 4.0)</p>
+
+            <!-- Document Information -->
+            <section class="doc-section">
+                <div class="info-box">
+                    <h3>Document Information</h3>
+                    <table style="width: 100%; margin-top: 1rem;">
+                        <tr>
+                            <td><strong>Project Name:</strong></td>
+                            <td>DataXpert - AI-Assisted Business Data Analytics & Management System</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Version:</strong></td>
+                            <td>4.0</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Date:</strong></td>
+                            <td>March 5, 2026</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Status:</strong></td>
+                            <td>Production - Fourth Release</td>
+                        </tr>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 1. Introduction -->
+            <section class="doc-section">
+                <h2>1. Introduction</h2>
+
+                <div class="info-box" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); border-left: 4px solid #6366f1;">
+                    <h3><i class="fas fa-rocket"></i> What's New in Version 4.0</h3>
+                    <ul>
+                        <li><strong>Production Deployment:</strong> Live on Render (backend) and Vercel (frontend)</li>
+                        <li><strong>Google OAuth Integration:</strong> One-click sign-in with Google accounts</li>
+                        <li><strong>Enhanced Security:</strong> SHA-256 password hashing, JWT with 7-day expiry, CORS protection</li>
+                        <li><strong>UI/UX Improvements:</strong> Dark/light theme toggle, responsive design, improved error handling</li>
+                        <li><strong>Keep-Alive System:</strong> GitHub Actions workflow to prevent server sleep</li>
+                        <li><strong>Comprehensive Documentation:</strong> Complete SRS, API docs, deployment guides</li>
+                        <li><strong>Performance Optimization:</strong> Gunicorn production server, database indexing, caching</li>
+                        <li><strong>Smart Data Upload:</strong> Enhanced CSV/Excel validation with automatic format detection</li>
+                    </ul>
+                </div>
+                
+                <h3>1.1 Purpose</h3>
+                <p>This Software Requirements Specification (SRS) document version 4.0 provides a complete description of all functionalities, constraints, and requirements for the DataXpert system. This is the fourth major release, representing a production-ready system with enhanced features, security, and performance optimizations. It is intended for developers, stakeholders, and end-users to understand the system's capabilities and limitations.</p>
+
+                <h3>1.2 Scope</h3>
+                <p>DataXpert version 4.0 is a production-grade, cloud-based business analytics platform that enables organizations to:</p>
+                <ul>
+                    <li>Upload and manage business data (sales, profits, expenses) with smart validation</li>
+                    <li>Analyze data using AI-powered natural language processing with intent recognition</li>
+                    <li>Visualize trends through interactive dashboards with Chart.js integration</li>
+                    <li>Detect anomalies automatically using Z-score machine learning algorithms</li>
+                    <li>Generate forecasts and comparative analysis with statistical models</li>
+                    <li>Export data in multiple formats (CSV, Excel, JSON)</li>
+                    <li><strong>[V4.0]</strong> Dual authentication with Google OAuth 2.0 integration</li>
+                    <li><strong>[V4.0]</strong> Production deployment on Render (backend) and Vercel (frontend)</li>
+                    <li><strong>[V4.0]</strong> Enhanced security with CORS, JWT token management, and password hashing</li>
+                    <li><strong>[V4.0]</strong> Responsive dark/light theme support</li>
+                    <li><strong>[V4.0]</strong> Comprehensive API documentation with Swagger/OpenAPI</li>
+                </ul>
+
+                <h3>1.3 Definitions, Acronyms, and Abbreviations</h3>
+                <div class="code-block">
+                    <table style="width: 100%;">
+                        <tr>
+                            <th style="width: 30%;">Term</th>
+                            <th>Definition</th>
+                        </tr>
+                        <tr>
+                            <td><strong>SRS</strong></td>
+                            <td>Software Requirements Specification</td>
+                        </tr>
+                        <tr>
+                            <td><strong>AI</strong></td>
+                            <td>Artificial Intelligence</td>
+                        </tr>
+                        <tr>
+                            <td><strong>NLP</strong></td>
+                            <td>Natural Language Processing</td>
+                        </tr>
+                        <tr>
+                            <td><strong>REST API</strong></td>
+                            <td>Representational State Transfer Application Programming Interface</td>
+                        </tr>
+                        <tr>
+                            <td><strong>JWT</strong></td>
+                            <td>JSON Web Token</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CORS</strong></td>
+                            <td>Cross-Origin Resource Sharing</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <h3>1.4 References</h3>
+                <ul>
+                    <li>Flask Documentation: <a href="https://flask.palletsprojects.com/" target="_blank">https://flask.palletsprojects.com/</a></li>
+                    <li>Supabase Documentation: <a href="https://supabase.com/docs" target="_blank">https://supabase.com/docs</a></li>
+                    <li>Chart.js Documentation: <a href="https://www.chartjs.org/docs/" target="_blank">https://www.chartjs.org/docs/</a></li>
+                </ul>
+            </section>
+
+            <!-- 2. Overall Description -->
+            <section class="doc-section">
+                <h2>2. Overall Description</h2>
+
+                <h3>2.1 Product Perspective</h3>
+                <p>DataXpert version 4.0 is a production-ready, cloud-deployed web application consisting of:</p>
+                <ul>
+                    <li><strong>Frontend:</strong> HTML5, CSS3, Vanilla JavaScript (Deployed on Vercel)</li>
+                    <li><strong>Backend:</strong> Flask 3.1.3 (Python) REST API (Deployed on Render)</li>
+                    <li><strong>Database:</strong> Supabase (PostgreSQL) - Cloud-hosted</li>
+                    <li><strong>AI/ML:</strong> Scikit-learn 1.8.0, Pandas 2.3.3, NumPy 1.26.4, SciPy 1.17.1</li>
+                    <li><strong>Authentication:</strong> JWT (7-day expiry) + Google OAuth 2.0</li>
+                    <li><strong>Server:</strong> Gunicorn 21.2.0 with production configuration</li>
+                </ul>
+
+                <h3>2.2 Product Functions</h3>
+                <div class="features-grid-doc">
+                    <div class="feature-box">
+                        <i class="fas fa-user-shield"></i>
+                        <h4>User Authentication</h4>
+                        <p>Email/password and Google OAuth login, profile management</p>
+                    </div>
+                    <div class="feature-box">
+                        <i class="fas fa-upload"></i>
+                        <h4>Data Management</h4>
+                        <p>CSV/Excel upload, validation, storage, and retrieval</p>
+                    </div>
+                    <div class="feature-box">
+                        <i class="fas fa-chart-line"></i>
+                        <h4>Data Visualization</h4>
+                        <p>Interactive charts, graphs, and dashboard widgets</p>
+                    </div>
+                    <div class="feature-box">
+                        <i class="fas fa-robot"></i>
+                        <h4>AI Chat Analysis</h4>
+                        <p>Natural language queries for business insights</p>
+                    </div>
+                    <div class="feature-box">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h4>Anomaly Detection</h4>
+                        <p>Automatic detection of unusual data patterns</p>
+                    </div>
+                    <div class="feature-box">
+                        <i class="fas fa-file-export"></i>
+                        <h4>Data Export</h4>
+                        <p>Export data in CSV, Excel, and JSON formats</p>
+                    </div>
+                </div>
+
+                <h3>2.3 User Classes and Characteristics</h3>
+                <table style="width: 100%; margin-top: 1rem;">
+                    <tr>
+                        <th style="width: 25%;">User Type</th>
+                        <th style="width: 35%;">Characteristics</th>
+                        <th style="width: 40%;">Functions</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Business Owner</strong></td>
+                        <td>Non-technical, needs simple insights</td>
+                        <td>View dashboard, ask AI questions, generate reports</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Data Analyst</strong></td>
+                        <td>Technical, needs detailed analysis</td>
+                        <td>Upload data, perform complex queries, export results</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Manager</strong></td>
+                        <td>Mid-technical, needs monitoring</td>
+                        <td>Track trends, monitor anomalies, comparative analysis</td>
+                    </tr>
+                </table>
+
+                <h3>2.4 Operating Environment</h3>
+                <ul>
+                    <li><strong>Client Side:</strong> Modern web browsers (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)</li>
+                    <li><strong>Frontend Hosting:</strong> Vercel (https://dataxpert.dev, https://dataxpert-orcin.vercel.app)</li>
+                    <li><strong>Backend Hosting:</strong> Render Free Tier (https://dataxpert-5twp.onrender.com)</li>
+                    <li><strong>Database:</strong> Supabase cloud PostgreSQL (hosted)</li>
+                    <li><strong>Minimum Internet Speed:</strong> 2 Mbps (recommended 5+ Mbps)</li>
+                    <li><strong>Screen Resolutions:</strong> 320px (mobile) to 2560px+ (desktop)</li>
+                    <li><strong>[V4.0]</strong> CDN: Cloudflare for static assets</li>
+                    <li><strong>[V4.0]</strong> SSL/TLS: HTTPS enforced on all domains</li>
+                </ul> 320px+, tablet 768px+, desktop 1024px+)</li>
+                    <li>Must comply with GDPR and data privacy regulations</li>
+                    <li>API response time should be under 3 seconds (target: 1.5s average)</li>
+                    <li>File upload size limited to 10MB per file</li>
+                    <li>Browser compatibility: Last 2 major versions of modern browsers</li>
+                    <li><strong>[V4.0]</strong> Render Free Tier: 15-minute sleep after inactivity (keep-alive implemented)</li>
+                    <li><strong>[V4.0]</strong> CORS: Restricted to approved domains only</li>
+                    <li><strong>[V4.0]</strong> Google OAuth: Requires approved JavaScript origins</li>
+                    <li><strong>[V4.0]</strong> Production environment variables must be secured</li>
+                    <li>Must comply with GDPR and data privacy regulations</li>
+                    <li>API response time should be under 3 seconds</li>
+                    <li>File upload size limited to 10MB</li>
+                    <li>Browser compatibility: Last 2 versions of major browsers</li>
+                </ul>
+            </section>
+
+            <!-- 3. System Features -->
+            <section class="doc-section">
+                <h2>3. System Features</h2>
+
+                <h3>3.1 User Authentication and Authorization</h3>
+                <div class="info-box">
+                    <h4>3.1.1 Description and Priority</h4>
+                    <p><strong>Priority:</strong> High</p>
+                    <p>Secure user registration, login, and profile management with multiple authentication methods.</p>
+
+                    <h4>3.1.2 Functional Requirements</h4>
+                    <ul>
+                        <li><strong>FR-1.1:</strong> System shall allow users to register using email and password</li>
+                        <li><strong>FR-1.2:</strong> System shall validate email format and password strength (minimum 6 characters)</li>
+                        <li><strong>FR-1.3:</strong> System shall support Google OAuth 2.0 authentication</li>
+                        <li><strong>FR-1.4:</strong> System shall generate JWT tokens with 7-day expiry</li>
+                        <li><strong>FR-1.5:</strong> System shall allow users to update profile information</li>
+                        <li><strong>FR-1.6:</strong> System shall provide password change functionality</li>
+                        <li><strong>FR-1.7:</strong> System shall display default avatar using UI Avatars API</li>
+                    </ul>
+                </div>
+
+                <h3>3.2 Business Data Management</h3>
+                <div class="info-box">
+                    <h4>3.2.1 Description and Priority</h4>
+                    <p><strong>Priority:</strong> High</p>
+                    <p>Upload, store, validate, and manage business data including sales, expenses, and profit records.</p>
+
+                    <h4>3.2.2 Functional Requirements</h4>
+                    <ul>
+                        <li><strong>FR-2.1:</strong> System shall accept CSV and Excel (.xlsx) file formats</li>
+                        <li><strong>FR-2.2:</strong> System shall validate data format and required fields</li>
+                        <li><strong>FR-2.3:</strong> System shall support fields: date, product, sales, expenses, profit, category</li>
+                        <li><strong>FR-2.4:</strong> System shall store data with user association</li>
+                        <li><strong>FR-2.5:</strong> System shall allow users to clear all their data</li>
+                        <li><strong>FR-2.6:</strong> System shall provide data pagination for large datasets</li>
+                        <li><strong>FR-2.7:</strong> System shall enforce maximum file size of 10MB</li>
+                    </ul>
+                </div>
+
+                <h3>3.3 Dashboard and Visualization</h3>
+                <div class="info-box">
+                    <h4>3.3.1 Description and Priority</h4>
+                    <p><strong>Priority:</strong> High</p>
+                    <p>Interactive dashboard with charts, graphs, and key performance indicators.</p>
+
+                    <h4>3.3.2 Functional Requirements</h4>
+                    <ul>
+                        <li><strong>FR-3.1:</strong> System shall display total sales, profit, and expenses metrics</li>
+                        <li><strong>FR-3.2:</strong> System shall generate line charts for trends over time</li>
+                        <li><strong>FR-3.3:</strong> System shall generate bar charts for product comparison</li>
+                        <li><strong>FR-3.4:</strong> System shall generate pie charts for category distribution</li>
+                        <li><strong>FR-3.5:</strong> System shall update charts in real-time on data changes</li>
+                        <li><strong>FR-3.6:</strong> System shall support chart export as images</li>
+                        <li><strong>FR-3.7:</strong> System shall display recent data entries</li>
+                    </ul>
+                </div>
+
+                <h3>3.4 AI-Powered Chat Analysis</h3>
+                <div class="info-box">
+                    <h4>3.4.1 Description and Priority</h4>
+                    <p><strong>Priority:</strong> High</p>
+                    <p>Natural language interface for querying business data and generating insights.</p>
+
+                    <h4>3.4.2 Functional Requirements</h4>
+                    <ul>
+                        <li><strong>FR-4.1:</strong> System shall accept natural language queries</li>
+                        <li><strong>FR-4.2:</strong> System shall extract intent (sales analysis, profit analysis, trend, forecast)</li>
+                        <li><strong>FR-4.3:</strong> System shall extract entities (dates, amounts, products)</li>
+                        <li><strong>FR-4.4:</strong> System shall perform sales trend analysis</li>
+                        <li><strong>FR-4.5:</strong> System shall perform profit analysis</li>
+                        <li><strong>FR-4.6:</strong> System shall generate sales forecasts using linear regression</li>
+                        <li><strong>FR-4.7:</strong> System shall provide comparative analysis between products/time periods</li>
+                        <li><strong>FR-4.8:</strong> System shall store chat history</li>
+                        <li><strong>FR-4.9:</strong> System shall respond within 3 seconds</li>
+                    </ul>
+                </div>
+
+                <h3>3.5 Anomaly Detection</h3>
+                <div class="info-box">
+                    <h4>3.5.1 Description and Priority</h4>
+                    <p><strong>Priority:</strong> Medium</p>
+                    <p>Automatic detection of unusual patterns in business data.</p>
+
+                    <h4>3.5.2 Functional Requirements</h4>
+                    <ul>
+                        <li><strong>FR-5.1:</strong> System shall use Z-score method for anomaly detection</li>
+                        <li><strong>FR-5.2:</strong> System shall flag data points with Z-score > 2.5</li>
+                        <li><strong>FR-5.3:</strong> System shall analyze sales, profit, and expense anomalies</li>
+                        <li><strong>FR-5.4:</strong> System shall display anomalies in dashboard</li>
+                        <li><strong>FR-5.5:</strong> System shall provide anomaly explanations</li>
+                    </ul>
+                </div>
+
+                <h3>3.6 Data Export</h3>
+                <div class="info-box">
+                    <h4>3.6.1 Description and Priority</h4>
+                    <p><strong>Priority:</strong> Medium</p>
+                    <p>Export business data and analysis results in multiple formats.</p>
+
+                    <h4>3.6.2 Functional Requirements</h4>
+                    <ul>
+                        <li><strong>FR-6.1:</strong> System shall export data in CSV format</li>
+                        <li><strong>FR-6.2:</strong> System shall export data in Excel (.xlsx) format</li>
+                        <li><strong>FR-6.3:</strong> System shall export data in JSON format</li>
+                        <li><strong>FR-6.4:</strong> System shall include filters in export</li>
+                        <li><strong>FR-6.5:</strong> System shall preserve data formatting in exports</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 4. External Interface Requirements -->
+            <section class="doc-section">
+                <h2>4. External Interface Requirements</h2>
+
+                <h3>4.1 User Interfaces</h3>
+                <ul>
+                    <li><strong>UI-1:</strong> Landing page with feature overview and authentication</li>
+                    <li><strong>UI-2:</strong> Login/Signup modals with email and Google options</li>
+                    <li><strong>UI-3:</strong> Dashboard with charts and KPI cards</li>
+                    <li><strong>UI-4:</strong> Analysis page with chat interface</li>
+                    <li><strong>UI-5:</strong> Profile page with user settings</li>
+                    <li><strong>UI-6:</strong> Dark/Light theme toggle</li>
+                    <li><strong>UI-7:</strong> Responsive design for mobile, tablet, desktop</li>
+                </ul>
+
+                <h3>4.2 Hardware Interfaces</h3>
+                <p>No direct hardware interfaces. System operates entirely in web browsers.</p>
+
+                <h3>4.3 Software Interfaces</h3>
+                <div class="code-block">
+                    <table style="width: 100%;">
+                        <tr>
+                            <th>Component</th>
+                            <th>Version</th>
+                            <th>Purpose</th>
+                        </tr>
+                        <tr>
+                            <td>Flask</td>
+                            <td>3.1.3</td>
+                            <td>Backend web framework</td>
+                        </tr>
+                        <tr>
+                            <td>Supabase Python Client</td>
+                            <td>2.6.0</td>
+                            <td>Database operations</td>
+                        </tr>
+                        <tr>
+                            <td>Chart.js</td>
+                            <td>Latest</td>
+                            <td>Data visualization</td>
+                        </tr>
+                        <tr>
+                            <td>Google OAuth 2.0</td>
+                            <td>2.48.0</td>
+                            <td>Social authentication</td>
+                        </tr>
+                        <tr>
+                            <td>Scikit-learn</td>
+                            <td>1.8.0</td>
+                            <td>Machine learning algorithms</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <h3>4.4 Communications Interfaces</h3>
+                <ul>
+                    <li><strong>Protocol:</strong> HTTPS/HTTP</li>
+                    <li><strong>API Format:</strong> RESTful JSON</li>
+                    <li><strong>Authentication:</strong> JWT Bearer tokens</li>
+                    <li><strong>CORS:</strong> Configured for allowed origins</li>
+                </ul>
+            </section>
+
+            <!-- 5. Non-Functional Requirements -->
+            <section class="doc-section">
+                <h2>5. Non-Functional Requirements</h2>
+
+                <h3>5.1 Performance Requirements</h3>
+                <ul>
+                    <li><strong>NFR-1.1:</strong> API response time shall be under 3 seconds (V4.0 Target: 1.5s average)</li>
+                    <li><strong>NFR-1.2:</strong> Page load time shall be under 2 seconds (V4.0: <1.5s with CDN)</li>
+                    <li><strong>NFR-1.3:</strong> System shall support 100 concurrent users (V4.0: tested up to 150)</li>
+                    <li><strong>NFR-1.4:</strong> Database queries shall execute within 1 second (V4.0: optimized with indexes)</li>
+                    <li><strong>NFR-1.5:</strong> Chart rendering shall complete within 1 second (V4.0: <800ms)</li>
+                    <li><strong>[V4.0] NFR-1.6:</strong> Cold start time (Render wake-up) shall be under 60 seconds</li>
+                    <li><strong>[V4.0] NFR-1.7:</strong> File upload processing shall handle 10MB files within 5 seconds</li>
+                </ul>
+
+                <h3>5.2 Safety Requirements</h3>
+                <ul>
+                    <li><strong>NFR-2.1:</strong> System shall backup data daily</li>
+                    <li><strong>NFR-2.2:</strong> System shall implement error logging</li>
+                    <li><strong>NFR-2.3:</strong> System shall gracefully handle failures</li>
+                </ul>
+
+                <h3>5.3 Security Requirements</h3>unique salt per user</li>
+                    <li><strong>NFR-3.2:</strong> JWT tokens shall expire after 7 days with HS256 algorithm</li>
+                    <li><strong>NFR-3.3:</strong> All API endpoints shall use HTTPS in production</li>
+                    <li><strong>NFR-3.4:</strong> SQL injection protection through parameterized queries (Supabase ORM)</li>
+                    <li><strong>NFR-3.5:</strong> XSS protection through input sanitization and Content Security Policy</li>
+                    <li><strong>NFR-3.6:</strong> CORS shall restrict to authorized domains only (whitelist approach)</li>
+                    <li><strong>[V4.0] NFR-3.7:</strong> Google OAuth tokens shall be verified server-side</li>
+                    <li><strong>[V4.0] NFR-3.8:</strong> Environment variables shall never be exposed in client code</li>
+                    <li><strong>[V4.0] NFR-3.9:</strong> API rate limiting implemented (100 requests per minute per user)</li>
+                    <li><strong>[V4.0] NFR-3.10:</strong> Session tokens stored in httpOnly cookies where applicable queries</li>
+                    <li><strong>NFR-3.5:</strong> XSS protection through input sanitization</li>
+                    <li><strong>NFR-3.6:</strong> CORS shall restrict to authorized domains only</li>
+                </ul>
+
+                <h3>5.4 Software Quality Attributes</h3>
+                <div class="features-grid-doc">
+                    <div class="feature-box">
+                        <i class="fas fa-expand-arrows-alt"></i>
+                        <h4>Scalability</h4>
+                        <p>Horizontal scaling through cloud infrastructure, supports growing user base</p>
+                    </div>
+                    <div class="feature-box">
+                        <i class="fas fa-shield-alt"></i>
+                        <h4>Reliability</h4>
+                        <p>99.5% uptime, automatic error recovery, data integrity checks</p>
+                    </div>
+                    <div class="feature-box">
+                        <i class="fas fa-wrench"></i>
+                        <h4>Maintainability</h4>
+                        <p>Modular code structure, comprehensive documentation, logging</p>
+                    </div>
+                    <div class="feature-box">
+                        <i class="fas fa-universal-access"></i>
+                        <h4>Usability</h4>
+                        <p>Intuitive interface, minimal learning curve, responsive design</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. System Models -->
+            <section class="doc-section">
+                <h2>6. System Models</h2>
+
+                <h3>6.1 Use Case Diagram</h3>
+                <div class="code-block">
+                    <pre><code>
+                    ┌──────────────┐
+                    │              │
+                    │     User     │
+                    │              │
+                    └──────┬───────┘
+                           │
+        ┌──────────────────┼──────────────────┐
+        │                  │                  │
+        ▼                  ▼                  ▼
+  [Register/Login]   [Upload Data]    [View Dashboard]
+        │                  │                  │
+        │                  ▼                  ▼
+        │          [Analyze Data]      [Export Data]
+        │                  │
+        │                  ▼
+        └─────────▶  [Chat with AI]
+                    </code></pre>
+                </div>
+
+                <h3>6.2 Data Flow Diagram (Level 0)</h3>
+                <div class="code-block">
+                    <pre><code>
+┌─────────┐          ┌───────────────┐          ┌──────────┐
+│         │          │               │          │          │
+│  User   │◀────────▶│   DataXpert   │◀────────▶│ Database │
+│         │          │   System      │          │          │
+└─────────┘          └───────┬───────┘          └──────────┘
+                             │
+                             │
+                             ▼
+                     ┌───────────────┐
+                     │   AI Engine   │
+                     │   (Analysis)  │
+                     └───────────────┘
+                    </code></pre>
+                </div>
+
+                <h3>6.3 State Diagram (User Session)</h3>
+                <div class="code-block">
+                    <pre><code>
+[Logged Out] ──Login──▶ [Authenticated] ──Logout──▶ [Logged Out]
+                              │
+                              ├──Upload Data──▶ [Data Uploaded]
+                              │
+                              ├──View Dashboard──▶ [Dashboard Active]
+                              │
+                              └──Chat Analysis──▶ [Analysis Active]
+                    </code></pre>
+                </div>
+            </section>
+
+            <!-- 7. Appendices -->
+            <section class="doc-section">
+                <h2>7. Appendices</h2>
+
+                <h3>7.1 API Endpoints</h3>
+                <div class="code-block">
+                    <table style="width: 100%;">
+                        <tr>
+                            <th style="width: 20%;">Method</th>
+                            <th style="width: 40%;">Endpoint</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-success">POST</span></td>
+                            <td>/api/auth/signup</td>
+                            <td>User registration</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-success">POST</span></td>
+                            <td>/api/auth/login</td>
+                            <td>User authentication</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-success">POST</span></td>
+                            <td>/api/auth/google</td>
+                            <td>Google OAuth</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-info">GET</span></td>
+                            <td>/api/auth/verify</td>
+                            <td>Token verification</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-success">POST</span></td>
+                            <td>/api/business/data</td>
+                            <td>Upload business data</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-info">GET</span></td>
+                            <td>/api/business/data</td>
+                            <td>Retrieve business data</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-info">GET</span></td>
+                            <td>/api/dashboard/stats</td>
+                            <td>Get dashboard metrics</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-success">POST</span></td>
+                            <td>/api/ai/chat</td>
+                            <td>AI chat analysis</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-info">GET</span></td>
+                            <td>/api/ai/chats</td>
+                            <td>Get chat history</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-info">GET</span></td>
+                            <td>/api/health</td>
+                            <td>Health check</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <h3>7.2 Database Schema</h3>
+                <p>See <a href="er-diagram.html">ER Diagram</a> page for complete database schema.</p>
+
+                <h3>7.3 Assumptions and Dependencies</h3>
+                <ul>
+                    <li>Users have stable internet connection</li>
+                    <li>Supabase service is available and operational</li>
+                    <li>Google OAuth service is accessible</li>
+                    <li>Users have modern web browsers with JavaScript enabled</li>
+                    <li>Render hosting service maintains 99.5% uptime</li>
+                </ul>
+            </section>
+
+            <!-- Version History -->
+            <section class="doc-section">
+                <h2>Version History</h2>
+                <table style="width: 100%;">
+                    <tr>
+                        <th style="width: 15%;">Version</th>
+                        <th style="width: 20%;">Date</th>
+                        <th style="width: 25%;">Author</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>1.0</td>
+                        <td>January 2026</td>
+                        <td>DataXpert Team</td>
+                        <td>Initial SRS document release with core features</td>
+                    </tr>
+                    <tr>
+                        <td>2.0</td>
+                        <td>February 2026</td>
+                        <td>DataXpert Team</td>
+                        <td>Added AI chat analysis and anomaly detection features</td>
+                    </tr>
+                    <tr>
+                        <td>3.0</td>
+                        <td>February 28, 2026</td>
+                        <td>DataXpert Team</td>
+                        <td>Enhanced data visualization and export capabilities</td>
+                    </tr>
+                    <tr>
+                        <td>4.0</td>
+                        <td>March 5, 2026</td>
+                        <td>DataXpert Team</td>
+                        <td>Production release with Google OAuth, improved UI/UX, and complete deployment documentation</td>
+                    </tr>
+                </table>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="../js/theme.js"></script>
+    <script src="js/docs.js"></script>
+</body>
+</html>
