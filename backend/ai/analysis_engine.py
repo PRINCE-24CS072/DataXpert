@@ -610,20 +610,40 @@ class AnalysisEngine:
         # Category breakdown (if available)
         category_chart = {'labels': [], 'datasets': []}
         if 'category' in df.columns:
-            category_sales = df.groupby('category')['sales'].sum()
-            category_chart = {
-                'labels': [str(label) for label in category_sales.index.tolist()],
-                'datasets': [{
-                    'data': [to_native(val) for val in category_sales.values.tolist()],
-                    'backgroundColor': [
-                        'rgba(255, 99, 132, 0.8)',
-                        'rgba(54, 162, 235, 0.8)',
-                        'rgba(255, 206, 86, 0.8)',
-                        'rgba(75, 192, 192, 0.8)',
-                        'rgba(153, 102, 255, 0.8)'
-                    ]
-                }]
-            }
+            # Filter out None/NaN categories and group
+            df_with_category = df[df['category'].notna() & (df['category'] != '')]
+            if len(df_with_category) > 0:
+                category_sales = df_with_category.groupby('category')['sales'].sum()
+                
+                # Dynamic color palette for any number of categories
+                base_colors = [
+                    'rgba(255, 99, 132, 0.8)',   # Red
+                    'rgba(54, 162, 235, 0.8)',   # Blue
+                    'rgba(255, 206, 86, 0.8)',   # Yellow
+                    'rgba(75, 192, 192, 0.8)',   # Teal
+                    'rgba(153, 102, 255, 0.8)', # Purple
+                    'rgba(255, 159, 64, 0.8)',   # Orange
+                    'rgba(99, 102, 241, 0.8)',   # Indigo
+                    'rgba(16, 185, 129, 0.8)',   # Green
+                    'rgba(236, 72, 153, 0.8)',   # Pink
+                    'rgba(245, 158, 11, 0.8)',   # Amber
+                    'rgba(59, 130, 246, 0.8)',   # Sky Blue
+                    'rgba(168, 85, 247, 0.8)',   # Violet
+                ]
+                
+                # Generate enough colors for all categories
+                num_categories = len(category_sales)
+                colors = []
+                for i in range(num_categories):
+                    colors.append(base_colors[i % len(base_colors)])
+                
+                category_chart = {
+                    'labels': [str(label) for label in category_sales.index.tolist()],
+                    'datasets': [{
+                        'data': [to_native(val) for val in category_sales.values.tolist()],
+                        'backgroundColor': colors
+                    }]
+                }
         
         return {
             'sales': sales_chart,
