@@ -3,7 +3,7 @@
 // Your Render backend URL will be: https://your-app-name.onrender.com/api
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000/api'
-    : 'https://dataxpert-5twp.onrender.com/'; // UPDATE THIS to your actual Render backend URL
+    : 'https://dataxpert-5twp.onrender.com/api'; // ✅ Fixed: Added /api at the end
 
 // Google OAuth Configuration
 const GOOGLE_CLIENT_ID = '72842356502-l4np4rfm963i89r17f8dlk7v7bmtrg6a.apps.googleusercontent.com';
