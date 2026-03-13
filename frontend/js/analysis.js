@@ -171,8 +171,18 @@ async function handleSendMessage(e) {
 
         if (data.success) {
             if (data.chat_id) currentChatId = data.chat_id;
-            addMessageToChat(data.response || data.message, 'assistant');
-            if (data.chart_data) renderAnalysisChart(data.chart_data);
+            // Backend returns response as object {text, summary, ...} or plain string
+            const responseText = typeof data.response === 'string'
+                ? data.response
+                : (data.response && (data.response.text || data.response.summary || data.response.message))
+                    || data.message
+                    || 'Analysis complete.';
+            addMessageToChat(responseText, 'assistant');
+            // Check all possible locations chart data could live in the response
+            const chartData = data.chart_data
+                || (data.response && data.response.chart_data)
+                || (data.analysis && (data.analysis.chart || data.analysis.chart_data));
+            if (chartData) renderAnalysisChart(chartData);
         } else {
             addMessageToChat('Sorry, I encountered an error. Please try again.', 'assistant');
             if (typeof showToast === 'function') showToast(data.message || 'Analysis failed', 'error');

@@ -1,8 +1,9 @@
 // Authentication Module - Fixed: No blur overlay, inline errors only
 
 let googleAuthRetries = 0;
-const MAX_GOOGLE_AUTH_RETRIES = 20;
-const GOOGLE_RETRY_INTERVAL = 100;
+let googleAuthPolling = false;
+const MAX_GOOGLE_AUTH_RETRIES = 50;
+const GOOGLE_RETRY_INTERVAL = 50;
 
 function getCurrentGoogleAction() {
     // New tab-based UI
@@ -16,11 +17,14 @@ function getCurrentGoogleAction() {
 }
 
 function initGoogleAuth() {
+    if (googleAuthPolling) return; // already polling — don't start a second loop
     if (googleAuthRetries >= MAX_GOOGLE_AUTH_RETRIES) {
         console.warn('Google Sign-In not available.');
         return;
     }
-    if (typeof google !== 'undefined' && google.accounts) {
+    const gsiReady = (typeof google !== 'undefined' && google.accounts) || window._gsiReady;
+    if (gsiReady && typeof google !== 'undefined' && google.accounts) {
+        googleAuthPolling = false;
         try {
             google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
@@ -33,9 +37,15 @@ function initGoogleAuth() {
             console.error('Google Auth init error:', e);
         }
     } else {
+        googleAuthPolling = true;
         googleAuthRetries++;
         if (googleAuthRetries < MAX_GOOGLE_AUTH_RETRIES) {
-            setTimeout(initGoogleAuth, GOOGLE_RETRY_INTERVAL);
+            setTimeout(() => {
+                googleAuthPolling = false;
+                initGoogleAuth();
+            }, GOOGLE_RETRY_INTERVAL);
+        } else {
+            googleAuthPolling = false;
         }
     }
 }
@@ -81,11 +91,10 @@ async function handleGoogleCallback(response) {
         const data = await result.json();
 
         if (data.success) {
-            localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
-            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
-            localStorage.setItem('dataxpert_show_banner', 'true');
+            setToken(data.token);
+            setUser(data.user);
             showToast(data.message || 'Signed in successfully!', 'success');
-            setTimeout(() => { window.location.href = 'dashboard.html'; }, 500);
+            window.location.href = 'dashboard.html';
         } else {
             if (data.need_signup) {
                 showInlineAuthError('loginError', 'No account found. Please sign up first.');
@@ -190,15 +199,14 @@ async function handleLogin(event) {
         const data = await response.json();
 
         if (data.success) {
-            localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
-            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
-            localStorage.setItem('dataxpert_show_banner', 'true');
+            setToken(data.token);
+            setUser(data.user);
             // Remember email if checkbox checked
             const rememberMe = document.getElementById('rememberMe');
             if (rememberMe && rememberMe.checked) {
-                localStorage.setItem('dataxpert_remember_email', email);
+                localStorage.setItem('dx_remember_email', email);
             } else {
-                localStorage.removeItem('dataxpert_remember_email');
+                localStorage.removeItem('dx_remember_email');
             }
             submitBtn.innerHTML = '<i class="fas fa-check"></i> Success!';
             setTimeout(() => { window.location.href = 'dashboard.html'; }, 400);
@@ -263,9 +271,8 @@ async function handleSignup(event) {
         const data = await response.json();
 
         if (data.success) {
-            localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
-            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
-            localStorage.setItem('dataxpert_show_banner', 'true');
+            setToken(data.token);
+            setUser(data.user);
             submitBtn.innerHTML = '<i class="fas fa-check"></i> Account created!';
             setTimeout(() => { window.location.href = 'dashboard.html'; }, 400);
         } else {
@@ -289,7 +296,7 @@ async function handleSignup(event) {
 
 // ---- AUTH VERIFICATION ----
 async function verifyAuth() {
-    if (!isAuthenticated()) return false;
+    if (!isLoggedIn()) return false;
     try {
         const response = await fetch(API_ENDPOINTS.VERIFY, {
             method: 'GET',
@@ -297,7 +304,7 @@ async function verifyAuth() {
         });
         const data = await response.json();
         if (data.success) {
-            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
+            setUser(data.user);
             return true;
         } else {
             logout();
@@ -371,21 +378,20 @@ async function handleProfileSetup(event) {
             showToast(profileData.message || 'Failed to update profile', 'error');
             submitBtn.disabled = false; submitBtn.innerHTML = orig; return;
         }
-        let user = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || '{}');
+        let user = getUser() || {};
         user.name = fullName;
         if (profileSetupImageFile) {
             const formData = new FormData();
             formData.append('profile_image', profileSetupImageFile);
-            const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
             const imgRes = await fetch(API_ENDPOINTS.UPLOAD_PROFILE_IMAGE, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
+                headers: { 'Authorization': `Bearer ${getToken()}` },
                 body: formData
             });
             const imgData = await imgRes.json();
             if (imgData.success && imgData.profile_image) user.profile_image = imgData.profile_image;
         }
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+        setUser(user);
         const modal = document.getElementById('profileSetupModal');
         if (modal) { modal.classList.remove('open'); modal.style.display = 'none'; }
         window.location.href = 'dashboard.html';
@@ -424,8 +430,8 @@ async function handleGoogleProfileCompletion(event) {
         const data = await response.json();
         if (data.success) {
             sessionStorage.removeItem('incomplete_user');
-            localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
-            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
+            setToken(data.token);
+            setUser(data.user);
             localStorage.removeItem('dataxpert_needs_profile_completion');
             window.location.href = 'dashboard.html';
         } else { showToast(data.message || 'Failed to complete profile', 'error'); }
@@ -442,6 +448,16 @@ function skipProfileCompletion() {
 window.showInlineError = showInlineAuthError;
 
 // ---- INIT ----
+// onGoogleLibraryLoad fires the instant GSI SDK is ready — zero polling delay
+window.onGoogleLibraryLoad = function () {
+    googleAuthPolling = false;
+    googleAuthRetries = 0;
+    initGoogleAuth();
+};
+
+// Try Google auth immediately (SDK may already be loaded before DOMContentLoaded)
+initGoogleAuth();
+
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
@@ -454,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (profileSetupForm) { profileSetupForm.addEventListener('submit', handleProfileSetup); setupProfileImagePreview(); }
 
     // Auto-fill remembered email
-    const remembered = localStorage.getItem('dataxpert_remember_email');
+    const remembered = localStorage.getItem('dx_remember_email') || localStorage.getItem('dataxpert_remember_email');
     if (remembered) {
         const el = document.getElementById('loginEmail');
         if (el) el.value = remembered;
@@ -474,5 +490,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    initGoogleAuth();
+    // Re-try Google auth in case it wasn't ready yet when first called
+    if (typeof google === 'undefined' || !google.accounts) {
+        initGoogleAuth();
+    }
 });

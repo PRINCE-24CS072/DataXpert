@@ -22,6 +22,7 @@
       <a href="dashboard.html" class="nav-link">Dashboard</a>
       <a href="analysis.html" class="nav-link">AI Analysis</a>
       <a href="history.html" class="nav-link active">History</a>
+      <a href="docs.html" class="nav-link">Documentation</a>
     </div>
     <div class="nav-right">
       <button class="nav-icon-btn" id="notificationBtn" title="Notifications">
@@ -50,8 +51,23 @@
           </button>
         </div>
       </div>
+      <!-- Hamburger (mobile only) -->
+      <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+      </button>
     </div>
   </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <a href="analysis.html" class="nav-link">AI Analysis</a>
+    <a href="history.html" class="nav-link active">History</a>
+    <a href="docs.html" class="nav-link">Documentation</a>
+    <div class="mobile-menu-divider"></div>
+    <a href="profile.html" class="dropdown-item">Profile</a>
+    <button class="dropdown-item danger logout-btn">Logout</button>
+  </div>
 
   <div class="main-content">
     <!-- Page Header -->
@@ -187,6 +203,18 @@
       </div>
     </div>
   </div>
+
+  <!-- App Footer -->
+  <footer class="app-footer">
+    <div class="app-footer-brand">Data<span>Xpert</span> <span style="font-weight:400;font-size:11px;color:var(--text-muted);margin-left:6px;">SGP Group · Manav Patel · Prince Patel · Srujal Patel</span></div>
+    <div class="app-footer-links">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="analysis.html">AI Analysis</a>
+      <a href="history.html">History</a>
+      <a href="docs.html">Documentation</a>
+    </div>
+    <div class="app-footer-copy">&copy; 2026 DataXpert — SGP Group. All rights reserved.</div>
+  </footer>
 
   <div class="toast-container" id="toastContainer"></div>
 
@@ -462,7 +490,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
-      if (!isAuthenticated()) { window.location.href = 'index.html'; return; }
+      if (!isLoggedIn()) { window.location.href = 'index.html'; return; }
       const verified = await verifyAuth();
       if (!verified) return;
       populateYearDropdowns();

@@ -133,20 +133,39 @@ async function loadDashboardData() {
     showSkeletons();
 
     try {
-        const response = await fetch(API_ENDPOINTS.DASHBOARD_STATS, {
-            method: 'GET',
-            headers: getAuthHeaders()
-        });
+        // Fetch stats AND charts in parallel — both are required for full dashboard
+        const [statsResp, chartsResp] = await Promise.all([
+            fetch(API_ENDPOINTS.DASHBOARD_STATS, { method: 'GET', headers: getAuthHeaders() }),
+            fetch(API_ENDPOINTS.DASHBOARD_CHARTS, { method: 'GET', headers: getAuthHeaders() })
+        ]);
 
-        if (response.status === 401) {
+        if (statsResp.status === 401) {
             if (typeof logout === 'function') logout();
             return;
         }
 
-        if (!response.ok) throw new Error('HTTP ' + response.status);
+        if (!statsResp.ok) throw new Error('HTTP ' + statsResp.status);
 
-        const result = await response.json();
-        if (result.success === false) throw new Error(result.message || 'Load failed');
+        const statsResult = await statsResp.json();
+        if (statsResult.success === false) throw new Error(statsResult.message || 'Load failed');
+
+        // Charts endpoint is best-effort — don't fail if it errors
+        let chartsData = {};
+        try {
+            if (chartsResp.ok) {
+                const chartsResult = await chartsResp.json();
+                if (chartsResult.success) chartsData = chartsResult.charts || chartsResult.chart_data || {};
+            }
+        } catch (_) { /* charts are optional */ }
+
+        // Flatten recent_data out of stats so renderDashboard can access it at root level
+        const statsObj = statsResult.stats || {};
+        const result = {
+            ...statsResult,
+            stats: statsObj,
+            charts: chartsData,
+            recent_data: statsObj.recent_data || statsResult.recent_data || []
+        };
 
         dashboardData = result;
         if (typeof DataCache !== 'undefined') DataCache.set(result);
@@ -458,7 +477,7 @@ function filterDataByRange(data, filter) {
         const from   = fromEl && fromEl.value ? new Date(fromEl.value) : null;
         const to     = toEl   && toEl.value   ? new Date(toEl.value + 'T23:59:59') : null;
         return data.filter(row => {
-            const d = new Date(row.date || row.Date || row.created_at || '');
+            const d = new Date(row.record_date || row.date || row.Date || row.created_at || '');
             if (isNaN(d.getTime())) return false;
             if (from && d < from) return false;
             if (to   && d > to)   return false;
@@ -469,7 +488,7 @@ function filterDataByRange(data, filter) {
     }
 
     return data.filter(row => {
-        const d = new Date(row.date || row.Date || row.created_at || '');
+        const d = new Date(row.record_date || row.date || row.Date || row.created_at || '');
         return !isNaN(d.getTime()) && d >= cutoff;
     });
 }
@@ -522,29 +541,37 @@ function rebuildChartsFromFilter(rows) {
     const monthMap = {}, catMap = {}, profitByMonth = {}, expenseByMonth = {};
 
     rows.forEach(row => {
-        const d = new Date(row.date || row.Date || row.created_at || '');
+        const d = new Date(row.record_date || row.date || row.Date || row.created_at || '');
         if (isNaN(d.getTime())) return;
 
         const key    = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
         const label  = d.toLocaleString('en-IN', { month: 'short', year: '2-digit' });
-        const amount = parseFloat(row.amount || row.Amount || 0);
-        const type   = (row.type || row.Type || row.data_type || '').toLowerCase();
         const cat    = row.category || row.Category || 'Other';
 
         if (!monthMap[key])       monthMap[key]       = { label, value: 0 };
         if (!profitByMonth[key])  profitByMonth[key]  = { label, value: 0 };
         if (!expenseByMonth[key]) expenseByMonth[key] = { label, value: 0 };
 
-        if (['sale','sales','income','revenue'].includes(type)) {
-            monthMap[key].value      += amount;
-            profitByMonth[key].value += amount;
-        } else if (['expense','expenses','cost'].includes(type)) {
-            expenseByMonth[key].value += amount;
-        } else if (type === 'profit') {
-            profitByMonth[key].value += amount;
+        // Support both legacy (type+amount) and new (sales/expenses/profit) formats
+        const sales    = parseFloat(row.sales    || 0);
+        const expenses = parseFloat(row.expenses || 0);
+        const profit   = parseFloat(row.profit   || 0);
+        const legacyAmount = parseFloat(row.amount || row.Amount || 0);
+        const type     = (row.type || row.Type || row.data_type || '').toLowerCase();
+
+        if (sales > 0 || ['sale','sales','income','revenue'].includes(type)) {
+            const amt = sales || legacyAmount;
+            monthMap[key].value      += amt;
+            profitByMonth[key].value += profit || amt;
+        }
+        if (expenses > 0 || ['expense','expenses','cost'].includes(type)) {
+            expenseByMonth[key].value += expenses || legacyAmount;
+        }
+        if (profit > 0 && !sales) {
+            profitByMonth[key].value += profit;
         }
 
-        catMap[cat] = (catMap[cat] || 0) + amount;
+        catMap[cat] = (catMap[cat] || 0) + (sales || expenses || profit || legacyAmount);
     });
 
     const sortedKeys     = Object.keys(monthMap).sort();
@@ -575,11 +602,27 @@ function renderRecentData(rows) {
     let html = '';
     rows.slice(0, 10).forEach(row => {
         const id          = row.id   || row._id || '';
-        const dateStr     = row.date || row.Date || row.created_at || '';
-        const type        = row.type || row.Type || row.data_type  || '';
-        const amount      = parseFloat(row.amount || row.Amount || 0);
+        const dateStr     = row.record_date || row.date || row.Date || row.created_at || '';
         const category    = row.category    || row.Category    || '—';
         const description = row.description || row.Description || row.notes || '—';
+
+        // Normalize type and amount — support both new (sales/expenses/profit) and legacy (type+amount)
+        let type = row.type || row.Type || row.data_type || '';
+        let amount = 0;
+        const sales    = parseFloat(row.sales    || 0);
+        const expenses = parseFloat(row.expenses || 0);
+        const profit   = parseFloat(row.profit   || 0);
+        const legacyAmt = parseFloat(row.amount || row.Amount || 0);
+
+        if (!type) {
+            // Derive type from which value is largest
+            if (sales >= expenses && sales >= profit && sales > 0)         { type = 'Sale';    amount = sales; }
+            else if (expenses >= sales && expenses >= profit && expenses > 0){ type = 'Expense'; amount = expenses; }
+            else if (profit > 0)                                            { type = 'Profit';  amount = profit; }
+            else if (legacyAmt > 0)                                         { type = 'Entry';   amount = legacyAmt; }
+        } else {
+            amount = legacyAmt || sales || expenses || profit;
+        }
 
         const typeLower = type.toLowerCase();
         let pillClass = 'status-pill';
@@ -947,7 +990,7 @@ function handleUploadFile(file) {
     }
 
     const zone     = document.getElementById('uploadZone');
-    const token    = localStorage.getItem('dataxpert_token');
+    const token    = getToken();
     const formData = new FormData();
     formData.append('file', file);
 

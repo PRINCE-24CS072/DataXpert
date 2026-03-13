@@ -1,63 +1,133 @@
-// Header Profile Module
-// Loads user profile into navbar dropdown and avatar
+// ============================================================
+// DataXpert – header-profile.js
+// Loads user data into navbar; wires hamburger + dropdown
+// ============================================================
 
-(function() {
+(function HeaderProfile() {
+
+    // ── Load user data into navbar elements ──────────────────
     function loadHeaderProfile() {
-        const userStr = localStorage.getItem('dataxpert_user');
-        if (!userStr) return;
+        const user = (typeof getUser === 'function') ? getUser() : null;
+        if (!user) return;
 
-        let user;
-        try { user = JSON.parse(userStr); } catch(e) { return; }
-
-        // Name
-        const nameEl = document.getElementById('dropdownName');
-        if (nameEl) nameEl.textContent = user.name || 'User';
-
-        // Email
+        // Name + email in dropdown
+        const nameEl  = document.getElementById('dropdownName');
         const emailEl = document.getElementById('dropdownEmail');
+        if (nameEl)  nameEl.textContent  = user.name  || 'User';
         if (emailEl) emailEl.textContent = user.email || '';
 
-        // Avatar initials
-        const name = user.name || 'U';
-        const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'U';
-
+        // Initials
+        const name     = user.name || 'U';
+        const initials = name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'U';
         const initialsEl = document.getElementById('navAvatarInitials');
         if (initialsEl) initialsEl.textContent = initials;
 
-        // Avatar image
+        // Avatar photo
         const avatarImg = document.getElementById('navAvatarImg');
-        if (avatarImg && user.profile_image) {
-            avatarImg.src = user.profile_image;
-            avatarImg.style.display = 'block';
-            if (initialsEl) initialsEl.style.display = 'none';
-        } else if (avatarImg) {
-            avatarImg.style.display = 'none';
-            if (initialsEl) initialsEl.style.display = 'flex';
+        if (avatarImg) {
+            if (user.profile_image) {
+                avatarImg.src = user.profile_image;
+                avatarImg.style.display = 'block';
+                if (initialsEl) initialsEl.style.display = 'none';
+            } else {
+                avatarImg.style.display = 'none';
+                if (initialsEl) initialsEl.style.display = 'flex';
+            }
         }
 
-        // Legacy: also update old header elements if present
-        const userNameEl = document.getElementById('userName');
-        if (userNameEl) userNameEl.textContent = user.name || 'User';
+        // Legacy element support
+        const legacyName  = document.getElementById('userName');
+        const legacyEmail = document.getElementById('userEmail');
+        if (legacyName)  legacyName.textContent  = user.name  || 'User';
+        if (legacyEmail) legacyEmail.textContent = user.email || '';
 
-        const userEmailEl = document.getElementById('userEmail');
-        if (userEmailEl) userEmailEl.textContent = user.email || '';
-
-        const oldAvatarImg = document.getElementById('userAvatar');
-        if (oldAvatarImg && user.profile_image) {
-            oldAvatarImg.src = user.profile_image;
-            oldAvatarImg.style.display = 'block';
+        const legacyAvatar = document.getElementById('userAvatar');
+        if (legacyAvatar && user.profile_image) {
+            legacyAvatar.src = user.profile_image;
+            legacyAvatar.style.display = 'block';
             const fallback = document.getElementById('avatarFallback');
             if (fallback) fallback.style.display = 'none';
         }
     }
 
-    // Run immediately
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', loadHeaderProfile);
-    } else {
-        loadHeaderProfile();
+    // ── Hamburger / Mobile Menu ───────────────────────────────
+    function setupHamburger() {
+        const btn     = document.getElementById('hamburgerBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (!btn || !mobileMenu) return;
+
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const open = mobileMenu.classList.toggle('open');
+            btn.setAttribute('aria-expanded', open);
+            btn.classList.toggle('active', open);
+        });
+
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+            if (!mobileMenu.contains(e.target) && e.target !== btn) {
+                mobileMenu.classList.remove('open');
+                btn.setAttribute('aria-expanded', 'false');
+                btn.classList.remove('active');
+            }
+        });
+
+        // Close on nav link click
+        mobileMenu.querySelectorAll('a, button').forEach(el => {
+            el.addEventListener('click', () => {
+                mobileMenu.classList.remove('open');
+                btn.classList.remove('active');
+            });
+        });
     }
 
-    // Export
+    // ── Avatar Dropdown ───────────────────────────────────────
+    function setupDropdown() {
+        const wrap = document.getElementById('avatarWrap');
+        if (!wrap) return;
+
+        wrap.addEventListener('click', (e) => {
+            e.stopPropagation();
+            wrap.classList.toggle('open');
+        });
+
+        document.addEventListener('click', () => wrap.classList.remove('open'));
+    }
+
+    // ── Logout ────────────────────────────────────────────────
+    function setupLogout() {
+        document.querySelectorAll('#logoutBtn, .logout-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (typeof logout === 'function') logout();
+            });
+        });
+    }
+
+    // ── Notification Bell (placeholder) ──────────────────────
+    function setupNotifications() {
+        const btn = document.getElementById('notificationBtn');
+        if (btn) {
+            btn.addEventListener('click', () => {
+                if (typeof showToast === 'function') showToast('No new notifications', 'info');
+            });
+        }
+    }
+
+    // ── Init ──────────────────────────────────────────────────
+    function init() {
+        loadHeaderProfile();
+        setupHamburger();
+        setupDropdown();
+        setupLogout();
+        setupNotifications();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    // Expose for external refresh (e.g., after profile update)
     window.loadHeaderProfile = loadHeaderProfile;
 })();

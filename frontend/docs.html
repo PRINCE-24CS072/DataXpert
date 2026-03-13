@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation — DataXpert</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* ── Docs Layout ── */
+    .docs-page {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background: var(--bg-base);
+    }
+
+    .docs-body {
+      display: flex;
+      max-width: 1300px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 40px 24px;
+      gap: 40px;
+      flex: 1;
+    }
+
+    /* ── Sidebar ── */
+    .docs-sidebar {
+      width: 220px;
+      flex-shrink: 0;
+    }
+
+    .docs-sidebar-inner {
+      position: sticky;
+      top: 76px; /* navbar height + 20px gap */
+    }
+
+    .docs-sidebar-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      padding-left: 10px;
+    }
+
+    .docs-nav {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .docs-nav a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: background 0.12s, color 0.12s;
+      border-left: 2px solid transparent;
+    }
+
+    .docs-nav a:hover {
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+    }
+
+    .docs-nav a.active {
+      color: var(--accent-blue);
+      background: rgba(37, 99, 235, 0.08);
+      border-left-color: var(--accent-blue);
+    }
+
+    .docs-nav a .nav-icon {
+      font-size: 13px;
+      width: 16px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Main content ── */
+    .docs-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* Section */
+    .docs-section {
+      margin-bottom: 64px;
+      scroll-margin-top: 80px;
+    }
+
+    .docs-section:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Section header */
+    .docs-section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .section-icon.blue   { background: rgba(37, 99, 235, 0.12);  color: var(--accent-blue); }
+    .section-icon.green  { background: rgba(5, 150, 105, 0.12);  color: var(--accent-green); }
+    .section-icon.purple { background: rgba(124, 58, 237, 0.12); color: var(--accent-purple); }
+    .section-icon.amber  { background: rgba(217, 119, 6, 0.12);  color: var(--accent-amber); }
+    .section-icon.red    { background: rgba(220, 38, 38, 0.12);  color: var(--accent-red); }
+    .section-icon.teal   { background: rgba(20, 184, 166, 0.12); color: #2DD4BF; }
+
+    .docs-section-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .docs-section-header p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 2px 0 0;
+    }
+
+    /* Body text */
+    .docs-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.75;
+      margin-bottom: 16px;
+    }
+
+    .docs-text:last-child { margin-bottom: 0; }
+
+    /* Sub-heading */
+    .docs-h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 28px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .docs-h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin: 20px 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Code block */
+    .docs-codeblock {
+      position: relative;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      margin: 12px 0 20px;
+      overflow: hidden;
+    }
+
+    .docs-codeblock-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .docs-codeblock-lang {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .docs-copy-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 5px;
+      border: 1px solid var(--border-subtle);
+      background: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .docs-copy-btn:hover {
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      border-color: var(--border-bright);
+    }
+
+    .docs-copy-btn.copied {
+      color: var(--accent-green);
+      border-color: rgba(5,150,105,0.3);
+    }
+
+    .docs-codeblock pre {
+      margin: 0;
+      padding: 16px;
+      overflow-x: auto;
+      font-family: 'DM Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    .docs-codeblock pre .kw  { color: #93C5FD; } /* keywords: blue */
+    .docs-codeblock pre .st  { color: #86EFAC; } /* strings: green */
+    .docs-codeblock pre .cm  { color: var(--text-muted); font-style: italic; } /* comments */
+    .docs-codeblock pre .nm  { color: #FCA5A5; } /* names: red */
+    .docs-codeblock pre .nb  { color: #FCD34D; } /* numbers: amber */
+
+    /* Inline code */
+    .docs-inline-code {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 1px 6px;
+      color: var(--accent-blue);
+    }
+
+    /* Steps list */
+    .docs-steps {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      counter-reset: step-counter;
+    }
+
+    .docs-step {
+      display: flex;
+      gap: 16px;
+      counter-increment: step-counter;
+    }
+
+    .docs-step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .docs-step-body {
+      flex: 1;
+    }
+
+    .docs-step-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .docs-step-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Feature cards grid */
+    .docs-feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .docs-feature-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 9px;
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .docs-feature-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .docs-feature-card strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .docs-feature-card p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    /* Info / warning / tip callouts */
+    .docs-callout {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin: 16px 0;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .docs-callout.info {
+      background: rgba(37,99,235,0.08);
+      border-left: 3px solid var(--accent-blue);
+      color: var(--text-secondary);
+    }
+
+    .docs-callout.tip {
+      background: rgba(5,150,105,0.08);
+      border-left: 3px solid var(--accent-green);
+      color: var(--text-secondary);
+    }
+
+    .docs-callout.warning {
+      background: rgba(217,119,6,0.08);
+      border-left: 3px solid var(--accent-amber);
+      color: var(--text-secondary);
+    }
+
+    .docs-callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    /* Table */
+    .docs-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 20px;
+      font-size: 13px;
+    }
+
+    .docs-table th {
+      text-align: left;
+      padding: 9px 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .docs-table td {
+      padding: 9px 12px;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+    }
+
+    .docs-table tr:hover td { background: rgba(37,99,235,0.03); }
+
+    /* Badge */
+    .docs-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .docs-badge.get    { background: rgba(5,150,105,0.12);  color: #34D399; }
+    .docs-badge.post   { background: rgba(37,99,235,0.12);  color: #93C5FD; }
+    .docs-badge.put    { background: rgba(217,119,6,0.12);  color: #FCD34D; }
+    .docs-badge.delete { background: rgba(220,38,38,0.12);  color: #FCA5A5; }
+
+    /* Architecture diagram */
+    .docs-arch {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 20px 24px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin: 12px 0 20px;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    /* Breadcrumb on top */
+    .docs-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+
+    .docs-breadcrumb a { color: var(--accent-blue); text-decoration: none; }
+    .docs-breadcrumb a:hover { text-decoration: underline; }
+    .docs-breadcrumb span { color: var(--text-muted); }
+
+    /* Page title banner */
+    .docs-hero {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin-bottom: 40px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .docs-hero-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: rgba(37,99,235,0.12);
+      border: 1px solid rgba(37,99,235,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      flex-shrink: 0;
+    }
+
+    .docs-hero h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 4px;
+    }
+
+    .docs-hero p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .docs-hero-meta {
+      margin-left: auto;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .docs-hero-meta span {
+      display: block;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .docs-hero-meta strong {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* Divider between list items */
+    .docs-ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin: 10px 0 16px;
+    }
+
+    .docs-ul li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .docs-ul li::before {
+      content: '›';
+      color: var(--accent-blue);
+      font-weight: 700;
+      font-size: 15px;
+      flex-shrink: 0;
+      line-height: 1.4;
+    }
+
+    /* Mobile: sidebar collapses */
+    @media (max-width: 900px) {
+      .docs-body { flex-direction: column; padding: 20px 16px; gap: 24px; }
+      .docs-sidebar { width: 100%; }
+      .docs-sidebar-inner { position: static; }
+      .docs-nav { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+      .docs-nav a { font-size: 12px; padding: 5px 10px; border-left: none; border-bottom: 2px solid transparent; }
+      .docs-nav a.active { border-left: none; border-bottom-color: var(--accent-blue); }
+      .docs-feature-grid { grid-template-columns: 1fr; }
+      .docs-hero { flex-wrap: wrap; }
+      .docs-hero-meta { margin-left: 0; text-align: left; }
+    }
+  </style>
+</head>
+<body class="docs-page">
+
+  <!-- ── Navbar ── -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <a href="index.html" class="nav-logo">Data<span class="accent">Xpert</span></a>
+      <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+      </button>
+    </div>
+    <div class="nav-center">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="analysis.html" class="nav-link">AI Analysis</a>
+      <a href="history.html" class="nav-link">History</a>
+      <a href="docs.html" class="nav-link active">Documentation</a>
+    </div>
+    <div class="nav-right">
+      <button class="nav-icon-btn" id="notificationBtn" title="Notifications">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span class="notif-dot"></span>
+      </button>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" id="themeIcon"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+      <div class="nav-avatar-wrap" id="avatarWrap">
+        <div class="nav-avatar" id="navAvatar">
+          <img id="navAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
+          <span id="navAvatarInitials">U</span>
+        </div>
+        <div class="nav-dropdown" id="navDropdown">
+          <div class="dropdown-user">
+            <strong id="dropdownName">Loading...</strong>
+            <span id="dropdownEmail"></span>
+          </div>
+          <hr class="dropdown-divider">
+          <a href="profile.html" class="dropdown-item">
+            <i class="fas fa-user" style="width:14px;margin-right:8px;"></i>Profile
+          </a>
+          <button class="dropdown-item danger" id="logoutBtn">
+            <i class="fas fa-sign-out-alt" style="width:14px;margin-right:8px;"></i>Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <a href="analysis.html" class="nav-link">AI Analysis</a>
+    <a href="history.html" class="nav-link">History</a>
+    <a href="docs.html" class="nav-link active">Documentation</a>
+    <div class="mobile-menu-divider"></div>
+    <a href="profile.html" class="dropdown-item">Profile</a>
+    <button class="dropdown-item danger logout-btn">Logout</button>
+  </div>
+
+  <!-- ── Docs Layout ── -->
+  <div class="docs-body">
+
+    <!-- ── Sidebar ── -->
+    <aside class="docs-sidebar">
+      <div class="docs-sidebar-inner">
+        <div class="docs-sidebar-label">On this page</div>
+        <ul class="docs-nav" id="docsNav">
+          <li><a href="#overview" class="active"><span class="nav-icon">📋</span> Overview</a></li>
+          <li><a href="#quick-start"><span class="nav-icon">🚀</span> Quick Start</a></li>
+          <li><a href="#configuration"><span class="nav-icon">⚙️</span> Configuration</a></li>
+          <li><a href="#database-setup"><span class="nav-icon">🗄️</span> Database Setup</a></li>
+          <li><a href="#google-oauth"><span class="nav-icon">🔐</span> Google OAuth</a></li>
+          <li><a href="#project-instructions"><span class="nav-icon">📖</span> Project Instructions</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- ── Main Content ── -->
+    <main class="docs-main">
+
+      <!-- Breadcrumb -->
+      <div class="docs-breadcrumb">
+        <a href="dashboard.html">Dashboard</a>
+        <span>›</span>
+        <span>Documentation</span>
+      </div>
+
+      <!-- Hero -->
+      <div class="docs-hero">
+        <div class="docs-hero-icon">📚</div>
+        <div>
+          <h1>DataXpert Documentation</h1>
+          <p>Complete guide to setup, configuration, architecture, and usage of the DataXpert platform.</p>
+        </div>
+        <div class="docs-hero-meta">
+          <span>Last updated</span>
+          <strong>March 4, 2026</strong>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           SECTION 1 — OVERVIEW
+           ════════════════════════════════════════ -->
+      <section class="docs-section" id="overview">
+        <div class="docs-section-header">
+          <div class="section-icon blue"><i class="fas fa-layer-group"></i></div>
+          <div>
+            <h2>Overview</h2>
+            <p>What is DataXpert and what makes it special</p>
+          </div>
+        </div>
+
+        <p class="docs-text">
+          <strong style="color:var(--text-primary);">DataXpert</strong> is a modern business analytics platform that leverages AI to provide actionable insights from your business data. Built with a Python Flask backend and vanilla JavaScript frontend, it offers real-time analytics, an AI-powered chat interface, and comprehensive data visualization.
+        </p>
+
+        <div class="docs-callout info">
+          <span class="docs-callout-icon">💡</span>
+          <span>DataXpert follows a clean three-tier architecture: <strong>Frontend (HTML/CSS/JS)</strong> → <strong>REST API (Flask)</strong> → <strong>Supabase (PostgreSQL)</strong>. All API calls go through <code class="docs-inline-code">/api/*</code> endpoints.</span>
+        </div>
+
+        <div class="docs-h3">Key Features</div>
+        <div class="docs-feature-grid">
+          <div class="docs-feature-card">
+            <div class="docs-feature-icon">🔐</div>
+            <div>
+              <strong>Dual Authentication</strong>
+              <p>Email/password OR Google OAuth for seamless access. JWT tokens for session management.</p>
+            </div>
+          </div>
+          <div class="docs-feature-card">
+            <div class="docs-feature-icon">📊</div>
+            <div>
+              <strong>Live Dashboard</strong>
+              <p>Real-time business metrics with interactive Chart.js visualizations and time-range filters.</p>
+            </div>
+          </div>
+          <div class="docs-feature-card">
+            <div class="docs-feature-icon">🤖</div>
+            <div>
+              <strong>AI Chat Analysis</strong>
+              <p>Natural language queries for instant insights — ask questions about your sales, profits, and trends.</p>
+            </div>
+          </div>
+          <div class="docs-feature-card">
+            <div class="docs-feature-icon">📈</div>
+            <div>
+              <strong>Anomaly Detection</strong>
+              <p>Automated Z-score based outlier identification across your business data records.</p>
+            </div>
+          </div>
+          <div class="docs-feature-card">
+            <div class="docs-feature-icon">📁</div>
+            <div>
+              <strong>Smart CSV Import</strong>
+              <p>Bulk upload and process business data from CSV/Excel files with auto column mapping.</p>
+            </div>
+          </div>
+          <div class="docs-feature-card">
+            <div class="docs-feature-icon">⚡</div>
+            <div>
+              <strong>DataCache</strong>
+              <p>Client-side sessionStorage cache with 5-minute TTL avoids redundant API calls.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="docs-h3">Technology Stack</div>
+        <table class="docs-table">
+          <thead>
+            <tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Frontend</td><td>HTML5, CSS3, Vanilla JS (ES6+)</td><td>UI & user interaction</td></tr>
+            <tr><td>Charts</td><td>Chart.js</td><td>Data visualization</td></tr>
+            <tr><td>Backend</td><td>Python, Flask, Flask-CORS</td><td>REST API server</td></tr>
+            <tr><td>Database</td><td>Supabase (PostgreSQL)</td><td>Persistent data storage</td></tr>
+            <tr><td>Auth</td><td>JWT, Google OAuth 2.0</td><td>Authentication & sessions</td></tr>
+            <tr><td>AI/ML</td><td>Pandas, NumPy, SciPy</td><td>Data analysis & anomaly detection</td></tr>
+          </tbody>
+        </table>
+
+        <div class="docs-h3">Project Structure</div>
+        <div class="docs-arch">DataXpert/
+├── backend/
+│   ├── app.py                   # Main Flask app — all API routes
+│   ├── requirements.txt         # Python dependencies
+│   ├── .env                     # Environment variables (never commit)
+│   ├── auth/
+│   │   └── auth_service.py      # Email + Google OAuth logic
+│   ├── database/
+│   │   └── supabase_client.py   # All DB operations (SupabaseClient class)
+│   └── ai/
+│       ├── analysis_engine.py   # Business data analysis
+│       ├── nlp_processor.py     # Intent & entity extraction
+│       ├── data_processor.py    # CSV/Excel processing
+│       └── anomaly_detector.py  # Z-score anomaly detection
+│
+└── frontend/
+    ├── css/
+    │   ├── style.css            # Global styles (Obsidian Pro design system)
+    │   ├── dashboard.css        # Dashboard, history, profile layouts
+    │   └── analysis.css         # AI analysis page styles
+    ├── js/
+    │   ├── config.js            # API endpoints, auth helpers, DataCache ← load FIRST
+    │   ├── auth.js              # Google OAuth + email auth handlers
+    │   ├── main.js              # Toast system, utilities, formatters
+    │   ├── theme.js             # Dark/light theme toggle
+    │   ├── header-profile.js    # Navbar profile + hamburger menu
+    │   ├── dashboard.js         # Dashboard data + charts
+    │   ├── analysis.js          # AI chat interface
+    │   ├── data-import-export.js
+    │   └── comparison-analysis.js
+    ├── index.html               # Login / Sign up page
+    ├── dashboard.html           # Main dashboard
+    ├── analysis.html            # AI analysis
+    ├── history.html             # Data history
+    └── profile.html             # User profile</div>
+
+      </section>
+
+      <!-- ════════════════════════════════════════
+           SECTION 2 — QUICK START
+           ════════════════════════════════════════ -->
+      <section class="docs-section" id="quick-start">
+        <div class="docs-section-header">
+          <div class="section-icon green"><i class="fas fa-rocket"></i></div>
+          <div>
+            <h2>Quick Start</h2>
+            <p>Get DataXpert running locally in minutes</p>
+          </div>
+        </div>
+
+        <div class="docs-callout tip">
+          <span class="docs-callout-icon">✅</span>
+          <span>Prerequisites: <strong>Python 3.8+</strong>, <strong>pip</strong>, a <strong>Supabase</strong> account, and optionally a <strong>Google Cloud</strong> project for OAuth.</span>
+        </div>
+
+        <ol class="docs-steps">
+          <li class="docs-step">
+            <div class="docs-step-num">1</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Clone the repository</div>
+              <div class="docs-step-desc">Download the project to your local machine.</div>
+              <div class="docs-codeblock">
+                <div class="docs-codeblock-header">
+                  <span class="docs-codeblock-lang">bash</span>
+                  <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+                </div>
+                <pre>git clone https://github.com/PRINCE-24CS072/DataXpert.git
+cd DataXpert</pre>
+              </div>
+            </div>
+          </li>
+
+          <li class="docs-step">
+            <div class="docs-step-num">2</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Install backend dependencies</div>
+              <div class="docs-step-desc">Install all required Python packages.</div>
+              <div class="docs-codeblock">
+                <div class="docs-codeblock-header">
+                  <span class="docs-codeblock-lang">bash</span>
+                  <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+                </div>
+                <pre>cd backend
+pip install -r requirements.txt</pre>
+              </div>
+            </div>
+          </li>
+
+          <li class="docs-step">
+            <div class="docs-step-num">3</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Configure environment variables</div>
+              <div class="docs-step-desc">Create your <code class="docs-inline-code">.env</code> file from the template, then fill in your credentials. See the <a href="#configuration" style="color:var(--accent-blue);">Configuration</a> section for all required variables.</div>
+              <div class="docs-codeblock">
+                <div class="docs-codeblock-header">
+                  <span class="docs-codeblock-lang">bash</span>
+                  <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+                </div>
+                <pre>cp .env.example .env
+# Then edit .env with your values</pre>
+              </div>
+            </div>
+          </li>
+
+          <li class="docs-step">
+            <div class="docs-step-num">4</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Set up the database</div>
+              <div class="docs-step-desc">Run <code class="docs-inline-code">database.sql</code> in your Supabase SQL Editor to create all tables. See <a href="#database-setup" style="color:var(--accent-blue);">Database Setup</a> for details. Tables created: <code class="docs-inline-code">users</code>, <code class="docs-inline-code">business_data</code>, <code class="docs-inline-code">chats</code>, <code class="docs-inline-code">analysis_results</code>, <code class="docs-inline-code">teams</code>, <code class="docs-inline-code">team_members</code>.</div>
+            </div>
+          </li>
+
+          <li class="docs-step">
+            <div class="docs-step-num">5</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Start the backend</div>
+              <div class="docs-step-desc">The Flask server starts on port 5000.</div>
+              <div class="docs-codeblock">
+                <div class="docs-codeblock-header">
+                  <span class="docs-codeblock-lang">bash</span>
+                  <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+                </div>
+                <pre>python app.py
+# Server running at http://localhost:5000</pre>
+              </div>
+            </div>
+          </li>
+
+          <li class="docs-step">
+            <div class="docs-step-num">6</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Serve the frontend</div>
+              <div class="docs-step-desc">Open a second terminal, navigate to the frontend directory and start the local server.</div>
+              <div class="docs-codeblock">
+                <div class="docs-codeblock-header">
+                  <span class="docs-codeblock-lang">bash</span>
+                  <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+                </div>
+                <pre>cd frontend
+python -m http.server 5500
+# App running at http://localhost:5500</pre>
+              </div>
+              <div class="docs-step-desc" style="margin-top:8px;">Alternatively: use the <strong>VS Code Live Server</strong> extension and click "Go Live".</div>
+            </div>
+          </li>
+
+          <li class="docs-step">
+            <div class="docs-step-num">7</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Open the app</div>
+              <div class="docs-step-desc">Navigate to <code class="docs-inline-code">http://localhost:5500</code> in your browser. Register a new account and start adding business data from the Dashboard.</div>
+            </div>
+          </li>
+        </ol>
+
+        <div class="docs-h3">Using the App</div>
+
+        <div class="docs-h4">Adding business data</div>
+        <ul class="docs-ul">
+          <li>Log in and navigate to the <strong>Dashboard</strong>.</li>
+          <li>Click <strong>Add Data</strong> and enter the date, category, sales, expenses (profit is auto-calculated).</li>
+          <li>Or click <strong>Upload</strong> to import a CSV file. Download the template first via the Upload modal.</li>
+        </ul>
+
+        <div class="docs-h4">AI Analysis</div>
+        <ul class="docs-ul">
+          <li>Navigate to <strong>AI Analysis</strong>.</li>
+          <li>Type a natural language question or click a suggestion chip: <em>"What are my total sales?"</em>, <em>"Detect anomalies"</em>, <em>"Show profit trends"</em>.</li>
+          <li>Use the <strong>Analysis Type</strong> tabs (Revenue / Profit / Expenses / Trends / Anomalies) for guided one-click analysis.</li>
+        </ul>
+
+      </section>
+
+      <!-- ════════════════════════════════════════
+           SECTION 3 — CONFIGURATION
+           ════════════════════════════════════════ -->
+      <section class="docs-section" id="configuration">
+        <div class="docs-section-header">
+          <div class="section-icon purple"><i class="fas fa-sliders-h"></i></div>
+          <div>
+            <h2>Configuration</h2>
+            <p>Environment variables and frontend config options</p>
+          </div>
+        </div>
+
+        <div class="docs-h3">Backend — <code class="docs-inline-code">backend/.env</code></div>
+        <p class="docs-text">Create this file from <code class="docs-inline-code">.env.example</code>. Never commit it to version control.</p>
+
+        <div class="docs-codeblock">
+          <div class="docs-codeblock-header">
+            <span class="docs-codeblock-lang">env</span>
+            <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+          </div>
+          <pre># Flask
+SECRET_KEY=your-super-secret-key-change-this
+JWT_SECRET_KEY=your-jwt-secret-key
+FLASK_ENV=development
+FLASK_DEBUG=True
+
+# Supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-supabase-anon-key
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your-google-oauth-client-id
+GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
+
+# CORS (comma-separated allowed origins)
+CORS_ORIGINS=http://localhost:5500,http://127.0.0.1:5500</pre>
+        </div>
+
+        <table class="docs-table">
+          <thead>
+            <tr><th>Variable</th><th>Required</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>SECRET_KEY</td><td>✅ Yes</td><td>Flask session secret key</td></tr>
+            <tr><td>JWT_SECRET_KEY</td><td>✅ Yes</td><td>Signs JWT tokens (7-day expiry, HS256)</td></tr>
+            <tr><td>SUPABASE_URL</td><td>✅ Yes</td><td>Your Supabase project URL</td></tr>
+            <tr><td>SUPABASE_KEY</td><td>✅ Yes</td><td>Supabase anon key</td></tr>
+            <tr><td>GOOGLE_CLIENT_ID</td><td>⚠️ Optional</td><td>Required for Google OAuth login</td></tr>
+            <tr><td>GOOGLE_CLIENT_SECRET</td><td>⚠️ Optional</td><td>Required for Google OAuth login</td></tr>
+            <tr><td>CORS_ORIGINS</td><td>✅ Yes</td><td>Comma-separated list of allowed frontend origins</td></tr>
+          </tbody>
+        </table>
+
+        <div class="docs-h3">Frontend — <code class="docs-inline-code">js/config.js</code></div>
+        <p class="docs-text">The frontend auto-detects the environment based on <code class="docs-inline-code">window.location.hostname</code>. Only <strong>one value</strong> needs changing for production — the render.com URL:</p>
+
+        <div class="docs-codeblock">
+          <div class="docs-codeblock-header">
+            <span class="docs-codeblock-lang">javascript</span>
+            <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+          </div>
+          <pre>// config.js — auto-switches between dev and production
+const API_BASE_URL = (window.location.hostname === 'localhost' ||
+                      window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:5000/api'           // development
+    : 'https://dataxpert-5twp.onrender.com/api'; // production
+
+// Must match GOOGLE_CLIENT_ID in backend .env
+const GOOGLE_CLIENT_ID = 'your-google-oauth-client-id';</pre>
+        </div>
+
+        <div class="docs-callout warning">
+          <span class="docs-callout-icon">⚠️</span>
+          <span><strong>Load order is critical.</strong> <code class="docs-inline-code">config.js</code> must be loaded first in every HTML file because all other scripts depend on its exported constants (<code class="docs-inline-code">API_ENDPOINTS</code>, <code class="docs-inline-code">getToken()</code>, <code class="docs-inline-code">DataCache</code>, etc.).</span>
+        </div>
+
+        <div class="docs-h3">Client-side Storage Keys</div>
+        <table class="docs-table">
+          <thead>
+            <tr><th>Key</th><th>Stores</th><th>Helper functions</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>dx_token</td><td>JWT access token</td><td><code class="docs-inline-code">getToken()</code> / <code class="docs-inline-code">setToken(t)</code></td></tr>
+            <tr><td>dx_user</td><td>User object (JSON)</td><td><code class="docs-inline-code">getUser()</code> / <code class="docs-inline-code">setUser(u)</code></td></tr>
+            <tr><td>dx_cache</td><td>DataCache snapshot</td><td><code class="docs-inline-code">DataCache.get()</code> / <code class="docs-inline-code">.set()</code> / <code class="docs-inline-code">.invalidate()</code></td></tr>
+            <tr><td>dx_remember_email</td><td>Remembered email for login</td><td>Direct localStorage</td></tr>
+            <tr><td>dataxpert_theme</td><td>dark / light preference</td><td><code class="docs-inline-code">setTheme()</code> / <code class="docs-inline-code">initTheme()</code></td></tr>
+          </tbody>
+        </table>
+
+      </section>
+
+      <!-- ════════════════════════════════════════
+           SECTION 4 — DATABASE SETUP
+           ════════════════════════════════════════ -->
+      <section class="docs-section" id="database-setup">
+        <div class="docs-section-header">
+          <div class="section-icon amber"><i class="fas fa-database"></i></div>
+          <div>
+            <h2>Database Setup</h2>
+            <p>Supabase (PostgreSQL) schema and table descriptions</p>
+          </div>
+        </div>
+
+        <ol class="docs-steps">
+          <li class="docs-step">
+            <div class="docs-step-num">1</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Create a Supabase project</div>
+              <div class="docs-step-desc">Go to <a href="https://supabase.com" target="_blank" rel="noopener" style="color:var(--accent-blue);">supabase.com</a>, sign up or log in, and click <strong>New Project</strong>. Choose a region close to your users.</div>
+            </div>
+          </li>
+          <li class="docs-step">
+            <div class="docs-step-num">2</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Copy your credentials</div>
+              <div class="docs-step-desc">In the Supabase dashboard go to <strong>Settings → API</strong>. Copy the <strong>Project URL</strong> and the <strong>anon / public key</strong> into your <code class="docs-inline-code">.env</code> file.</div>
+            </div>
+          </li>
+          <li class="docs-step">
+            <div class="docs-step-num">3</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Run the SQL setup</div>
+              <div class="docs-step-desc">Open the <strong>SQL Editor</strong> in Supabase, paste the contents of <code class="docs-inline-code">database.sql</code> from the project root, and run it. This creates all required tables.</div>
+            </div>
+          </li>
+          <li class="docs-step">
+            <div class="docs-step-num">4</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Enable Row Level Security (optional)</div>
+              <div class="docs-step-desc">For production, enable RLS on all tables in <strong>Table Editor → Policies</strong> to ensure users can only access their own data. The backend handles auth via JWT so RLS via the anon key is optional in development.</div>
+            </div>
+          </li>
+        </ol>
+
+        <div class="docs-h3">Database Schema</div>
+        <table class="docs-table">
+          <thead>
+            <tr><th>Table</th><th>Key Columns</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>users</td><td>id, name, email, password_hash, google_id, profile_image, business_name</td><td>User accounts</td></tr>
+            <tr><td>business_data</td><td>id, user_id, record_date, category, sales, expenses, profit</td><td>Core business metrics</td></tr>
+            <tr><td>chats</td><td>id, user_id, message, response, created_at</td><td>AI chat history</td></tr>
+            <tr><td>analysis_results</td><td>id, chat_id, analysis_type, result_data</td><td>AI-generated insights</td></tr>
+            <tr><td>teams</td><td>id, name, owner_id, created_at</td><td>Team management</td></tr>
+            <tr><td>team_members</td><td>id, team_id, user_id, role</td><td>Team membership</td></tr>
+          </tbody>
+        </table>
+
+        <div class="docs-callout info">
+          <span class="docs-callout-icon">ℹ️</span>
+          <span>The <code class="docs-inline-code">business_data</code> table stores <code class="docs-inline-code">record_date</code>, <code class="docs-inline-code">sales</code>, <code class="docs-inline-code">expenses</code>, <code class="docs-inline-code">profit</code>. When importing CSV files, the AI processor auto-maps flexible column names (e.g. <code class="docs-inline-code">amount</code>→<code class="docs-inline-code">sales</code>, <code class="docs-inline-code">type</code>→<code class="docs-inline-code">category</code>, <code class="docs-inline-code">date</code>→<code class="docs-inline-code">record_date</code>).</span>
+        </div>
+
+        <div class="docs-h3">CSV Import Format</div>
+        <p class="docs-text">Use the template download from the Upload modal or call <code class="docs-inline-code">downloadTemplate()</code> in the browser console. Required columns:</p>
+        <div class="docs-codeblock">
+          <div class="docs-codeblock-header">
+            <span class="docs-codeblock-lang">csv</span>
+            <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+          </div>
+          <pre>date,category,sales,expenses,profit,description
+2024-01-15,Electronics,150000,80000,70000,January electronics sales
+2024-02-10,Services,95000,42000,53000,February consulting services</pre>
+        </div>
+
+      </section>
+
+      <!-- ════════════════════════════════════════
+           SECTION 5 — GOOGLE OAUTH
+           ════════════════════════════════════════ -->
+      <section class="docs-section" id="google-oauth">
+        <div class="docs-section-header">
+          <div class="section-icon red"><i class="fab fa-google"></i></div>
+          <div>
+            <h2>Google OAuth Setup</h2>
+            <p>Enable Google Sign-In for your DataXpert instance</p>
+          </div>
+        </div>
+
+        <div class="docs-callout warning">
+          <span class="docs-callout-icon">⚠️</span>
+          <span>Google OAuth is <strong>optional</strong>. Email/password login works without it. Skip this section if you don't need Google Sign-In.</span>
+        </div>
+
+        <ol class="docs-steps">
+          <li class="docs-step">
+            <div class="docs-step-num">1</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Go to Google Cloud Console</div>
+              <div class="docs-step-desc">Visit <a href="https://console.cloud.google.com/" target="_blank" rel="noopener" style="color:var(--accent-blue);">console.cloud.google.com</a> and sign in with your Google account.</div>
+            </div>
+          </li>
+          <li class="docs-step">
+            <div class="docs-step-num">2</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Create or select a project</div>
+              <div class="docs-step-desc">Click the project selector at the top and choose <strong>New Project</strong>. Give it a name like <em>DataXpert</em>.</div>
+            </div>
+          </li>
+          <li class="docs-step">
+            <div class="docs-step-num">3</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Enable the Google Identity API</div>
+              <div class="docs-step-desc">Go to <strong>APIs &amp; Services → Library</strong>, search for <strong>Google Identity</strong> (or Google+ API) and click <strong>Enable</strong>.</div>
+            </div>
+          </li>
+          <li class="docs-step">
+            <div class="docs-step-num">4</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Create OAuth 2.0 credentials</div>
+              <div class="docs-step-desc">Go to <strong>APIs &amp; Services → Credentials → Create Credentials → OAuth 2.0 Client ID</strong>. Select application type <strong>Web application</strong>.</div>
+            </div>
+          </li>
+          <li class="docs-step">
+            <div class="docs-step-num">5</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Add authorized origins & redirect URIs</div>
+              <div class="docs-step-desc">In the credentials form add the following:</div>
+              <div class="docs-codeblock">
+                <div class="docs-codeblock-header">
+                  <span class="docs-codeblock-lang">Authorized JavaScript origins</span>
+                  <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+                </div>
+                <pre>http://localhost:5500
+http://127.0.0.1:5500</pre>
+              </div>
+              <div class="docs-codeblock">
+                <div class="docs-codeblock-header">
+                  <span class="docs-codeblock-lang">Authorized redirect URIs</span>
+                  <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+                </div>
+                <pre>http://localhost:5500
+http://localhost:5500/index.html</pre>
+              </div>
+            </div>
+          </li>
+          <li class="docs-step">
+            <div class="docs-step-num">6</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Copy the Client ID to your config</div>
+              <div class="docs-step-desc">Copy the generated <strong>Client ID</strong> and paste it in <strong>two places</strong>:</div>
+              <div class="docs-codeblock">
+                <div class="docs-codeblock-header">
+                  <span class="docs-codeblock-lang">backend/.env</span>
+                  <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+                </div>
+                <pre>GOOGLE_CLIENT_ID=72842356502-xxxxxxxx.apps.googleusercontent.com</pre>
+              </div>
+              <div class="docs-codeblock">
+                <div class="docs-codeblock-header">
+                  <span class="docs-codeblock-lang">frontend/js/config.js</span>
+                  <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+                </div>
+                <pre>const GOOGLE_CLIENT_ID = '72842356502-xxxxxxxx.apps.googleusercontent.com';</pre>
+              </div>
+            </div>
+          </li>
+        </ol>
+
+        <div class="docs-callout tip">
+          <span class="docs-callout-icon">✅</span>
+          <span>After saving, the Google Sign-In button on the login page will appear automatically. The GSI SDK is loaded asynchronously via <code class="docs-inline-code">window.onGoogleLibraryLoad</code> for near-instant button rendering.</span>
+        </div>
+
+      </section>
+
+      <!-- ════════════════════════════════════════
+           SECTION 6 — PROJECT INSTRUCTIONS
+           ════════════════════════════════════════ -->
+      <section class="docs-section" id="project-instructions">
+        <div class="docs-section-header">
+          <div class="section-icon teal"><i class="fas fa-code"></i></div>
+          <div>
+            <h2>Project Instructions</h2>
+            <p>Architecture patterns, API conventions, and developer workflow</p>
+          </div>
+        </div>
+
+        <div class="docs-h3">Architecture & Data Flow</div>
+        <p class="docs-text">All requests flow through a clean layered architecture:</p>
+        <div class="docs-arch">Frontend (HTML/JS)
+    │
+    ▼  HTTP Request to /api/*
+Flask Routes (app.py)
+    │  @token_required decorator validates JWT
+    ▼
+Service Classes
+    ├── AuthService      → auth/auth_service.py
+    ├── SupabaseClient   → database/supabase_client.py
+    └── AI Pipeline      → ai/analysis_engine.py
+                              ai/nlp_processor.py
+                              ai/anomaly_detector.py
+    │
+    ▼  supabase-py
+Supabase (PostgreSQL)</div>
+
+        <div class="docs-h3">API Response Format</div>
+        <p class="docs-text">All API endpoints return a consistent JSON envelope:</p>
+        <div class="docs-codeblock">
+          <div class="docs-codeblock-header">
+            <span class="docs-codeblock-lang">python — success</span>
+            <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+          </div>
+          <pre>return jsonify({'success': True, 'data': result}), 200</pre>
+        </div>
+        <div class="docs-codeblock">
+          <div class="docs-codeblock-header">
+            <span class="docs-codeblock-lang">python — error</span>
+            <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+          </div>
+          <pre>return jsonify({'success': False, 'message': 'Error details'}), 400</pre>
+        </div>
+
+        <div class="docs-h3">Key API Endpoints</div>
+        <table class="docs-table">
+          <thead>
+            <tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="docs-badge post">POST</span></td><td>/api/auth/signup</td><td>No</td><td>Register with email + password</td></tr>
+            <tr><td><span class="docs-badge post">POST</span></td><td>/api/auth/login</td><td>No</td><td>Login, returns JWT token</td></tr>
+            <tr><td><span class="docs-badge post">POST</span></td><td>/api/auth/google</td><td>No</td><td>Google OAuth sign-in / sign-up</td></tr>
+            <tr><td><span class="docs-badge get">GET</span></td><td>/api/auth/verify</td><td>✅ JWT</td><td>Verify token, refresh user object</td></tr>
+            <tr><td><span class="docs-badge get">GET</span></td><td>/api/dashboard/stats</td><td>✅ JWT</td><td>Total sales, profit, expenses, entries</td></tr>
+            <tr><td><span class="docs-badge get">GET</span></td><td>/api/dashboard/charts</td><td>✅ JWT</td><td>Chart data (sales trend, categories)</td></tr>
+            <tr><td><span class="docs-badge get">GET</span></td><td>/api/business/data</td><td>✅ JWT</td><td>All business records for the user</td></tr>
+            <tr><td><span class="docs-badge post">POST</span></td><td>/api/business-data/upload-smart</td><td>✅ JWT</td><td>CSV/Excel file upload (multipart)</td></tr>
+            <tr><td><span class="docs-badge post">POST</span></td><td>/api/ai/chat</td><td>✅ JWT</td><td>Send message, get AI analysis response</td></tr>
+            <tr><td><span class="docs-badge put">PUT</span></td><td>/api/user/profile</td><td>✅ JWT</td><td>Update name / email</td></tr>
+          </tbody>
+        </table>
+
+        <div class="docs-h3">Protected Routes Pattern</div>
+        <p class="docs-text">All authenticated endpoints use the <code class="docs-inline-code">@token_required</code> decorator. It validates the Bearer token and injects <code class="docs-inline-code">current_user</code> as the first argument:</p>
+        <div class="docs-codeblock">
+          <div class="docs-codeblock-header">
+            <span class="docs-codeblock-lang">python</span>
+            <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+          </div>
+          <pre>@app.route('/api/resource', methods=['GET'])
+@token_required
+def get_resource(current_user):
+    # current_user = { id, name, email, ... }
+    user_id = current_user['id']
+    data = db_client.get_user_data(user_id)
+    return jsonify({'success': True, 'data': data})</pre>
+        </div>
+
+        <div class="docs-h3">Frontend Auth Pattern</div>
+        <p class="docs-text">Always use the helpers from <code class="docs-inline-code">config.js</code> — never access localStorage directly:</p>
+        <div class="docs-codeblock">
+          <div class="docs-codeblock-header">
+            <span class="docs-codeblock-lang">javascript</span>
+            <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+          </div>
+          <pre>// Auth helpers (defined in config.js)
+const token = getToken();           // read JWT
+setToken(data.token);               // save JWT after login
+const user  = getUser();            // read user object
+setUser(data.user);                 // save user object
+clearAuth();                        // remove token + user (logout)
+const loggedIn = isLoggedIn();      // boolean check
+requireAuth();                      // redirect to index.html if not logged in
+
+// Authenticated fetch using getAuthHeaders()
+const headers = getAuthHeaders();   // { Content-Type, Authorization: 'Bearer ...' }
+
+// Or use the unified apiRequest wrapper
+const data = await apiRequest(API_ENDPOINTS.DASHBOARD_STATS);
+// → auto-attaches Bearer token, handles 401 redirects, throws on failure</pre>
+        </div>
+
+        <div class="docs-h3">Database Access Pattern</div>
+        <p class="docs-text">Never call <code class="docs-inline-code">supabase</code> client directly in route handlers. Always go through the <code class="docs-inline-code">SupabaseClient</code> class:</p>
+        <div class="docs-codeblock">
+          <div class="docs-codeblock-header">
+            <span class="docs-codeblock-lang">python</span>
+            <button class="docs-copy-btn" onclick="copyCode(this)"><i class="fas fa-copy"></i> Copy</button>
+          </div>
+          <pre># ✅ Correct — use SupabaseClient methods
+db_client.get_user_by_id(user_id)
+db_client.add_business_data(data_dict)
+db_client.get_business_data(user_id)
+
+# ❌ Wrong — never call supabase directly in routes
+supabase.table('users').select('*').execute()  # Don't do this</pre>
+        </div>
+
+        <div class="docs-h3">AI Analysis Pipeline</div>
+        <p class="docs-text">When a user sends a chat message on the AI Analysis page:</p>
+        <ol class="docs-steps">
+          <li class="docs-step">
+            <div class="docs-step-num">1</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title"><code class="docs-inline-code">nlp_processor.extract_intent()</code></div>
+              <div class="docs-step-desc">Determines analysis type: sales, profit, trend, or forecast.</div>
+            </div>
+          </li>
+          <li class="docs-step">
+            <div class="docs-step-num">2</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title"><code class="docs-inline-code">nlp_processor.extract_entities()</code></div>
+              <div class="docs-step-desc">Extracts dates, amounts, and time periods from the message.</div>
+            </div>
+          </li>
+          <li class="docs-step">
+            <div class="docs-step-num">3</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title"><code class="docs-inline-code">analysis_engine.analyze()</code></div>
+              <div class="docs-step-desc">Performs the analysis (using Pandas/NumPy) based on intent and entities.</div>
+            </div>
+          </li>
+          <li class="docs-step">
+            <div class="docs-step-num">4</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title"><code class="docs-inline-code">anomaly_detector.detect_anomalies()</code></div>
+              <div class="docs-step-desc">Runs Z-score based outlier detection on the business data.</div>
+            </div>
+          </li>
+          <li class="docs-step">
+            <div class="docs-step-num">5</div>
+            <div class="docs-step-body">
+              <div class="docs-step-title">Response persisted to database</div>
+              <div class="docs-step-desc">Full response saved to <code class="docs-inline-code">chats</code> table; analysis object saved to <code class="docs-inline-code">analysis_results</code>.</div>
+            </div>
+          </li>
+        </ol>
+
+        <div class="docs-h3">Adding New Features</div>
+        <table class="docs-table">
+          <thead>
+            <tr><th>Goal</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>New API endpoint</td><td>Add route in <code class="docs-inline-code">app.py</code> with <code class="docs-inline-code">@token_required</code> if auth needed</td></tr>
+            <tr><td>New DB operation</td><td>Add method to <code class="docs-inline-code">SupabaseClient</code> in <code class="docs-inline-code">supabase_client.py</code></td></tr>
+            <tr><td>New analysis type</td><td>Add entry to <code class="docs-inline-code">analysis_types</code> dict in <code class="docs-inline-code">analysis_engine.py</code></td></tr>
+            <tr><td>New frontend page</td><td>Create HTML + load <code class="docs-inline-code">config.js</code> first, then <code class="docs-inline-code">auth.js</code>, <code class="docs-inline-code">theme.js</code>, <code class="docs-inline-code">main.js</code>, <code class="docs-inline-code">header-profile.js</code></td></tr>
+          </tbody>
+        </table>
+
+        <div class="docs-h3">About SGP Group</div>
+        <div style="background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:10px;padding:20px 24px;margin-top:8px;">
+          <p class="docs-text" style="margin-bottom:12px;">DataXpert is developed by the <strong style="color:var(--text-primary);">SGP Group</strong> — a team of Computer Science students at CHARUSAT University passionate about building AI-driven tools.</p>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+            <div style="background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:8px;padding:14px;text-align:center;">
+              <div style="font-size:22px;margin-bottom:6px;">👨‍💻</div>
+              <strong style="display:block;font-size:13px;color:var(--text-primary);">Manav Patel</strong>
+              <span style="font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace;">24CS067</span><br>
+              <a href="mailto:24CS067@charusat.edu.in" style="font-size:11px;color:var(--accent-blue);">24CS067@charusat.edu.in</a>
+            </div>
+            <div style="background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:8px;padding:14px;text-align:center;">
+              <div style="font-size:22px;margin-bottom:6px;">👨‍💻</div>
+              <strong style="display:block;font-size:13px;color:var(--text-primary);">Prince Patel</strong>
+              <span style="font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace;">24CS072</span><br>
+              <a href="mailto:24CS072@charusat.edu.in" style="font-size:11px;color:var(--accent-blue);">24CS072@charusat.edu.in</a>
+            </div>
+            <div style="background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:8px;padding:14px;text-align:center;">
+              <div style="font-size:22px;margin-bottom:6px;">👨‍💻</div>
+              <strong style="display:block;font-size:13px;color:var(--text-primary);">Srujal Patel</strong>
+              <span style="font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace;">24CS076</span><br>
+              <a href="mailto:24CS076@charusat.edu.in" style="font-size:11px;color:var(--accent-blue);">24CS076@charusat.edu.in</a>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+  </div><!-- /.docs-body -->
+
+  <!-- App Footer -->
+  <footer class="app-footer">
+    <div class="app-footer-brand">Data<span>Xpert</span> <span style="font-weight:400;font-size:11px;color:var(--text-muted);margin-left:6px;">SGP Group · Manav Patel · Prince Patel · Srujal Patel</span></div>
+    <div class="app-footer-links">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="analysis.html">AI Analysis</a>
+      <a href="history.html">History</a>
+      <a href="docs.html">Documentation</a>
+    </div>
+    <div class="app-footer-copy">&copy; 2026 DataXpert — SGP Group. All rights reserved.</div>
+  </footer>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/header-profile.js"></script>
+  <script>
+    // ── Copy code button ──────────────────────────────────────
+    function copyCode(btn) {
+      const pre = btn.closest('.docs-codeblock').querySelector('pre');
+      if (!pre) return;
+      navigator.clipboard.writeText(pre.innerText.trim()).then(() => {
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      }).catch(() => {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = pre.innerText.trim();
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
+    // ── Active sidebar link on scroll ─────────────────────────
+    (function() {
+      const sections = document.querySelectorAll('.docs-section');
+      const navLinks = document.querySelectorAll('#docsNav a');
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            navLinks.forEach(l => l.classList.remove('active'));
+            const active = document.querySelector('#docsNav a[href="#' + entry.target.id + '"]');
+            if (active) active.classList.add('active');
+          }
+        });
+      }, { rootMargin: '-20% 0px -70% 0px' });
+
+      sections.forEach(s => observer.observe(s));
+    })();
+
+    // ── Modal helpers ─────────────────────────────────────────
+    function closeModalById(id) { const m = document.getElementById(id); if (m) m.classList.remove('open'); }
+    function openModalById(id)  { const m = document.getElementById(id); if (m) m.classList.add('open'); }
+    window.closeModal = closeModalById;
+  </script>
+</body>
+</html>

@@ -94,12 +94,12 @@ async function importFile(file) {
 
 function downloadTemplate() {
     const csv = [
-        'date,type,amount,category,description',
-        '2024-01-01,sale,10000,Electronics,Sample product sale',
-        '2024-01-02,expense,2000,Rent,Monthly office rent',
-        '2024-01-03,sale,15000,Clothing,Apparel sale',
-        '2024-01-04,expense,500,Utilities,Electricity bill',
-        '2024-01-05,revenue,5000,Services,Consulting fee'
+        'date,category,sales,expenses,profit,description',
+        '2024-01-01,Electronics,10000,0,0,Product sale revenue',
+        '2024-01-02,Rent,0,2000,0,Monthly office rent',
+        '2024-01-03,Clothing,15000,0,0,Apparel sale',
+        '2024-01-04,Utilities,0,500,0,Electricity bill',
+        '2024-01-05,Services,5000,0,0,Consulting fee'
     ].join('\n');
     downloadFile(csv, 'dataxpert-template.csv', 'text/csv');
     if (typeof showToast === 'function') showToast('Template downloaded', 'success');
@@ -109,7 +109,9 @@ function downloadTemplate() {
 // Upload Validation
 // =====================
 
-const REQUIRED_COLUMNS = ['date', 'type', 'amount', 'category', 'description'];
+// Required columns — updated to match backend data_processor expected format
+// The data_processor also accepts: date/record_date, type/category, amount/sales
+const REQUIRED_COLUMNS = ['date', 'category', 'sales'];
 const VALID_TYPES = ['sale', 'expense', 'revenue', 'profit'];
 
 function buildColumnStatus(required, found) {
@@ -203,47 +205,75 @@ function clearUploadError() {
 async function uploadFile(file) {
     clearUploadError();
 
-    let parsed;
-    try {
-        parsed = await importFile(file);
-    } catch (err) {
-        showUploadError({ missing: [`Could not read file: ${err.message}`], extra: [], rowErrors: [], columnStatus: {} });
+    // Local file type check — give immediate feedback before any network call
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['csv', 'xlsx', 'xls'].includes(ext)) {
+        showUploadError({ missing: [`Unsupported file type ".${ext}". Please use CSV, XLSX, or XLS.`], extra: [], rowErrors: [], columnStatus: {} });
         return false;
     }
 
-    if (!parsed.data || parsed.data.length === 0) {
-        showUploadError({ missing: ['File appears to be empty. Please add data rows.'], extra: [], rowErrors: [], columnStatus: {} });
-        return false;
-    }
+    // Show uploading state in zone
+    const zone = document.getElementById('uploadZone');
+    const zoneOrigHTML = zone ? zone.innerHTML : '';
+    if (zone) zone.innerHTML = `<p style="color:var(--text-muted)">Uploading <strong>${file.name}</strong>…</p>`;
 
-    const validation = validateUploadedFile(parsed.headers, parsed.data);
-
-    if (!validation.valid) {
-        showUploadError(validation);
-        return false;
-    }
+    const restore = () => { if (zone && zoneOrigHTML) zone.innerHTML = zoneOrigHTML; };
 
     try {
+        // Send actual file as multipart — backend (upload-smart) requires request.files['file']
+        const formData = new FormData();
+        formData.append('file', file);
+        const token = getToken();
+
         const response = await fetch(API_ENDPOINTS.BUSINESS_DATA_UPLOAD, {
             method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ data: parsed.data, type: 'business' })
+            headers: { 'Authorization': token ? `Bearer ${token}` : '' },
+            // NO Content-Type header — browser sets multipart/form-data with boundary
+            body: formData
         });
+
         const result = await response.json();
 
         if (result.success) {
+            restore();
             if (typeof DataCache !== 'undefined') DataCache.invalidate();
-            if (typeof showToast === 'function') showToast(`Imported ${parsed.data.length} records!`, 'success');
+            const count = result.records_added || result.total_rows || '?';
+            const warnings = result.warnings && result.warnings.length
+                ? ` (${result.warnings.length} warning${result.warnings.length > 1 ? 's' : ''})` : '';
+            if (typeof showToast === 'function') {
+                showToast(`Successfully imported ${count} records!${warnings}`, 'success');
+            }
             const modal = document.getElementById('uploadDataModal');
             if (modal) modal.classList.remove('open');
             if (typeof loadDashboardData === 'function') loadDashboardData();
             return true;
         } else {
-            if (typeof showToast === 'function') showToast(result.message || 'Upload failed', 'error');
+            restore();
+            // Build a rich error from the backend response
+            const msg = result.message || 'Upload failed';
+            const expectedCols = result.expected_columns;
+            const reportSteps = result.processing_steps || [];
+
+            if (expectedCols && expectedCols.length) {
+                // Column mismatch error from backend
+                const colStatus = {};
+                expectedCols.forEach(c => { colStatus[c] = 'missing'; });
+                showUploadError({
+                    missing: [`File rejected by server: ${msg}`],
+                    extra: [],
+                    rowErrors: [`Required columns: ${expectedCols.join(', ')}`],
+                    columnStatus: colStatus
+                });
+            } else {
+                showUploadError({ missing: [msg], extra: [], rowErrors: reportSteps.slice(0, 3), columnStatus: {} });
+            }
+            if (typeof showToast === 'function') showToast(msg, 'error');
             return false;
         }
     } catch (err) {
-        if (typeof showToast === 'function') showToast('Network error during upload', 'error');
+        restore();
+        const msg = navigator.onLine ? 'Upload failed. Please try again.' : 'No internet connection.';
+        if (typeof showToast === 'function') showToast(msg, 'error');
         return false;
     }
 }
@@ -425,7 +455,7 @@ function createImportModal() {
                 </button>
             </div>
             <div class="modal-body">
-                <p style="color:var(--text-secondary);margin-bottom:16px;">Required columns: date, type, amount, category, description.</p>
+                <p style="color:var(--text-secondary);margin-bottom:16px;">Required columns: <code>date, category, sales, expenses, profit</code>. AI auto-maps similar column names.</p>
                 <div class="upload-zone" id="importDropzone" onclick="document.getElementById('importFileInput').click()">
                     <i class="fas fa-cloud-upload-alt" style="font-size:36px;margin-bottom:12px;display:block;"></i>
                     <p>Drag &amp; drop or click to browse</p>

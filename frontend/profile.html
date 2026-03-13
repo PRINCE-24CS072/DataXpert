@@ -22,6 +22,7 @@
       <a href="dashboard.html" class="nav-link">Dashboard</a>
       <a href="analysis.html" class="nav-link">AI Analysis</a>
       <a href="history.html" class="nav-link">History</a>
+      <a href="docs.html" class="nav-link">Documentation</a>
     </div>
     <div class="nav-right">
       <button class="nav-icon-btn" id="notificationBtn" title="Notifications">
@@ -50,8 +51,23 @@
           </button>
         </div>
       </div>
+      <!-- Hamburger (mobile only) -->
+      <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+      </button>
     </div>
   </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <a href="analysis.html" class="nav-link">AI Analysis</a>
+    <a href="history.html" class="nav-link">History</a>
+    <a href="docs.html" class="nav-link">Documentation</a>
+    <div class="mobile-menu-divider"></div>
+    <a href="profile.html" class="dropdown-item">Profile</a>
+    <button class="dropdown-item danger logout-btn">Logout</button>
+  </div>
 
   <div class="main-content">
     <!-- Page Header -->
@@ -277,6 +293,18 @@
     </div>
   </div>
 
+  <!-- App Footer -->
+  <footer class="app-footer">
+    <div class="app-footer-brand">Data<span>Xpert</span> <span style="font-weight:400;font-size:11px;color:var(--text-muted);margin-left:6px;">SGP Group · Manav Patel · Prince Patel · Srujal Patel</span></div>
+    <div class="app-footer-links">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="analysis.html">AI Analysis</a>
+      <a href="history.html">History</a>
+      <a href="docs.html">Documentation</a>
+    </div>
+    <div class="app-footer-copy">&copy; 2026 DataXpert — SGP Group. All rights reserved.</div>
+  </footer>
+
   <div class="toast-container" id="toastContainer"></div>
 
   <script src="js/config.js"></script>
@@ -342,9 +370,8 @@
 
     // Load profile data
     function loadProfileData() {
-      const userStr = localStorage.getItem(STORAGE_KEYS.USER);
-      if (!userStr) return;
-      const user = JSON.parse(userStr);
+      const user = getUser();
+      if (!user) return;
 
       document.getElementById('profileName').value = user.name || '';
       document.getElementById('profileEmail').value = user.email || '';
@@ -369,7 +396,7 @@
       }
 
       // Theme preference toggle
-      const currentTheme = localStorage.getItem('dataxpert_theme') || 'dark';
+      const currentTheme = localStorage.getItem('dx_theme') || 'dark';
       document.getElementById('themePreference').checked = currentTheme === 'dark';
 
       // Detect Google user
@@ -393,24 +420,35 @@
       e.preventDefault();
       const name = document.getElementById('profileName').value.trim();
       const email = document.getElementById('profileEmail').value.trim();
+      if (!name) { showToast('Full name cannot be empty', 'error'); return; }
       const btn = e.target.querySelector('button[type="submit"]');
-      const orig = btn.textContent;
-      btn.disabled = true; btn.textContent = 'Saving...';
+      const orig = btn.innerHTML;
+      btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
       try {
         const res = await fetch(API_ENDPOINTS.USER_PROFILE, {
           method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify({ name, email })
         });
         const data = await res.json();
         if (data.success) {
-          const user = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER));
-          user.name = name; if(email) user.email = email;
-          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+          // Use server-returned user data as source of truth
+          const existing = getUser() || {};
+          const updated = Object.assign(existing, data.user || {}, { name });
+          if (email) updated.email = email;
+          setUser(updated);
           loadProfileData();
           if (typeof loadHeaderProfile === 'function') loadHeaderProfile();
-          showToast('Profile updated successfully', 'success');
-        } else { showToast(data.message || 'Failed to update', 'error'); }
-      } catch(err) { showToast('Error updating profile', 'error'); }
-      btn.disabled = false; btn.textContent = orig;
+          showToast(data.message || 'Profile updated successfully', 'success');
+          btn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+          setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 1500);
+          return;
+        } else {
+          const msg = res.status === 401 ? 'Session expired. Please log in again.'
+            : res.status === 409 ? 'Email already in use by another account.'
+            : data.message || 'Failed to update profile.';
+          showToast(msg, 'error');
+        }
+      } catch(err) { showToast('Network error. Please check your connection.', 'error'); }
+      btn.disabled = false; btn.innerHTML = orig;
     });
 
     // Change password form
@@ -419,26 +457,45 @@
       const current = document.getElementById('currentPassword').value;
       const newPw = document.getElementById('newPassword').value;
       const confirm = document.getElementById('confirmPassword').value;
-      if (newPw !== confirm) { showToast('Passwords do not match', 'error'); return; }
+      if (!current) { showToast('Current password is required', 'error'); return; }
+      if (newPw.length < 8) { showToast('New password must be at least 8 characters', 'error'); return; }
+      if (newPw !== confirm) { showToast('New passwords do not match', 'error'); return; }
       const btn = e.target.querySelector('button[type="submit"]');
-      const orig = btn.textContent;
-      btn.disabled = true; btn.textContent = 'Updating...';
+      const orig = btn.innerHTML;
+      btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating…';
       try {
         const res = await fetch(API_ENDPOINTS.CHANGE_PASSWORD, {
           method: 'POST', headers: getAuthHeaders(),
           body: JSON.stringify({ current_password: current, new_password: newPw })
         });
         const data = await res.json();
-        if (data.success) { showToast('Password updated successfully', 'success'); e.target.reset(); }
-        else { showToast(data.message || 'Failed to update password', 'error'); }
-      } catch(err) { showToast('Error updating password', 'error'); }
-      btn.disabled = false; btn.textContent = orig;
+        if (data.success) {
+          showToast('Password updated successfully', 'success');
+          e.target.reset();
+          btn.innerHTML = '<i class="fas fa-check"></i> Updated!';
+          setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 1500);
+          return;
+        } else {
+          const msg = res.status === 401 ? 'Current password is incorrect.'
+            : data.message || 'Failed to update password.';
+          showToast(msg, 'error');
+        }
+      } catch(err) { showToast('Network error. Please check your connection.', 'error'); }
+      btn.disabled = false; btn.innerHTML = orig;
     });
 
     // Profile image upload
     document.getElementById('profileImageInput').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
+
+      // Validate type and size before uploading
+      if (!file.type.startsWith('image/')) { showToast('Please select an image file (JPG, PNG, WEBP)', 'error'); return; }
+      if (file.size > 5 * 1024 * 1024) { showToast('Image must be smaller than 5 MB', 'error'); return; }
+
+      // Show preview immediately (optimistic)
+      const oldSrc = document.getElementById('profilePhoto').src;
+      const wasVisible = document.getElementById('profilePhoto').style.display !== 'none';
       const reader = new FileReader();
       reader.onload = ev => {
         document.getElementById('profilePhoto').src = ev.target.result;
@@ -446,22 +503,42 @@
         document.getElementById('profileInitials').style.display = 'none';
       };
       reader.readAsDataURL(file);
+
+      // Show upload progress on camera button
+      const camBtn = document.querySelector('.profile-avatar-change-btn');
+      if (camBtn) camBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
       const formData = new FormData();
       formData.append('profile_image', file);
       try {
-        const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
         const res = await fetch(API_ENDPOINTS.UPLOAD_PROFILE_IMAGE, {
-          method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: formData
+          method: 'POST', headers: { 'Authorization': 'Bearer ' + getToken() }, body: formData
         });
         const data = await res.json();
         if (data.success && data.profile_image) {
-          const user = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER));
+          const user = getUser() || {};
           user.profile_image = data.profile_image;
-          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+          setUser(user);
           if (typeof loadHeaderProfile === 'function') loadHeaderProfile();
-          showToast('Photo updated!', 'success');
-        } else { showToast(data.message || 'Failed to upload photo', 'error'); }
-      } catch(err) { showToast('Error uploading photo', 'error'); }
+          showToast('Profile photo updated!', 'success');
+        } else {
+          // Revert preview on failure
+          if (wasVisible) { document.getElementById('profilePhoto').src = oldSrc; }
+          else { document.getElementById('profilePhoto').style.display = 'none'; document.getElementById('profileInitials').style.display = 'block'; }
+          const msg = res.status === 413 ? 'Image too large. Max size is 5 MB.'
+            : res.status === 415 ? 'Unsupported image format. Use JPG, PNG, or WEBP.'
+            : data.message || 'Failed to upload photo.';
+          showToast(msg, 'error');
+        }
+      } catch(err) {
+        // Revert preview on network error
+        if (wasVisible) { document.getElementById('profilePhoto').src = oldSrc; }
+        else { document.getElementById('profilePhoto').style.display = 'none'; document.getElementById('profileInitials').style.display = 'block'; }
+        showToast('Network error. Photo could not be saved.', 'error');
+      } finally {
+        if (camBtn) camBtn.innerHTML = '<i class="fas fa-camera"></i>';
+        e.target.value = '';  // reset input so same file can be re-selected
+      }
     });
 
     // Delete account
@@ -500,7 +577,7 @@
     window.showMessage = (msg, type) => showToast(msg, type);
 
     document.addEventListener('DOMContentLoaded', () => {
-      if (!isAuthenticated()) { window.location.href = 'index.html'; return; }
+      if (!isLoggedIn()) { window.location.href = 'index.html'; return; }
       loadProfileData();
     });
   </script>
