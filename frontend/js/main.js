@@ -1,84 +1,226 @@
-// Main JavaScript for Homepage
+// ============================================
+// DataXpert - Main JS
+// Includes: DataCache, Toast System, Home Page
+// ============================================
 
-// Modal Management
-function setupModals() {
-    const loginModal = document.getElementById('loginModal');
-    const signupModal = document.getElementById('signupModal');
-    
+// ---- DATA CACHE SYSTEM ----
+const DataCache = {
+    data: null,
+    lastFetched: null,
+    TTL: 5 * 60 * 1000, // 5 minutes
+
+    isValid() {
+        return this.data !== null &&
+            this.lastFetched !== null &&
+            (Date.now() - this.lastFetched) < this.TTL;
+    },
+
+    set(data) {
+        this.data = data;
+        this.lastFetched = Date.now();
+        try {
+            sessionStorage.setItem('dx_cache', JSON.stringify({
+                data: data,
+                lastFetched: this.lastFetched
+            }));
+        } catch(e) { /* storage quota exceeded - ignore */ }
+    },
+
+    get() {
+        if (this.data && this.isValid()) return this.data;
+        try {
+            const stored = sessionStorage.getItem('dx_cache');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                this.data = parsed.data;
+                this.lastFetched = parsed.lastFetched;
+                if (this.isValid()) return this.data;
+            }
+        } catch(e) { /* parse error */ }
+        return null;
+    },
+
+    invalidate() {
+        this.data = null;
+        this.lastFetched = null;
+        try { sessionStorage.removeItem('dx_cache'); } catch(e) {}
+    }
+};
+
+// ---- TOAST NOTIFICATION SYSTEM ----
+const toastQueue = [];
+const MAX_TOASTS = 3;
+
+function showToast(message, type = 'success', title = '', duration = 3000) {
+    const container = document.getElementById('toastContainer');
+    if (!container) {
+        // Fallback if no toast container
+        console.log(`[Toast ${type}]: ${message}`);
+        return;
+    }
+
+    // Remove oldest if at max
+    while (toastQueue.length >= MAX_TOASTS) {
+        const oldest = toastQueue.shift();
+        if (oldest && oldest.parentNode) {
+            oldest.classList.add('removing');
+            setTimeout(() => oldest.remove(), 250);
+        }
+    }
+
+    const icons = {
+        success: `<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="color:var(--accent-green)"><polyline points="20 6 9 17 4 12"/></svg>`,
+        error: `<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="color:var(--accent-red)"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+        warning: `<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="color:var(--accent-amber)"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+        info: `<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="color:var(--accent-blue)"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`
+    };
+
+    const defaultTitles = {
+        success: 'Success',
+        error: 'Error',
+        warning: 'Warning',
+        info: 'Info'
+    };
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || icons.info}</div>
+        <div class="toast-content">
+            <div class="toast-title">${title || defaultTitles[type]}</div>
+            <div class="toast-msg">${message}</div>
+        </div>
+        <button class="toast-close" onclick="dismissToast(this.parentElement)">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    `;
+
+    container.appendChild(toast);
+    toastQueue.push(toast);
+
+    // Click to dismiss
+    toast.addEventListener('click', () => dismissToast(toast));
+
+    // Auto-dismiss
+    setTimeout(() => dismissToast(toast), duration);
+}
+
+function dismissToast(toast) {
+    if (!toast || !toast.parentNode) return;
+    toast.classList.add('removing');
+    setTimeout(() => {
+        if (toast.parentNode) toast.remove();
+        const idx = toastQueue.indexOf(toast);
+        if (idx > -1) toastQueue.splice(idx, 1);
+    }, 250);
+}
+
+// Legacy showMessage compatibility (used by auth.js and other files)
+function showMessage(message, type = 'info') {
+    const typeMap = { 'success': 'success', 'error': 'error', 'info': 'info', 'warning': 'warning' };
+    showToast(message, typeMap[type] || 'info');
+}
+
+// clearMessages compatibility
+function clearMessages() {
+    const container = document.getElementById('toastContainer');
+    if (container) container.innerHTML = '';
+    toastQueue.length = 0;
+}
+
+// ---- MODAL HELPERS ----
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    if (modal.classList.contains('modal-overlay')) {
+        modal.classList.add('open');
+    } else {
+        modal.style.display = 'block';
+        const content = modal.querySelector('.modal-content');
+        if (content) setTimeout(() => content.classList.add('show'), 10);
+    }
+    if (typeof renderGoogleButtons === 'function') {
+        setTimeout(renderGoogleButtons, 100);
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    if (modal.classList.contains('modal-overlay')) {
+        modal.classList.remove('open');
+    } else {
+        const content = modal.querySelector('.modal-content');
+        if (content) content.classList.remove('show');
+        setTimeout(() => { modal.style.display = 'none'; }, 300);
+    }
+}
+
+// ---- HOME PAGE LOGIC (only runs on index.html) ----
+function setupHomePage() {
+    // Only run if login/signup buttons exist (home page)
     const loginBtn = document.getElementById('loginBtn');
     const signupBtn = document.getElementById('signupBtn');
-    const getStartedBtn = document.getElementById('getStartedBtn');
-    const ctaSignupBtn = document.getElementById('ctaSignupBtn');
-    
-    const switchToSignup = document.getElementById('switchToSignup');
-    const switchToLogin = document.getElementById('switchToLogin');
-    
-    const closeButtons = document.querySelectorAll('.close');
 
-    // Open Login Modal
     if (loginBtn) {
         loginBtn.addEventListener('click', () => {
-            openModal('loginModal');
+            if (typeof switchAuthTab === 'function') switchAuthTab('login');
+            else openModal('loginModal');
         });
     }
 
-    // Open Signup Modal
     if (signupBtn) {
         signupBtn.addEventListener('click', () => {
-            openModal('signupModal');
+            if (typeof switchAuthTab === 'function') switchAuthTab('signup');
+            else openModal('signupModal');
         });
     }
 
+    const getStartedBtn = document.getElementById('getStartedBtn');
     if (getStartedBtn) {
         getStartedBtn.addEventListener('click', () => {
             if (isAuthenticated()) {
                 window.location.href = 'dashboard.html';
             } else {
-                openModal('signupModal');
+                if (typeof switchAuthTab === 'function') switchAuthTab('signup');
+                else openModal('signupModal');
             }
         });
     }
 
-    if (ctaSignupBtn) {
-        ctaSignupBtn.addEventListener('click', () => {
-            openModal('signupModal');
+    const demoBtnHero = document.getElementById('demoBtnHero');
+    if (demoBtnHero) {
+        demoBtnHero.addEventListener('click', () => {
+            if (isAuthenticated()) {
+                window.location.href = 'analysis.html';
+            } else {
+                showToast('Please login to try the demo', 'info');
+                setTimeout(() => {
+                    if (typeof switchAuthTab === 'function') switchAuthTab('login');
+                }, 800);
+            }
         });
     }
 
-    // Switch between modals
+    // Switch tab links
+    const switchToSignup = document.getElementById('switchToSignup');
+    const switchToLogin = document.getElementById('switchToLogin');
     if (switchToSignup) {
         switchToSignup.addEventListener('click', (e) => {
             e.preventDefault();
-            // Clear error messages when switching
-            if (typeof clearMessages === 'function') {
-                clearMessages();
-            }
-            closeModal('loginModal');
-            openModal('signupModal');
+            if (typeof switchAuthTab === 'function') switchAuthTab('signup');
+            else { closeModal('loginModal'); openModal('signupModal'); }
         });
     }
-
     if (switchToLogin) {
         switchToLogin.addEventListener('click', (e) => {
             e.preventDefault();
-            // Clear error messages when switching
-            if (typeof clearMessages === 'function') {
-                clearMessages();
-            }
-            closeModal('signupModal');
-            openModal('loginModal');
+            if (typeof switchAuthTab === 'function') switchAuthTab('login');
+            else { closeModal('signupModal'); openModal('loginModal'); }
         });
     }
 
-    // Close modal buttons
-    closeButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const modalId = button.getAttribute('data-modal');
-            closeModal(modalId);
-        });
-    });
-
-    // Close modal on outside click
+    // Close modals on outside click (legacy modal system)
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal')) {
             e.target.style.display = 'none';
@@ -86,214 +228,53 @@ function setupModals() {
     });
 }
 
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        // Clear any existing error messages from previous attempts
-        if (typeof clearMessages === 'function') {
-            clearMessages();
-        }
-        
-        modal.style.display = 'block';
-        setTimeout(() => {
-            modal.querySelector('.modal-content').classList.add('show');
-        }, 10);
-        
-        // Re-render Google buttons when modal opens to ensure they work
-        if (typeof renderGoogleButtons === 'function') {
-            setTimeout(renderGoogleButtons, 100);
-        }
+// ---- NAVBAR SETUP (for inner pages) ----
+function setupNavbar() {
+    // Avatar dropdown
+    const avatarWrap = document.getElementById('avatarWrap');
+    if (avatarWrap) {
+        avatarWrap.addEventListener('click', (e) => {
+            e.stopPropagation();
+            avatarWrap.classList.toggle('open');
+        });
+        document.addEventListener('click', () => {
+            avatarWrap.classList.remove('open');
+        });
     }
-}
 
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.querySelector('.modal-content').classList.remove('show');
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 300);
+    // Logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            if (typeof logout === 'function') logout();
+        });
     }
-}
 
-// Smooth Scrolling
-function setupSmoothScrolling() {
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-    });
-}
-
-// Navbar Scroll Effect
-function setupNavbarScroll() {
-    const navbar = document.querySelector('.navbar');
-    
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) {
-            navbar.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
-        }
-    });
-}
-
-// Active Navigation Link
-function setupActiveNav() {
-    const sections = document.querySelectorAll('section[id], footer[id]');
-    const navLinks = document.querySelectorAll('.nav-links a');
-    let isScrolling = false;
-    let scrollTimeout;
-
-    // Handle direct link clicks
-    navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            isScrolling = true;
-            navLinks.forEach(l => l.classList.remove('active'));
-            link.classList.add('active');
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(() => {
-                isScrolling = false;
-            }, 1000);
-        });
-    });
-
-    window.addEventListener('scroll', () => {
-        if (isScrolling) return;
-        
-        let current = '';
-        
-        sections.forEach(section => {
-            const sectionTop = section.offsetTop;
-            const sectionHeight = section.clientHeight;
-            
-            if (scrollY >= sectionTop - 200) {
-                current = section.getAttribute('id');
-            }
-        });
-
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('href').includes(current)) {
-                link.classList.add('active');
-            }
-        });
-    });
-}
-
-// Demo Button Handler
-function setupDemoButton() {
-    const demoBtnHero = document.getElementById('demoBtnHero');
-    
-    if (demoBtnHero) {
-        demoBtnHero.addEventListener('click', async () => {
-            if (isAuthenticated()) {
-                window.location.href = 'analysis.html';
-            } else {
-                showMessage('Please login to try the demo', 'info');
-                setTimeout(() => {
-                    openModal('loginModal');
-                }, 1000);
-            }
+    // Notification bell (placeholder)
+    const notifBtn = document.getElementById('notificationBtn');
+    if (notifBtn) {
+        notifBtn.addEventListener('click', () => {
+            showToast('No new notifications', 'info');
         });
     }
 }
 
-// Check Authentication Status
-function checkAuthStatus() {
-    if (isAuthenticated()) {
-        // Update nav buttons
-        const navButtons = document.querySelector('.nav-buttons');
-        if (navButtons) {
-            navButtons.innerHTML = `
-                <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'">Dashboard</button>
-                <button class="btn btn-primary" onclick="logout()">Logout</button>
-            `;
-        }
-    }
+// ---- PROFILE COMPLETION BANNER (dashboard) ----
+function checkProfileCompletion() {
+    const showBanner = localStorage.getItem('dataxpert_show_banner');
+    const dismissed = sessionStorage.getItem('dataxpert_banner_dismissed');
+    // Silently mark as seen - no banner in new design (users go to profile page)
+    if (showBanner) localStorage.removeItem('dataxpert_show_banner');
 }
 
-// Intersection Observer for Animations
-function setupIntersectionObserver() {
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -100px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('fade-in-up');
-            }
-        });
-    }, observerOptions);
-
-    // Observe feature cards
-    document.querySelectorAll('.feature-card').forEach(card => {
-        observer.observe(card);
-    });
-
-    // Observe stat cards
-    document.querySelectorAll('.stat-card').forEach(card => {
-        observer.observe(card);
-    });
+function dismissProfileBanner() {
+    const banner = document.getElementById('profileCompletionBanner');
+    if (banner) banner.style.display = 'none';
+    sessionStorage.setItem('dataxpert_banner_dismissed', 'true');
 }
 
-// Counter Animation
-function animateCounters() {
-    const counters = document.querySelectorAll('.stat-card h3');
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const target = entry.target;
-                const value = target.textContent;
-                const numeric = parseFloat(value.replace(/[^0-9.]/g, ''));
-                
-                if (!isNaN(numeric)) {
-                    animateValue(target, 0, numeric, 2000, value);
-                }
-                
-                observer.unobserve(target);
-            }
-        });
-    }, { threshold: 0.5 });
-
-    counters.forEach(counter => observer.observe(counter));
-}
-
-function animateValue(element, start, end, duration, originalText) {
-    const range = end - start;
-    const increment = range / (duration / 16);
-    let current = start;
-    
-    const timer = setInterval(() => {
-        current += increment;
-        if (current >= end) {
-            element.textContent = originalText;
-            clearInterval(timer);
-        } else {
-            const displayValue = Math.floor(current);
-            element.textContent = originalText.replace(/[0-9.]+/, displayValue);
-        }
-    }, 16);
-}
-
-// Initialize Everything
+// ---- INIT ----
 document.addEventListener('DOMContentLoaded', () => {
-    setupModals();
-    setupSmoothScrolling();
-    setupNavbarScroll();
-    setupActiveNav();
-    setupDemoButton();
-    checkAuthStatus();
-    setupIntersectionObserver();
-    animateCounters();
+    setupHomePage();
+    setupNavbar();
 });

@@ -1,623 +1,439 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - DataXpert</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- SheetJS for Excel import/export -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <!-- html2pdf for PDF export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — DataXpert</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
-<body class="dashboard-page">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <span>DataXpert</span>
-            </div>
+<body class="app-page">
+  <!-- Top Navbar -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <a href="dashboard.html" class="nav-logo">Data<span class="accent">Xpert</span></a>
+    </div>
+    <div class="nav-center">
+      <a href="dashboard.html" class="nav-link active">Dashboard</a>
+      <a href="analysis.html" class="nav-link">AI Analysis</a>
+      <a href="history.html" class="nav-link">History</a>
+    </div>
+    <div class="nav-right">
+      <button class="nav-icon-btn" id="notificationBtn" title="Notifications">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span class="notif-dot"></span>
+      </button>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" id="themeIcon"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+      <div class="nav-avatar-wrap" id="avatarWrap">
+        <div class="nav-avatar" id="navAvatar">
+          <img id="navAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
+          <span id="navAvatarInitials">U</span>
         </div>
-
-        <nav class="sidebar-nav">
-            <a href="dashboard.html" class="nav-item active">
-                <i class="fas fa-th-large"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="analysis.html" class="nav-item">
-                <i class="fas fa-robot"></i>
-                <span>AI Analysis</span>
-            </a>
-            <a href="#" class="nav-item" id="historySidebarBtn">
-                <i class="fas fa-history"></i>
-                <span>History</span>
-            </a>
-            <a href="profile.html" class="nav-item">
-                <i class="fas fa-user"></i>
-                <span>Profile</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <button class="btn btn-logout btn-full" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i>
-                Logout
-            </button>
+        <div class="nav-dropdown" id="navDropdown">
+          <div class="dropdown-user">
+            <strong id="dropdownName">Loading...</strong>
+            <span id="dropdownEmail"></span>
+          </div>
+          <hr class="dropdown-divider">
+          <a href="profile.html" class="dropdown-item">
+            <i class="fas fa-user" style="width:14px;margin-right:8px;"></i>Profile
+          </a>
+          <button class="dropdown-item danger" id="logoutBtn">
+            <i class="fas fa-sign-out-alt" style="width:14px;margin-right:8px;"></i>Logout
+          </button>
         </div>
-    </aside>
+      </div>
+    </div>
+  </nav>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Top Bar -->
-        <header class="topbar">
-            <div class="topbar-left">
-                <button class="menu-toggle" id="menuToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1>Dashboard</h1>
-            </div>
-            <div class="topbar-right">
-                <button class="theme-toggle" onclick="openSearchModal()" title="Search (Ctrl+K)">
-                    <i class="fas fa-search"></i>
-                </button>
-                <div class="theme-toggle-wrapper" style="margin-left: 12px;">
-                    <button class="theme-toggle-switch" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark mode">
-                        <span class="theme-toggle-slider">
-                            <i class="theme-toggle-icon fas fa-sun"></i>
-                        </span>
-                    </button>
-                </div>
-                <a href="profile.html" class="header-profile" style="text-decoration: none; color: inherit; margin-left: 15px;">
-                    <div class="user-avatar">
-                        <img id="userAvatar" src="" alt="Profile" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                        <i class="fas fa-user" id="avatarFallback"></i>
-                    </div>
-                    <div class="user-details">
-                        <span id="userName" class="user-name">Loading...</span>
-                        <span id="userEmail" class="user-email"></span>
-                    </div>
-                </a>
-            </div>
-        </header>
-
-        <!-- Profile Completion Banner -->
-        <div id="profileCompletionBanner" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; margin: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); animation: slideDown 0.5s ease;">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <i class="fas fa-info-circle" style="font-size: 24px;"></i>
-                    <div>
-                        <strong style="font-size: 16px; display: block; margin-bottom: 5px;">Complete Your Profile</strong>
-                        <span style="font-size: 14px; opacity: 0.9;">Add your business details to unlock all features and get personalized insights</span>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <a href="profile.html" class="btn btn-light" style="padding: 8px 20px; background: white; color: #667eea; border: none; border-radius: 5px; text-decoration: none; font-weight: 500;">
-                        Complete Now
-                    </a>
-                    <button onclick="dismissProfileBanner()" style="background: transparent; border: none; color: white; cursor: pointer; padding: 5px 10px; font-size: 20px;">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dashboard Content -->
-        <div class="dashboard-container">
-            <!-- Action Buttons Bar -->
-            <div class="action-buttons-bar" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding: 15px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                <button class="btn btn-primary btn-small" id="addDataBtn" title="Add data manually">
-                    <i class="fas fa-plus"></i> Add Data
-                </button>
-                <button class="btn btn-success btn-small" id="uploadDataBtn" title="Upload Excel/CSV file">
-                    <i class="fas fa-file-upload"></i> Upload File
-                </button>
-                <button class="btn btn-small" style="background: #06b6d4; color: white;" onclick="openExportModal()" title="Export data to CSV/Excel/PDF">
-                    <i class="fas fa-file-export"></i> Export
-                </button>
-                <button class="btn btn-small" style="background: #f59e0b; color: white;" onclick="openComparisonModal()" title="Compare different time periods">
-                    <i class="fas fa-balance-scale"></i> Compare
-                </button>
-                <button class="btn btn-danger btn-small" id="clearDataBtn" title="Clear all data">
-                    <i class="fas fa-trash"></i> Clear Data
-                </button>
-            </div>
-
-            <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card-dash">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                        <i class="fas fa-rupee-sign"></i>
-                    </div>
-                    <div class="stat-details">
-                        <span class="stat-label">Total Sales</span>
-                        <span class="stat-value" id="totalSales">₹0.00</span>
-                        <span class="stat-change neutral" id="salesChange">--</span>
-                    </div>
-                </div>
-
-                <div class="stat-card-dash">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="stat-details">
-                        <span class="stat-label">Total Profit</span>
-                        <span class="stat-value" id="totalProfit">₹0.00</span>
-                        <span class="stat-change neutral" id="profitChange">--</span>
-                    </div>
-                </div>
-
-                <div class="stat-card-dash">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <div class="stat-details">
-                        <span class="stat-label">Total Expenses</span>
-                        <span class="stat-value" id="totalExpenses">₹0.00</span>
-                        <span class="stat-change neutral" id="expenseChange">--</span>
-                    </div>
-                </div>
-
-                <div class="stat-card-dash">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
-                        <i class="fas fa-database"></i>
-                    </div>
-                    <div class="stat-details">
-                        <span class="stat-label">Data Entries</span>
-                        <span class="stat-value" id="dataCount">0</span>
-                        <span class="stat-change neutral">Total</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Charts Section -->
-            <div class="charts-grid">
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>Sales Overview</h3>
-                    </div>
-                    <canvas id="salesChart"></canvas>
-                </div>
-
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>Profit vs Expenses</h3>
-                    </div>
-                    <canvas id="profitExpenseChart"></canvas>
-                </div>
-
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>Category Breakdown</h3>
-                    </div>
-                    <canvas id="categoryChart"></canvas>
-                </div>
-
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>Recent Activity</h3>
-                    </div>
-                    <div class="recent-data" id="recentData">
-                        <p class="no-data">No recent activity</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Add Data Modal -->
-    <div id="addDataModal" class="modal">
-        <div class="modal-content">
-            <span class="close" data-modal="addDataModal">&times;</span>
-            <h2>Add Business Data</h2>
-            <p>Enter your business data for analysis</p>
-            
-            <form id="addDataForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="recordDate">Date</label>
-                        <input type="date" id="recordDate" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="category">Category</label>
-                        <select id="category" required>
-                            <option value="">Select Category</option>
-                            <option value="Retail">Retail</option>
-                            <option value="Services">Services</option>
-                            <option value="Manufacturing">Manufacturing</option>
-                            <option value="E-commerce">E-commerce</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="sales">Sales (₹)</label>
-                        <input type="number" id="sales" step="0.01" required placeholder="0.00">
-                    </div>
-                    <div class="form-group">
-                        <label for="expenses">Expenses (₹)</label>
-                        <input type="number" id="expenses" step="0.01" required placeholder="0.00">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="profit">Profit (₹)</label>
-                    <input type="number" id="profit" step="0.01" required placeholder="0.00" readonly>
-                </div>
-                <button type="submit" class="btn btn-primary btn-full">Add Data</button>
-            </form>
-        </div>
+  <!-- Main Content -->
+  <main class="main-content" id="dashboardContainer">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Dashboard</h1>
+        <div class="page-subtitle" id="lastUpdatedText">Loading data...</div>
+      </div>
+      <button class="btn-action" id="refreshBtn" title="Refresh data" onclick="refreshDashboard()">
+        <svg width="14" height="14" id="refreshIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>
+        Refresh
+      </button>
     </div>
 
-    <!-- Upload Data Modal - Enhanced with AI Processing -->
-    <div id="uploadDataModal" class="modal">
-        <div class="modal-content modal-large">
-            <span class="close" data-modal="uploadDataModal">&times;</span>
-            <h2><i class="fas fa-magic"></i> Smart Data Upload</h2>
-            <p>Upload your data and let AI clean, preprocess, and visualize it</p>
-            
-            <div class="upload-steps">
-                <!-- Step 1: File Upload -->
-                <div class="upload-step" id="uploadStep1">
-                    <div class="step-header">
-                        <span class="step-number">1</span>
-                        <h3>Select File</h3>
-                    </div>
-                    
-                    <div class="upload-zone" id="uploadZone">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <p>Drag & drop your file here or click to browse</p>
-                        <p class="upload-formats"><strong>Supported:</strong> Excel (.xlsx, .xls) and CSV (.csv)</p>
-                        <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
-                        <button class="btn btn-primary" onclick="document.getElementById('excelFileInput').click()">
-                            <i class="fas fa-folder-open"></i> Choose File
-                        </button>
-                    </div>
-                    
-                    <div id="filePreview" class="file-preview" style="display:none;">
-                        <div class="file-info">
-                            <i class="fas fa-file-excel"></i>
-                            <span id="selectedFileName">file.xlsx</span>
-                            <button class="btn btn-sm btn-secondary" onclick="clearSelectedFile()">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Step 2: AI Processing Options -->
-                <div class="upload-step" id="uploadStep2" style="display:none;">
-                    <div class="step-header">
-                        <span class="step-number">2</span>
-                        <h3>AI Processing Options</h3>
-                    </div>
-                    
-                    <div class="data-analysis-preview" id="dataAnalysisPreview">
-                        <!-- Will be populated by JS -->
-                    </div>
-                    
-                    <div class="processing-options">
-                        <div class="option-group">
-                            <label class="toggle-option">
-                                <input type="checkbox" id="removeOutliers" checked>
-                                <span class="toggle-slider"></span>
-                                <span class="option-label">
-                                    <i class="fas fa-filter"></i> Remove Outliers
-                                    <small>Automatically detect and remove anomalous data points</small>
-                                </span>
-                            </label>
-                            
-                            <div class="sub-options" id="outlierOptions">
-                                <label>Method:</label>
-                                <select id="outlierMethod">
-                                    <option value="iqr" selected>IQR (Recommended)</option>
-                                    <option value="zscore">Z-Score</option>
-                                    <option value="percentile">Percentile</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="option-group">
-                            <label class="toggle-option">
-                                <input type="checkbox" id="fillMissing" checked>
-                                <span class="toggle-slider"></span>
-                                <span class="option-label">
-                                    <i class="fas fa-magic"></i> Fill Missing Values
-                                    <small>Intelligently fill gaps in your data</small>
-                                </span>
-                            </label>
-                            
-                            <div class="sub-options" id="fillOptions">
-                                <label>Method:</label>
-                                <select id="fillMethod">
-                                    <option value="smart" selected>Smart (Category-based)</option>
-                                    <option value="mean">Mean</option>
-                                    <option value="median">Median</option>
-                                    <option value="zero">Zero</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Step 3: Graph Selection -->
-                <div class="upload-step" id="uploadStep3" style="display:none;">
-                    <div class="step-header">
-                        <span class="step-number">3</span>
-                        <h3>Choose Visualizations</h3>
-                    </div>
-                    
-                    <p class="step-description">Select which charts AI should generate for your data</p>
-                    
-                    <div class="graph-options" id="graphOptions">
-                        <!-- Will be populated dynamically based on data -->
-                    </div>
-                </div>
-                
-                <!-- Progress Display -->
-                <div id="uploadProgress" class="upload-progress" style="display:none;">
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
-                    </div>
-                    <p id="uploadStatus">Processing...</p>
-                    <div id="processingSteps" class="processing-steps"></div>
-                </div>
-            </div>
-            
-            <!-- Action Buttons -->
-            <div class="modal-actions">
-                <button class="btn btn-secondary" id="backStepBtn" style="display:none;" onclick="previousUploadStep()">
-                    <i class="fas fa-arrow-left"></i> Back
-                </button>
-                <button class="btn btn-primary" id="nextStepBtn" style="display:none;" onclick="nextUploadStep()">
-                    Next <i class="fas fa-arrow-right"></i>
-                </button>
-                <button class="btn btn-success" id="processUploadBtn" style="display:none;" onclick="processAndUploadData()">
-                    <i class="fas fa-robot"></i> Process & Upload
-                </button>
-            </div>
-        </div>
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <button class="btn-action primary" id="addDataBtn">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Data
+      </button>
+      <button class="btn-action" id="uploadDataBtn">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload
+      </button>
+      <button class="btn-action" onclick="openExportModal()">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export
+      </button>
+      <button class="btn-action" id="compareBtn" onclick="openComparePanel()">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
+        Compare
+      </button>
+      <button class="btn-action danger" id="clearDataBtn">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+        Clear Data
+      </button>
     </div>
 
-    <!-- Clear Data Confirmation Modal -->
-    <div id="clearDataModal" class="modal">
-        <div class="modal-content">
-            <span class="close" data-modal="clearDataModal">&times;</span>
-            <div class="confirm-icon warning">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <h2>Clear All Data?</h2>
-            <p>Choose how you want to handle your data deletion:</p>
-            
-            <div class="clear-options">
-                <label class="clear-option" id="clearOptionBackup">
-                    <input type="radio" name="clearType" value="backup" checked>
-                    <div class="option-card recommended">
-                        <div class="option-icon">
-                            <i class="fas fa-archive"></i>
-                        </div>
-                        <div class="option-details">
-                            <span class="option-title">Keep Backup (30 Days)</span>
-                            <span class="option-desc">Data will be archived. You can restore it within 30 days. Analysis history will be preserved.</span>
-                        </div>
-                        <span class="recommended-tag">Recommended</span>
-                    </div>
-                </label>
-                
-                <label class="clear-option" id="clearOptionPermanent">
-                    <input type="radio" name="clearType" value="permanent">
-                    <div class="option-card danger">
-                        <div class="option-icon">
-                            <i class="fas fa-trash-alt"></i>
-                        </div>
-                        <div class="option-details">
-                            <span class="option-title">Permanent Delete</span>
-                            <span class="option-desc">Data will be permanently deleted immediately. Analysis history will still be preserved.</span>
-                        </div>
-                    </div>
-                </label>
-            </div>
-            
-            <div class="clear-summary" id="clearSummary">
-                <!-- Will show record count -->
-            </div>
-            
-            <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="closeModal('clearDataModal')">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-                <button class="btn btn-danger" onclick="confirmClearData()">
-                    <i class="fas fa-trash"></i> Clear Data
-                </button>
-            </div>
-        </div>
+    <!-- Metrics Grid -->
+    <div class="metrics-grid">
+      <div class="metric-card blue fade-in">
+        <div class="metric-label">Total Sales</div>
+        <div class="metric-value" id="totalSales">&#8377;0.00</div>
+        <div class="metric-trend" id="salesChange">&#8212;</div>
+      </div>
+      <div class="metric-card green fade-in">
+        <div class="metric-label">Total Profit</div>
+        <div class="metric-value" id="totalProfit">&#8377;0.00</div>
+        <div class="metric-trend" id="profitChange">&#8212;</div>
+      </div>
+      <div class="metric-card red fade-in">
+        <div class="metric-label">Total Expenses</div>
+        <div class="metric-value" id="totalExpenses">&#8377;0.00</div>
+        <div class="metric-trend" id="expenseChange">&#8212;</div>
+      </div>
+      <div class="metric-card purple fade-in">
+        <div class="metric-label">Data Entries</div>
+        <div class="metric-value" id="dataCount" style="font-family:'DM Mono',monospace;">0</div>
+        <div class="metric-trend" id="dataCountChange">Total records</div>
+      </div>
     </div>
 
-    <!-- Custom Chart Modal -->
-    <div id="customChartModal" class="modal">
-        <div class="modal-content modal-large">
-            <span class="close" data-modal="customChartModal">&times;</span>
-            <h2><i class="fas fa-chart-bar"></i> Create Custom Chart</h2>
-            <p>Design your own visualization</p>
-            
-            <div class="chart-builder">
-                <div class="builder-options">
-                    <div class="form-group">
-                        <label for="chartTypeSelect">Chart Type</label>
-                        <select id="chartTypeSelect">
-                            <option value="line">Line Chart</option>
-                            <option value="bar">Bar Chart</option>
-                            <option value="area">Area Chart</option>
-                            <option value="pie">Pie Chart</option>
-                            <option value="doughnut">Doughnut Chart</option>
-                            <option value="scatter">Scatter Plot</option>
-                            <option value="radar">Radar Chart</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Y-Axis Fields (metrics to display)</label>
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" name="yFields" value="sales" checked> Sales</label>
-                            <label><input type="checkbox" name="yFields" value="profit"> Profit</label>
-                            <label><input type="checkbox" name="yFields" value="expenses"> Expenses</label>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="groupBySelect">Group By</label>
-                        <select id="groupBySelect">
-                            <option value="">None (Time Series)</option>
-                            <option value="category">Category</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="chart-preview">
-                    <canvas id="customChartPreview"></canvas>
-                </div>
-            </div>
-            
-            <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="closeModal('customChartModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="previewCustomChart()">
-                    <i class="fas fa-eye"></i> Preview
-                </button>
-                <button class="btn btn-success" onclick="saveCustomChart()">
-                    <i class="fas fa-save"></i> Add to Dashboard
-                </button>
-            </div>
-        </div>
+    <!-- Time Filter Bar -->
+    <div class="filter-pills" id="timeFilterBar">
+      <span style="font-size:12px;color:var(--text-muted);margin-right:4px;">Range:</span>
+      <button class="filter-pill active" data-filter="all" onclick="applyTimeFilter('all',this)">All</button>
+      <button class="filter-pill" data-filter="year" onclick="applyTimeFilter('year',this)">This Year</button>
+      <button class="filter-pill" data-filter="6months" onclick="applyTimeFilter('6months',this)">6 Months</button>
+      <button class="filter-pill" data-filter="3months" onclick="applyTimeFilter('3months',this)">3 Months</button>
+      <button class="filter-pill" data-filter="month" onclick="applyTimeFilter('month',this)">This Month</button>
+      <button class="filter-pill" data-filter="week" onclick="applyTimeFilter('week',this)">This Week</button>
+      <button class="filter-pill" data-filter="custom" onclick="applyTimeFilter('custom',this)">Custom &#9662;</button>
     </div>
-
-    <!-- Search Modal (Ctrl+K) -->
-    <div class="search-modal" id="searchModal">
-        <div class="search-container">
-            <div class="search-input-wrapper">
-                <i class="fas fa-search"></i>
-                <input type="text" class="search-input" id="searchInput" placeholder="Search pages, features..." autofocus>
-                <span class="search-shortcut">ESC</span>
-            </div>
-            <div class="search-results" id="searchResults">
-                <a href="dashboard.html" class="search-result-item">
-                    <i class="fas fa-th-large"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="analysis.html" class="search-result-item">
-                    <i class="fas fa-robot"></i>
-                    <span>AI Analysis</span>
-                </a>
-                <a href="history.html" class="search-result-item">
-                    <i class="fas fa-history"></i>
-                    <span>History</span>
-                </a>
-                <a href="profile.html" class="search-result-item">
-                    <i class="fas fa-user"></i>
-                    <span>Profile Settings</span>
-                </a>
-            </div>
-        </div>
+    <!-- Custom date range (hidden until Custom clicked) -->
+    <div class="filter-custom-range" id="customRangeRow">
+      <input type="date" id="customFrom" title="From">
+      <span style="color:var(--text-muted);font-size:13px;">to</span>
+      <input type="date" id="customTo" title="To">
+      <button class="btn-action primary" style="height:34px;" onclick="applyCustomRange()">Apply</button>
     </div>
+    <div class="filter-info-row" id="filterInfoRow"></div>
 
-    <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/theme.js"></script>
-    <script src="js/header-profile.js"></script>
-    <script src="js/data-import-export.js"></script>
-    <script src="js/comparison-analysis.js"></script>
-    <script src="js/dashboard.js"></script>
-    <script>
-        // Search Modal Functions
-        function openSearchModal() {
-            document.getElementById('searchModal').classList.add('active');
-            document.getElementById('searchInput').focus();
-        }
-        
-        function closeSearchModal() {
-            document.getElementById('searchModal').classList.remove('active');
-        }
-        
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            // Ctrl+K or Cmd+K to open search
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                openSearchModal();
-            }
-            // ESC to close search
-            if (e.key === 'Escape') {
-                closeSearchModal();
-            }
-        });
-        
-        // Close search modal when clicking outside
-        document.getElementById('searchModal').addEventListener('click', (e) => {
-            if (e.target.classList.contains('search-modal')) {
-                closeSearchModal();
-            }
-        });
-        
-        // Display last login time
-        function displayLastLogin() {
-            const userStr = localStorage.getItem(STORAGE_KEYS.USER);
-            if (userStr) {
-                const user = JSON.parse(userStr);
-                if (user.last_login) {
-                    const lastLogin = new Date(user.last_login);
-                    const now = new Date();
-                    const diffMs = now - lastLogin;
-                    const diffMins = Math.floor(diffMs / 60000);
-                    const diffHours = Math.floor(diffMs / 3600000);
-                    const diffDays = Math.floor(diffMs / 86400000);
-                    
-                    let timeText;
-                    if (diffMins < 1) timeText = 'Just now';
-                    else if (diffMins < 60) timeText = `${diffMins}m ago`;
-                    else if (diffHours < 24) timeText = `${diffHours}h ago`;
-                    else timeText = `${diffDays}d ago`;
-                    
-                    document.getElementById('lastLoginTime').textContent = `Last login: ${timeText}`;
-                    document.getElementById('lastLoginInfo').style.display = 'flex';
-                }
-            }
-        }
-        
-        // Call on page load
-        document.addEventListener('DOMContentLoaded', displayLastLogin);
-    </script>
-    <style>
-        .header-profile {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .user-details {
-            display: flex;
-            flex-direction: column;
-            line-height: 1.2;
-        }
-        .user-name {
-            font-weight: 600;
-            font-size: 14px;
-        }
-        .user-email {
-            font-size: 11px;
-            color: var(--text-secondary);
-            opacity: 0.8;
-        }
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        @media (max-width: 768px) {
-            .user-details { display: none; }
-        }
-    </style>
+    <!-- Charts Grid -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <span class="chart-card-title">Sales Overview</span>
+        </div>
+        <div class="chart-card-body">
+          <canvas id="salesChart" style="max-height:220px;"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <span class="chart-card-title">Profit vs Expenses</span>
+        </div>
+        <div class="chart-card-body">
+          <canvas id="profitExpenseChart" style="max-height:220px;"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <span class="chart-card-title">Category Breakdown</span>
+        </div>
+        <div class="chart-card-body" style="display:flex;justify-content:center;">
+          <canvas id="categoryChart" style="max-height:220px;max-width:280px;"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <span class="chart-card-title">Recent Entries</span>
+        </div>
+        <div id="recentData">
+          <div class="empty-state" style="padding:30px;">
+            <i class="fas fa-chart-line" style="font-size:28px;"></i>
+            <p>No recent data</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Compare Panel (slides from right) -->
+  <div class="compare-panel" id="comparePanel">
+    <div class="compare-header">
+      <h2>Compare Periods</h2>
+      <button class="compare-close" id="closeCompare" onclick="closeComparePanel()">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="compare-scroll">
+      <div class="compare-selectors">
+        <div class="compare-period">
+          <label>Period A</label>
+          <select class="field" id="periodAType" style="height:36px;padding:0 10px;width:100%;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;font-size:13px;outline:none;">
+            <option value="month">Month</option>
+            <option value="quarter">Quarter</option>
+            <option value="year">Year</option>
+            <option value="custom">Custom</option>
+          </select>
+          <div id="periodAInputs" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+        <div class="compare-vs">VS</div>
+        <div class="compare-period">
+          <label>Period B</label>
+          <select class="field" id="periodBType" style="height:36px;padding:0 10px;width:100%;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;font-size:13px;outline:none;">
+            <option value="month">Month</option>
+            <option value="quarter">Quarter</option>
+            <option value="year">Year</option>
+            <option value="custom">Custom</option>
+          </select>
+          <div id="periodBInputs" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+      </div>
+      <button class="btn-action primary" style="width:100%;height:38px;justify-content:center;margin-bottom:20px;" onclick="runComparison()">
+        Compare &#8594;
+      </button>
+      <div id="compareResults" style="display:none;">
+        <div class="compare-metrics-grid" id="compareMetricsGrid"></div>
+        <div class="compare-chart-panel">
+          <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.06em;">Comparison Chart</div>
+          <canvas id="compareChart" style="max-height:180px;"></canvas>
+        </div>
+        <div class="compare-insights">
+          <h3>Key Insights</h3>
+          <ul id="compareInsightsList"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Data Modal -->
+  <div class="modal-overlay" id="addDataModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>Add Business Data</h3>
+        <button class="modal-close" onclick="closeModalById('addDataModal')">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="addDataForm">
+          <div class="field-row">
+            <div class="field"><label>Date</label><input type="date" id="recordDate" required></div>
+            <div class="field">
+              <label>Category</label>
+              <select id="category" required>
+                <option value="">Select Category</option>
+                <option value="Retail">Retail</option>
+                <option value="Services">Services</option>
+                <option value="Manufacturing">Manufacturing</option>
+                <option value="E-commerce">E-commerce</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Sales (&#8377;)</label><input type="number" id="sales" step="0.01" required placeholder="0.00"></div>
+            <div class="field"><label>Expenses (&#8377;)</label><input type="number" id="expenses" step="0.01" required placeholder="0.00"></div>
+          </div>
+          <div class="field"><label>Profit (&#8377;)</label><input type="number" id="profit" step="0.01" placeholder="Auto-calculated" readonly></div>
+          <div class="modal-foot" style="padding:0;border:none;margin-top:4px;">
+            <button type="button" class="btn-ghost" onclick="closeModalById('addDataModal')">Cancel</button>
+            <button type="submit" class="btn-primary" style="padding:0 20px;">Add Data</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Data Modal -->
+  <div class="modal-overlay" id="uploadDataModal">
+    <div class="modal-box large">
+      <div class="modal-head">
+        <h3>Upload Data File</h3>
+        <button class="modal-close" onclick="closeModalById('uploadDataModal')">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Upload error box -->
+        <div class="upload-error-box" id="uploadErrorBox"></div>
+
+        <!-- Step 1: Upload zone -->
+        <div id="uploadStep1">
+          <div class="upload-zone" id="uploadZone">
+            <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="color:var(--text-muted);margin-bottom:12px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <p style="font-size:14px;font-weight:500;color:var(--text-secondary);">Drag &amp; drop or click to browse</p>
+            <p><strong>.xlsx, .xls, .csv</strong> supported</p>
+            <p style="font-size:11px;margin-top:8px;">Required columns: <span style="font-family:'DM Mono',monospace;color:var(--accent-blue);">date, category, sales, expenses, profit</span></p>
+            <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
+          </div>
+          <div id="filePreview" style="display:none;margin-top:12px;">
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:8px;">
+              <i class="fas fa-file-excel" style="color:var(--accent-green);"></i>
+              <span id="selectedFileName" style="font-size:13px;flex:1;color:var(--text-primary);"></span>
+              <button class="btn-action" onclick="clearSelectedFile()" style="height:28px;padding:0 10px;font-size:12px;">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Processing options (Step 2) -->
+        <div id="uploadStep2" style="display:none;margin-top:16px;">
+          <div id="dataAnalysisPreview"></div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-secondary);cursor:pointer;">
+              <input type="checkbox" id="removeOutliers" checked style="accent-color:var(--accent-blue);"> Remove outliers
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-secondary);cursor:pointer;">
+              <input type="checkbox" id="fillMissing" checked style="accent-color:var(--accent-blue);"> Fill missing values
+            </label>
+            <div>
+              <label style="font-size:12px;color:var(--text-muted);">Outlier method</label>
+              <select id="outlierMethod" style="margin-top:4px;height:34px;width:100%;padding:0 10px;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;font-size:13px;outline:none;">
+                <option value="iqr">IQR (Recommended)</option>
+                <option value="zscore">Z-Score</option>
+                <option value="percentile">Percentile</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:12px;color:var(--text-muted);">Fill method</label>
+              <select id="fillMethod" style="margin-top:4px;height:34px;width:100%;padding:0 10px;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;font-size:13px;outline:none;">
+                <option value="smart">Smart (Category-based)</option>
+                <option value="mean">Mean</option>
+                <option value="median">Median</option>
+                <option value="zero">Zero</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress -->
+        <div id="uploadProgress" style="display:none;margin-top:16px;">
+          <div style="background:var(--bg-elevated);border-radius:6px;height:6px;overflow:hidden;">
+            <div id="progressFill" style="height:100%;background:var(--accent-blue);width:0%;transition:width 0.3s;"></div>
+          </div>
+          <p id="uploadStatus" style="font-size:12px;color:var(--text-muted);margin-top:8px;"></p>
+          <div id="processingSteps" style="margin-top:8px;"></div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+          <button class="btn-ghost" id="backStepBtn" style="display:none;" onclick="previousUploadStep()">&#8592; Back</button>
+          <button class="btn-primary" id="nextStepBtn" style="display:none;padding:0 20px;" onclick="nextUploadStep()">Next &#8594;</button>
+          <button class="btn-primary" id="processUploadBtn" style="display:none;padding:0 20px;" onclick="processAndUploadData()">
+            <i class="fas fa-robot" style="margin-right:6px;"></i>Process &amp; Upload
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clear Data Modal -->
+  <div class="modal-overlay" id="clearDataModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>Clear All Data?</h3>
+        <button class="modal-close" onclick="closeModalById('clearDataModal')">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Choose how to handle data deletion:</p>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <label style="cursor:pointer;display:flex;gap:12px;align-items:flex-start;padding:14px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:8px;">
+            <input type="radio" name="clearType" value="backup" checked style="margin-top:3px;accent-color:var(--accent-blue);">
+            <div>
+              <strong style="font-size:13px;font-weight:600;color:var(--text-primary);">Keep Backup (30 Days)</strong>
+              <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">Data will be archived. You can restore it within 30 days.</p>
+              <span style="font-size:11px;background:rgba(5,150,105,0.12);color:#34D399;padding:2px 8px;border-radius:4px;font-weight:600;">Recommended</span>
+            </div>
+          </label>
+          <label style="cursor:pointer;display:flex;gap:12px;align-items:flex-start;padding:14px;background:var(--bg-elevated);border:1px solid rgba(220,38,38,0.2);border-radius:8px;">
+            <input type="radio" name="clearType" value="permanent" style="margin-top:3px;accent-color:var(--accent-red);">
+            <div>
+              <strong style="font-size:13px;font-weight:600;color:var(--accent-red);">Permanent Delete</strong>
+              <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">Data will be permanently deleted immediately.</p>
+            </div>
+          </label>
+        </div>
+        <div id="clearSummary" style="margin-top:14px;font-size:12px;color:var(--text-muted);"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-ghost" onclick="closeModalById('clearDataModal')">Cancel</button>
+        <button class="btn-danger" onclick="confirmClearData()">Clear Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/header-profile.js"></script>
+  <script src="js/data-import-export.js"></script>
+  <script src="js/comparison-analysis.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script>
+    // Modal helpers for new overlay system
+    function closeModalById(id) {
+      const m = document.getElementById(id);
+      if (m) { m.classList.remove('open'); }
+    }
+    function openModalById(id) {
+      const m = document.getElementById(id);
+      if (m) { m.classList.add('open'); }
+    }
+    // Legacy closeModal compat
+    window.closeModal = closeModalById;
+
+    // Close overlay on backdrop click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('open');
+      });
+    });
+
+    // Compare panel
+    function openComparePanel() {
+      document.getElementById('comparePanel').classList.add('open');
+    }
+    function closeComparePanel() {
+      document.getElementById('comparePanel').classList.remove('open');
+    }
+
+    // Last updated timer
+    function updateLastUpdatedText() {
+      const el = document.getElementById('lastUpdatedText');
+      if (!el) return;
+      if (typeof DataCache !== 'undefined') {
+        const d = DataCache.lastFetched;
+        if (!d) { el.textContent = 'Not yet loaded'; return; }
+        const diff = Math.floor((Date.now() - d) / 60000);
+        el.textContent = diff < 1 ? 'Last updated: just now' : 'Last updated: ' + diff + ' minute' + (diff > 1 ? 's' : '') + ' ago';
+      }
+    }
+    setInterval(updateLastUpdatedText, 60000);
+  </script>
 </body>
 </html>

@@ -1,415 +1,473 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Activity History - DataXpert</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>History — DataXpert</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="dashboard-page">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <span>DataXpert</span>
-            </div>
+<body class="app-page">
+
+  <!-- Top Navbar (active: History) -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <a href="dashboard.html" class="nav-logo">Data<span class="accent">Xpert</span></a>
+    </div>
+    <div class="nav-center">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="analysis.html" class="nav-link">AI Analysis</a>
+      <a href="history.html" class="nav-link active">History</a>
+    </div>
+    <div class="nav-right">
+      <button class="nav-icon-btn" id="notificationBtn" title="Notifications">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span class="notif-dot"></span>
+      </button>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" id="themeIcon"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+      <div class="nav-avatar-wrap" id="avatarWrap">
+        <div class="nav-avatar" id="navAvatar">
+          <img id="navAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
+          <span id="navAvatarInitials">U</span>
         </div>
-
-        <nav class="sidebar-nav">
-            <a href="dashboard.html" class="nav-item">
-                <i class="fas fa-th-large"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="analysis.html" class="nav-item">
-                <i class="fas fa-robot"></i>
-                <span>AI Analysis</span>
-            </a>
-            <a href="history.html" class="nav-item active">
-                <i class="fas fa-history"></i>
-                <span>History</span>
-            </a>
-            <a href="profile.html" class="nav-item">
-                <i class="fas fa-user"></i>
-                <span>Profile</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <button class="btn btn-logout btn-full" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i>
-                Logout
-            </button>
+        <div class="nav-dropdown" id="navDropdown">
+          <div class="dropdown-user">
+            <strong id="dropdownName">Loading...</strong>
+            <span id="dropdownEmail"></span>
+          </div>
+          <hr class="dropdown-divider">
+          <a href="profile.html" class="dropdown-item">
+            <i class="fas fa-user" style="width:14px;margin-right:8px;"></i>Profile
+          </a>
+          <button class="dropdown-item danger" id="logoutBtn">
+            <i class="fas fa-sign-out-alt" style="width:14px;margin-right:8px;"></i>Logout
+          </button>
         </div>
-    </aside>
+      </div>
+    </div>
+  </nav>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Top Bar -->
-        <header class="topbar">
-            <div class="topbar-left">
-                <button class="menu-toggle" id="menuToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1>Activity History</h1>
-            </div>
-            <div class="topbar-right">
-                <button class="theme-toggle" onclick="openSearchModal()" title="Search (Ctrl+K)">
-                    <i class="fas fa-search"></i>
-                </button>
-                <div class="theme-toggle-wrapper" style="margin-left: 12px;">
-                    <button class="theme-toggle-switch" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark mode">
-                        <span class="theme-toggle-slider">
-                            <i class="theme-toggle-icon fas fa-sun"></i>
-                        </span>
-                    </button>
-                </div>
-                <a href="profile.html" class="header-profile" style="text-decoration: none; color: inherit; margin-left: 15px;">
-                    <div class="user-avatar">
-                        <img id="userAvatar" src="" alt="Profile" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                        <i class="fas fa-user" id="avatarFallback"></i>
-                    </div>
-                    <div class="user-details">
-                        <span id="userName" class="user-name">Loading...</span>
-                        <span id="userEmail" class="user-email"></span>
-                    </div>
-                </a>
-            </div>
-        </header>
-
-        <!-- History Content -->
-        <div class="dashboard-container">
-            <div class="chart-card" style="max-width: 100%;">
-                <div class="chart-header">
-                    <h3><i class="fas fa-history"></i> Your Activity</h3>
-                    <div class="history-filters">
-                        <button class="filter-btn active" data-filter="all">All Activity</button>
-                        <button class="filter-btn" data-filter="uploads">Uploads</button>
-                        <button class="filter-btn" data-filter="analysis">Analysis</button>
-                        <button class="filter-btn" data-filter="backups">Backups</button>
-                    </div>
-                </div>
-                
-                <div class="history-timeline" id="historyTimeline">
-                    <div class="loading-placeholder">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <p>Loading your activity history...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/theme.js"></script>
-    <script src="js/header-profile.js"></script>
-    <script>
-        // Check authentication
-        document.addEventListener('DOMContentLoaded', async () => {
-            if (!isAuthenticated()) {
-                window.location.href = 'index.html';
-                return;
-            }
-
-            const verified = await verifyAuth();
-            if (!verified) {
-                return;
-            }
-
-            loadUserInfo();
-            loadHistory('all');
-            setupFilters();
-        });
-
-        // Load user information
-        function loadUserInfo() {
-            const userStr = localStorage.getItem(STORAGE_KEYS.USER);
-            if (userStr) {
-                const user = JSON.parse(userStr);
-                document.getElementById('userName').textContent = user.name || 'User';
-                
-                const avatarImg = document.getElementById('userAvatar');
-                const avatarFallback = document.getElementById('avatarFallback');
-                if (avatarImg) {
-                    const profileUrl = user.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=6366f1&color=fff&size=200`;
-                    avatarImg.src = profileUrl;
-                    avatarImg.style.display = 'block';
-                    if (avatarFallback) avatarFallback.style.display = 'none';
-                }
-            }
-        }
-
-        // Setup filter buttons
-        function setupFilters() {
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    loadHistory(btn.dataset.filter);
-                });
-            });
-        }
-
-        // Load history
-        async function loadHistory(filter = 'all') {
-            const timeline = document.getElementById('historyTimeline');
-            timeline.innerHTML = '<div class="loading-placeholder"><i class="fas fa-spinner fa-spin"></i><p>Loading activity...</p></div>';
-
-            try {
-                const response = await fetch(`${API_ENDPOINTS.ACTIVITY_HISTORY}?filter=${filter}`, {
-                    headers: getAuthHeaders()
-                });
-
-                const data = await response.json();
-
-                if (data.success && data.activities && data.activities.length > 0) {
-                    renderHistory(data.activities, filter);
-                } else {
-                    timeline.innerHTML = '<div class="no-data"><i class="fas fa-history"></i><p>No activity history yet</p></div>';
-                }
-            } catch (error) {
-                console.error('Error loading history:', error);
-                timeline.innerHTML = '<div class="no-data"><i class="fas fa-exclamation-triangle"></i><p>Error loading history</p></div>';
-            }
-        }
-
-        // Render history
-        function renderHistory(activities, filter) {
-            const timeline = document.getElementById('historyTimeline');
-            
-            const filteredActivities = filter === 'all' 
-                ? activities 
-                : activities.filter(a => a.type === filter);
-
-            if (filteredActivities.length === 0) {
-                timeline.innerHTML = '<div class="no-data"><i class="fas fa-history"></i><p>No activities found for this filter</p></div>';
-                return;
-            }
-
-            timeline.innerHTML = filteredActivities.map(activity => {
-                const icon = getActivityIcon(activity.type);
-                const color = getActivityColor(activity.type);
-                return `
-                    <div class="history-item">
-                        <div class="history-icon" style="background: ${color};">
-                            <i class="${icon}"></i>
-                        </div>
-                        <div class="history-content">
-                            <h4>${activity.title}</h4>
-                            <p>${activity.description}</p>
-                            <span class="history-date">${formatDate(activity.created_at)}</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // Get activity icon
-        function getActivityIcon(type) {
-            const icons = {
-                'uploads': 'fas fa-file-upload',
-                'analysis': 'fas fa-chart-line',
-                'backups': 'fas fa-archive',
-                'data_added': 'fas fa-plus-circle',
-                'data_deleted': 'fas fa-trash',
-                'profile_updated': 'fas fa-user-edit'
-            };
-            return icons[type] || 'fas fa-circle';
-        }
-
-        // Get activity color
-        function getActivityColor(type) {
-            const colors = {
-                'uploads': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                'analysis': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                'backups': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                'data_added': 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-                'data_deleted': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-                'profile_updated': 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)'
-            };
-            return colors[type] || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-        }
-
-        // Format date
-        function formatDate(dateString) {
-            if (!dateString) return 'N/A';
-            const date = new Date(dateString);
-            const now = new Date();
-            const diff = now - date;
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            
-            if (days === 0) {
-                const hours = Math.floor(diff / (1000 * 60 * 60));
-                if (hours === 0) {
-                    const minutes = Math.floor(diff / (1000 * 60));
-                    return minutes === 0 ? 'Just now' : `${minutes} min${minutes > 1 ? 's' : ''} ago`;
-                }
-                return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-            } else if (days === 1) {
-                return 'Yesterday';
-            } else if (days < 7) {
-                return `${days} days ago`;
-            } else {
-                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            }
-        }
-
-        // Menu toggle
-        document.getElementById('menuToggle').addEventListener('click', () => {
-            document.querySelector('.sidebar').classList.toggle('collapsed');
-        });
-    </script>
-
-    <style>
-        .history-filters {
-            display: flex;
-            gap: 10px;
-        }
-
-        .filter-btn {
-            padding: 8px 16px;
-            border: 2px solid #e0e0e0;
-            background: white;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        .filter-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: transparent;
-        }
-
-        .filter-btn:hover {
-            border-color: #667eea;
-        }
-
-        .history-timeline {
-            padding: 20px;
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-
-        .history-item {
-            display: flex;
-            gap: 15px;
-            padding: 20px;
-            margin-bottom: 15px;
-            background: white;
-            border-radius: 10px;
-            border: 1px solid #e0e0e0;
-            transition: all 0.3s;
-        }
-
-        .history-item:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
-
-        .history-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 20px;
-            flex-shrink: 0;
-        }
-
-        .history-content {
-            flex: 1;
-        }
-
-        .history-content h4 {
-            margin: 0 0 8px 0;
-            color: #2d3748;
-            font-size: 16px;
-        }
-
-        .history-content p {
-            margin: 0 0 8px 0;
-            color: #718096;
-            font-size: 14px;
-        }
-
-        .history-date {
-            font-size: 12px;
-            color: #a0aec0;
-        }
-
-        .loading-placeholder {
-            text-align: center;
-            padding: 60px 20px;
-            color: #718096;
-        }
-
-        .loading-placeholder i {
-            font-size: 48px;
-            margin-bottom: 15px;
-            color: #667eea;
-        }
-
-        .no-data {
-            text-align: center;
-            padding: 60px 20px;
-            color: #718096;
-        }
-
-        .no-data i {
-            font-size: 48px;
-            margin-bottom: 15px;
-            color: #cbd5e0;
-        }
-        .header-profile { display: flex; align-items: center; gap: 10px; }
-        .user-details { display: flex; flex-direction: column; line-height: 1.2; }
-        .user-name { font-weight: 600; font-size: 14px; }
-        .user-email { font-size: 11px; color: var(--text-secondary); opacity: 0.8; }
-        .topbar-right { display: flex; align-items: center; gap: 8px; }
-        @media (max-width: 768px) { .user-details { display: none; } }
-    </style>
-
-    <!-- Search Modal -->
-    <div id="searchModal" class="search-modal">
-        <div class="search-modal-content">
-            <div class="search-header">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Search pages..." autofocus>
-                <kbd>ESC</kbd>
-            </div>
-            <div class="search-results">
-                <a href="dashboard.html" class="search-item"><i class="fas fa-th-large"></i> Dashboard</a>
-                <a href="analysis.html" class="search-item"><i class="fas fa-robot"></i> AI Analysis</a>
-                <a href="history.html" class="search-item"><i class="fas fa-history"></i> History</a>
-                <a href="profile.html" class="search-item"><i class="fas fa-user"></i> Profile</a>
-            </div>
-        </div>
+  <div class="main-content">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">History</h1>
+        <div id="activeFilterBadgeWrap" style="margin-top:6px;"></div>
+      </div>
     </div>
 
-    <script>
-        // Search and keyboard shortcuts
-        function openSearchModal() {
-            document.getElementById('searchModal').classList.add('active');
-            document.getElementById('searchInput').focus();
-        }
-        function closeSearchModal() {
-            document.getElementById('searchModal').classList.remove('active');
-        }
-        document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                openSearchModal();
-            }
-            if (e.key === 'Escape') closeSearchModal();
+    <!-- Filter Panel -->
+    <div class="history-filter-panel">
+      <div class="history-filter-types">
+        <button class="history-filter-btn active" data-type="all" onclick="setHistoryFilter('all',this)">All</button>
+        <button class="history-filter-btn" data-type="date" onclick="setHistoryFilter('date',this)">Specific Date</button>
+        <button class="history-filter-btn" data-type="month" onclick="setHistoryFilter('month',this)">Month</button>
+        <button class="history-filter-btn" data-type="year" onclick="setHistoryFilter('year',this)">Year</button>
+        <button class="history-filter-btn" data-type="range" onclick="setHistoryFilter('range',this)">Date Range</button>
+      </div>
+
+      <!-- Date filter -->
+      <div class="history-filter-inputs" id="filterDate">
+        <input type="date" id="specificDate" class="form-input" style="height:34px;font-size:13px;">
+        <button class="btn-action primary" style="height:34px;" onclick="applyHistoryFilter()">Apply</button>
+      </div>
+
+      <!-- Month filter -->
+      <div class="history-filter-inputs" id="filterMonth">
+        <select id="monthSelect" class="form-input" style="height:34px;padding:0 10px;font-size:13px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;outline:none;">
+          <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+          <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+          <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+          <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+        </select>
+        <select class="form-input" style="height:34px;padding:0 10px;font-size:13px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;outline:none;" id="monthYearSelect">
+          <!-- Populated by JS -->
+        </select>
+        <button class="btn-action primary" style="height:34px;" onclick="applyHistoryFilter()">Apply</button>
+      </div>
+
+      <!-- Year filter -->
+      <div class="history-filter-inputs" id="filterYear">
+        <select class="form-input" style="height:34px;padding:0 10px;font-size:13px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;outline:none;" id="yearSelect">
+          <!-- Populated by JS -->
+        </select>
+        <button class="btn-action primary" style="height:34px;" onclick="applyHistoryFilter()">Apply</button>
+      </div>
+
+      <!-- Range filter -->
+      <div class="history-filter-inputs" id="filterRange">
+        <input type="date" id="rangeFrom" class="form-input" style="height:34px;font-size:13px;">
+        <span class="filter-sep">to</span>
+        <input type="date" id="rangeTo" class="form-input" style="height:34px;font-size:13px;">
+        <button class="btn-action primary" style="height:34px;" onclick="applyHistoryFilter()">Apply</button>
+      </div>
+    </div>
+
+    <!-- Data Table Card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title" id="tableTitle">All Records</span>
+        <span id="recordCountBadge" style="font-size:12px;color:var(--text-muted);font-family:'DM Mono',monospace;"></span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" id="historyTable">
+          <thead>
+            <tr>
+              <th onclick="sortTable('date')">Date <span class="sort-icon">&#8597;</span></th>
+              <th onclick="sortTable('category')">Category <span class="sort-icon">&#8597;</span></th>
+              <th onclick="sortTable('sales')">Sales <span class="sort-icon">&#8597;</span></th>
+              <th onclick="sortTable('expenses')">Expenses <span class="sort-icon">&#8597;</span></th>
+              <th onclick="sortTable('profit')">Profit <span class="sort-icon">&#8597;</span></th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody">
+            <tr><td colspan="7" style="text-align:center;padding:40px;">
+              <div class="empty-state"><i class="fas fa-chart-bar"></i><p>Loading data...</p></div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="paginationbar">
+        <span class="pagination-info" id="paginationInfo">-</span>
+        <div class="pagination-controls">
+          <button class="page-btn" id="prevPageBtn" onclick="changePage(-1)">&#8249;</button>
+          <div id="pageNumbers" style="display:flex;gap:4px;"></div>
+          <button class="page-btn" id="nextPageBtn" onclick="changePage(1)">&#8250;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden legacy historyTimeline (for backward compat) -->
+    <div id="historyTimeline" style="display:none;"></div>
+  </div>
+
+  <!-- Edit Data Modal -->
+  <div class="modal-overlay" id="editDataModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>Edit Record</h3>
+        <button class="modal-close" onclick="closeModalById('editDataModal')">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="editDataForm">
+          <input type="hidden" id="editRecordId">
+          <div class="field-row">
+            <div class="field"><label>Date</label><input type="date" id="editDate" required></div>
+            <div class="field">
+              <label>Category</label>
+              <select id="editCategory" required>
+                <option value="Retail">Retail</option>
+                <option value="Services">Services</option>
+                <option value="Manufacturing">Manufacturing</option>
+                <option value="E-commerce">E-commerce</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Sales (&#8377;)</label><input type="number" id="editSales" step="0.01" required></div>
+            <div class="field"><label>Expenses (&#8377;)</label><input type="number" id="editExpenses" step="0.01" required></div>
+          </div>
+          <div class="field"><label>Profit (&#8377;)</label><input type="number" id="editProfit" step="0.01" readonly></div>
+          <div class="modal-foot" style="padding:0;border:none;margin-top:16px;">
+            <button type="button" class="btn-ghost" onclick="closeModalById('editDataModal')">Cancel</button>
+            <button type="submit" class="btn-primary" style="padding:0 20px;">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/header-profile.js"></script>
+  <script>
+    function closeModalById(id){const m=document.getElementById(id);if(m)m.classList.remove('open');}
+    function openModalById(id){const m=document.getElementById(id);if(m)m.classList.add('open');}
+    window.closeModal=closeModalById;
+    document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+    // Populate year dropdowns
+    function populateYearDropdowns() {
+      const currentYear = new Date().getFullYear();
+      const monthYearSel = document.getElementById('monthYearSelect');
+      const yearSel = document.getElementById('yearSelect');
+      for (let y = currentYear; y >= currentYear - 5; y--) {
+        if (monthYearSel) monthYearSel.innerHTML += '<option value="'+y+'">'+y+'</option>';
+        if (yearSel) yearSel.innerHTML += '<option value="'+y+'">'+y+'</option>';
+      }
+      // Set current month
+      const monthSel = document.getElementById('monthSelect');
+      if (monthSel) monthSel.value = new Date().getMonth() + 1;
+    }
+
+    // Filter type switching
+    let currentFilterType = 'all';
+    function setHistoryFilter(type, btn) {
+      currentFilterType = type;
+      document.querySelectorAll('.history-filter-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+
+      document.querySelectorAll('.history-filter-inputs').forEach(el=>el.classList.remove('visible'));
+      if (type !== 'all') {
+        const inputEl = document.getElementById('filter' + type.charAt(0).toUpperCase() + type.slice(1));
+        if (inputEl) inputEl.classList.add('visible');
+      } else {
+        clearHistoryFilter();
+      }
+    }
+
+    // History state
+    let allHistoryData = [];
+    let filteredData = [];
+    let currentPage = 1;
+    const PAGE_SIZE = 10;
+    let sortField = 'date';
+    let sortDir = 'desc';
+
+    function applyHistoryFilter() {
+      const type = currentFilterType;
+      let filtered = [...allHistoryData];
+
+      if (type === 'date') {
+        const d = document.getElementById('specificDate').value;
+        if (d) filtered = filtered.filter(r => r.date && r.date.startsWith(d));
+        updateActiveFilterBadge('Date: ' + d, filtered.length);
+      } else if (type === 'month') {
+        const m = parseInt(document.getElementById('monthSelect').value);
+        const y = parseInt(document.getElementById('monthYearSelect').value);
+        filtered = filtered.filter(r => {
+          const rd = new Date(r.date);
+          return rd.getMonth()+1 === m && rd.getFullYear() === y;
         });
-        document.getElementById('searchModal').addEventListener('click', (e) => {
-            if (e.target.classList.contains('search-modal')) closeSearchModal();
+        const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        updateActiveFilterBadge(monthNames[m-1] + ' ' + y, filtered.length);
+      } else if (type === 'year') {
+        const y = parseInt(document.getElementById('yearSelect').value);
+        filtered = filtered.filter(r => new Date(r.date).getFullYear() === y);
+        updateActiveFilterBadge('Year ' + y, filtered.length);
+      } else if (type === 'range') {
+        const from = document.getElementById('rangeFrom').value;
+        const to = document.getElementById('rangeTo').value;
+        if (from && to) {
+          filtered = filtered.filter(r => {
+            const d = new Date(r.date);
+            return d >= new Date(from) && d <= new Date(to);
+          });
+          updateActiveFilterBadge(from + ' to ' + to, filtered.length);
+        }
+      }
+
+      filteredData = filtered;
+      currentPage = 1;
+      renderTable();
+    }
+
+    function clearHistoryFilter() {
+      filteredData = [...allHistoryData];
+      currentPage = 1;
+      document.getElementById('activeFilterBadgeWrap').innerHTML = '';
+      renderTable();
+    }
+
+    function updateActiveFilterBadge(label, count) {
+      document.getElementById('activeFilterBadgeWrap').innerHTML =
+        '<span class="filter-badge">' +
+          'Filtered: ' + label + ' (' + count + ' record' + (count!==1?'s':'') + ')' +
+          '<button class="filter-badge-close" onclick="clearHistoryFilter();setHistoryFilter(\'all\',document.querySelector(\'[data-type=all]\'))">&#x2715;</button>' +
+        '</span>';
+    }
+
+    function sortTable(field) {
+      if (sortField === field) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else { sortField = field; sortDir = 'asc'; }
+      filteredData.sort((a,b) => {
+        let av = a[field] || '', bv = b[field] || '';
+        if (!isNaN(parseFloat(av)) && !isNaN(parseFloat(bv))) { av = parseFloat(av); bv = parseFloat(bv); }
+        if (av < bv) return sortDir === 'asc' ? -1 : 1;
+        if (av > bv) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+      });
+      renderTable();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('historyTableBody');
+      const total = filteredData.length;
+      const start = (currentPage-1)*PAGE_SIZE;
+      const end = Math.min(start+PAGE_SIZE, total);
+      const rows = filteredData.slice(start, end);
+
+      if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state" style="padding:40px;">' +
+          '<i class="fas fa-filter" style="font-size:28px;"></i>' +
+          '<p>No data found for the selected period</p>' +
+          '<small>Try a different filter or clear it</small>' +
+          '</div></td></tr>';
+        document.getElementById('paginationInfo').textContent = 'No records';
+        document.getElementById('pageNumbers').innerHTML = '';
+        return;
+      }
+
+      const fmt = (v) => '\u20B9' + parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+      const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '\u2014';
+
+      tbody.innerHTML = rows.map(r => {
+        const profit = parseFloat(r.profit||0);
+        const statusPill = profit >= 0
+          ? '<span class="status-pill status-profit">Profit</span>'
+          : '<span class="status-pill status-loss">Loss</span>';
+        const rJson = JSON.stringify(r).replace(/"/g,'&quot;');
+        return '<tr>' +
+          '<td>' + fmtDate(r.date) + '</td>' +
+          '<td style="color:var(--text-primary);font-family:inherit;">' + (r.category||'\u2014') + '</td>' +
+          '<td>' + fmt(r.sales) + '</td>' +
+          '<td>' + fmt(r.expenses) + '</td>' +
+          '<td style="color:' + (profit>=0?'var(--accent-green)':'var(--accent-red)') + '">' + fmt(r.profit) + '</td>' +
+          '<td>' + statusPill + '</td>' +
+          '<td><div style="display:flex;gap:6px;">' +
+            '<button class="btn-action" style="height:28px;padding:0 10px;font-size:12px;" onclick="editRecord(' + rJson + ')">Edit</button>' +
+            '<button class="btn-action danger" style="height:28px;padding:0 10px;font-size:12px;" onclick="deleteRecord(\'' + r.id + '\')">Delete</button>' +
+          '</div></td>' +
+        '</tr>';
+      }).join('');
+
+      // Pagination info
+      document.getElementById('paginationInfo').textContent = (start+1) + '\u2013' + end + ' of ' + total + ' records';
+      document.getElementById('tableTitle').textContent = (currentFilterType === 'all' ? 'All' : 'Filtered') + ' Records';
+      document.getElementById('recordCountBadge').textContent = total + ' total';
+
+      // Page buttons
+      const totalPages = Math.ceil(total/PAGE_SIZE);
+      let pageHTML = '';
+      for (let p = Math.max(1,currentPage-2); p <= Math.min(totalPages,currentPage+2); p++) {
+        pageHTML += '<button class="page-btn' + (p===currentPage?' active':'') + '" onclick="goPage(' + p + ')">' + p + '</button>';
+      }
+      document.getElementById('pageNumbers').innerHTML = pageHTML;
+      document.getElementById('prevPageBtn').disabled = currentPage <= 1;
+      document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
+    }
+
+    function changePage(dir) { goPage(currentPage + dir); }
+    function goPage(p) {
+      const total = filteredData.length;
+      const totalPages = Math.ceil(total/PAGE_SIZE);
+      if (p < 1 || p > totalPages) return;
+      currentPage = p;
+      renderTable();
+    }
+
+    function editRecord(record) {
+      document.getElementById('editRecordId').value = record.id || '';
+      document.getElementById('editDate').value = record.date || '';
+      document.getElementById('editCategory').value = record.category || '';
+      document.getElementById('editSales').value = record.sales || '';
+      document.getElementById('editExpenses').value = record.expenses || '';
+      document.getElementById('editProfit').value = record.profit || '';
+      openModalById('editDataModal');
+    }
+
+    async function deleteRecord(id) {
+      if (!confirm('Delete this record?')) return;
+      try {
+        const res = await fetch(API_ENDPOINTS.BUSINESS_DATA + '/' + id, {
+          method: 'DELETE', headers: getAuthHeaders()
         });
-    </script>
+        const data = await res.json();
+        if (data.success) {
+          if (typeof DataCache !== 'undefined') DataCache.invalidate();
+          showToast('Record deleted', 'success');
+          loadHistoryData();
+        } else { showToast(data.message || 'Delete failed', 'error'); }
+      } catch(e) { showToast('Error deleting record', 'error'); }
+    }
+
+    document.getElementById('editDataForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('editRecordId').value;
+      const sales = parseFloat(document.getElementById('editSales').value);
+      const expenses = parseFloat(document.getElementById('editExpenses').value);
+      const payload = {
+        date: document.getElementById('editDate').value,
+        category: document.getElementById('editCategory').value,
+        sales: sales,
+        expenses: expenses,
+        profit: sales - expenses
+      };
+      document.getElementById('editProfit').value = payload.profit;
+      try {
+        const res = await fetch(API_ENDPOINTS.BUSINESS_DATA + '/' + id, {
+          method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (typeof DataCache !== 'undefined') DataCache.invalidate();
+          closeModalById('editDataModal');
+          showToast('Record updated', 'success');
+          loadHistoryData();
+        } else { showToast(data.message || 'Update failed', 'error'); }
+      } catch(e) { showToast('Error updating record', 'error'); }
+    });
+
+    async function loadHistoryData() {
+      // Try cache first
+      if (typeof DataCache !== 'undefined') {
+        const cached = DataCache.get();
+        if (cached && cached.records) {
+          allHistoryData = cached.records;
+          filteredData = [...allHistoryData];
+          renderTable();
+          return;
+        }
+      }
+      // Fetch from API
+      try {
+        const res = await fetch(API_ENDPOINTS.BUSINESS_DATA, { headers: getAuthHeaders() });
+        const data = await res.json();
+        if (data.success && data.data) {
+          allHistoryData = data.data;
+          filteredData = [...allHistoryData];
+          if (typeof DataCache !== 'undefined') {
+            DataCache.set({ records: allHistoryData });
+          }
+          renderTable();
+        } else {
+          document.getElementById('historyTableBody').innerHTML =
+            '<tr><td colspan="7"><div class="empty-state" style="padding:40px;">' +
+            '<i class="fas fa-database" style="font-size:28px;"></i>' +
+            '<p>No data yet. Add data from the Dashboard.</p>' +
+            '</div></td></tr>';
+        }
+      } catch(e) {
+        document.getElementById('historyTableBody').innerHTML =
+          '<tr><td colspan="7"><div class="empty-state" style="padding:40px;">' +
+          '<i class="fas fa-exclamation-triangle" style="font-size:28px;"></i>' +
+          '<p>Failed to load data</p>' +
+          '</div></td></tr>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!isAuthenticated()) { window.location.href = 'index.html'; return; }
+      const verified = await verifyAuth();
+      if (!verified) return;
+      populateYearDropdowns();
+      loadHistoryData();
+    });
+  </script>
 </body>
 </html>

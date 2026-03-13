@@ -1,47 +1,63 @@
-// Instant Header Profile Loading
-// Loads user profile in header across all pages instantly
+// Header Profile Module
+// Loads user profile into navbar dropdown and avatar
 
 (function() {
-    // Load profile from localStorage immediately (no network call)
     function loadHeaderProfile() {
         const userStr = localStorage.getItem('dataxpert_user');
         if (!userStr) return;
-        
-        try {
-            const user = JSON.parse(userStr);
-            
-            // Update name
-            const nameEl = document.getElementById('userName');
-            if (nameEl) nameEl.textContent = user.name || 'User';
-            
-            // Update email (small text under name)
-            const emailEl = document.getElementById('userEmail');
-            if (emailEl) emailEl.textContent = user.email || '';
-            
-            // Update avatar
-            const avatarImg = document.getElementById('userAvatar');
-            const avatarFallback = document.getElementById('avatarFallback');
-            
-            if (user.profile_image && avatarImg) {
-                avatarImg.src = user.profile_image;
-                avatarImg.style.display = 'block';
-                if (avatarFallback) avatarFallback.style.display = 'none';
-            } else if (avatarFallback) {
-                if (avatarImg) avatarImg.style.display = 'none';
-                avatarFallback.style.display = 'flex';
-            }
-        } catch (e) {
-            console.error('Error loading header profile:', e);
+
+        let user;
+        try { user = JSON.parse(userStr); } catch(e) { return; }
+
+        // Name
+        const nameEl = document.getElementById('dropdownName');
+        if (nameEl) nameEl.textContent = user.name || 'User';
+
+        // Email
+        const emailEl = document.getElementById('dropdownEmail');
+        if (emailEl) emailEl.textContent = user.email || '';
+
+        // Avatar initials
+        const name = user.name || 'U';
+        const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'U';
+
+        const initialsEl = document.getElementById('navAvatarInitials');
+        if (initialsEl) initialsEl.textContent = initials;
+
+        // Avatar image
+        const avatarImg = document.getElementById('navAvatarImg');
+        if (avatarImg && user.profile_image) {
+            avatarImg.src = user.profile_image;
+            avatarImg.style.display = 'block';
+            if (initialsEl) initialsEl.style.display = 'none';
+        } else if (avatarImg) {
+            avatarImg.style.display = 'none';
+            if (initialsEl) initialsEl.style.display = 'flex';
+        }
+
+        // Legacy: also update old header elements if present
+        const userNameEl = document.getElementById('userName');
+        if (userNameEl) userNameEl.textContent = user.name || 'User';
+
+        const userEmailEl = document.getElementById('userEmail');
+        if (userEmailEl) userEmailEl.textContent = user.email || '';
+
+        const oldAvatarImg = document.getElementById('userAvatar');
+        if (oldAvatarImg && user.profile_image) {
+            oldAvatarImg.src = user.profile_image;
+            oldAvatarImg.style.display = 'block';
+            const fallback = document.getElementById('avatarFallback');
+            if (fallback) fallback.style.display = 'none';
         }
     }
-    
-    // Run immediately when script loads (before DOMContentLoaded)
+
+    // Run immediately
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', loadHeaderProfile);
     } else {
         loadHeaderProfile();
     }
-    
-    // Export for use in other scripts
+
+    // Export
     window.loadHeaderProfile = loadHeaderProfile;
 })();

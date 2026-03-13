@@ -1,347 +1,408 @@
-// AI Analysis JavaScript
+// analysis.js — AI Chat & Analysis Page Logic
+// DataXpert Frontend — Analysis Module
 
-let currentChart = null;
+'use strict';
 
-// Check authentication on page load
-document.addEventListener('DOMContentLoaded', async () => {
-    if (!isAuthenticated()) {
-        window.location.href = 'index.html';
-        return;
-    }
+// ─────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────
+let currentChatId = null;
 
-    const verified = await verifyAuth();
-    if (!verified) {
-        return;
-    }
-
-    loadUserInfo();
-    setupEventListeners();
-    loadChatHistory();
-});
-
-// Load user information
-function loadUserInfo() {
-    const userStr = localStorage.getItem(STORAGE_KEYS.USER);
-    if (userStr) {
-        const user = JSON.parse(userStr);
-        document.getElementById('userName').textContent = user.name || 'User';
-    }
+// ─────────────────────────────────────────────
+// 1. escapeHtml — basic XSS prevention
+// ─────────────────────────────────────────────
+function escapeHtml(text) {
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return String(text).replace(/[&<>"']/g, ch => map[ch]);
 }
 
-// Setup event listeners
-function setupEventListeners() {
-    // Chat form
-    const chatForm = document.getElementById('chatForm');
-    if (chatForm) {
-        chatForm.addEventListener('submit', handleSendMessage);
+// ─────────────────────────────────────────────
+// 2. formatMessage — convert AI markdown to HTML
+// ─────────────────────────────────────────────
+function formatMessage(text) {
+    if (!text) return '';
+
+    const lines = text.split('\n');
+    let html = '';
+    let inOl = false;
+    let inUl = false;
+
+    const closeOpenLists = () => {
+        if (inOl) { html += '</ol>'; inOl = false; }
+        if (inUl) { html += '</ul>'; inUl = false; }
+    };
+
+    const applyInline = (line) => {
+        // Bold: **text**
+        line = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        // Inline code: `code`
+        line = line.replace(/`([^`]+)`/g, '<code class="mono">$1</code>');
+        // ₹ numbers get mono class
+        line = line.replace(/(₹\s*[\d,]+(?:\.\d{1,2})?)/g, '<span class="mono">$1</span>');
+        return line;
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+        const trimmed = lines[i].trim();
+
+        if (/^##\s+/.test(trimmed)) {
+            closeOpenLists();
+            html += `<h4 class="ai-header">${applyInline(trimmed.replace(/^##\s+/, ''))}</h4>`;
+            continue;
+        }
+        if (/^\d+\.\s+/.test(trimmed)) {
+            if (inUl) { html += '</ul>'; inUl = false; }
+            if (!inOl) { html += '<ol>'; inOl = true; }
+            html += `<li>${applyInline(trimmed.replace(/^\d+\.\s+/, ''))}</li>`;
+            continue;
+        }
+        if (/^-\s+/.test(trimmed)) {
+            if (inOl) { html += '</ol>'; inOl = false; }
+            if (!inUl) { html += '<ul>'; inUl = true; }
+            html += `<li>${applyInline(trimmed.replace(/^-\s+/, ''))}</li>`;
+            continue;
+        }
+        if (trimmed === '') {
+            closeOpenLists();
+            html += '<br>';
+            continue;
+        }
+        closeOpenLists();
+        html += `<p>${applyInline(trimmed)}</p>`;
     }
 
-    // Auto-resize textarea
-    const messageInput = document.getElementById('messageInput');
-    if (messageInput) {
-        messageInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
-        });
-
-        // Enter to send, Shift+Enter for new line
-        messageInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                chatForm.dispatchEvent(new Event('submit'));
-            }
-        });
-    }
-
-    // Suggestion chips
-    document.querySelectorAll('.chip').forEach(chip => {
-        chip.addEventListener('click', function() {
-            const question = this.getAttribute('data-question');
-            messageInput.value = question;
-            chatForm.dispatchEvent(new Event('submit'));
-        });
-    });
-
-    // Close results
-    const closeResults = document.getElementById('closeResults');
-    if (closeResults) {
-        closeResults.addEventListener('click', () => {
-            document.getElementById('analysisResults').style.display = 'none';
-        });
-    }
-
-    // Menu toggle
-    const menuToggle = document.getElementById('menuToggle');
-    const sidebar = document.querySelector('.sidebar');
-    if (menuToggle && sidebar) {
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-        });
-    }
+    closeOpenLists();
+    html = html.replace(/^(<br>)+/, '').replace(/(<br>)+$/, '');
+    return html;
 }
 
-// Handle send message
-async function handleSendMessage(event) {
-    event.preventDefault();
-    
-    const messageInput = document.getElementById('messageInput');
-    const message = messageInput.value.trim();
-    
+// ─────────────────────────────────────────────
+// 3. addMessageToChat
+// ─────────────────────────────────────────────
+function addMessageToChat(content, role) {
+    const container = document.getElementById('chatContainer');
+    if (!container) return;
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('chat-message-wrapper', role === 'user' ? 'user-wrapper' : 'ai-wrapper');
+
+    const bubble = document.createElement('div');
+    bubble.classList.add('chat-bubble', role === 'user' ? 'user-bubble' : 'ai-bubble');
+
+    if (role === 'user') {
+        bubble.textContent = content;
+    } else {
+        bubble.innerHTML = formatMessage(content);
+    }
+
+    const timestamp = document.createElement('span');
+    timestamp.classList.add('chat-timestamp');
+    timestamp.textContent = timeStr;
+
+    wrapper.appendChild(bubble);
+    wrapper.appendChild(timestamp);
+    container.appendChild(wrapper);
+    container.scrollTop = container.scrollHeight;
+}
+
+// ─────────────────────────────────────────────
+// 4. showTypingIndicator / hideTypingIndicator
+// ─────────────────────────────────────────────
+function showTypingIndicator() {
+    const container = document.getElementById('chatContainer');
+    if (!container) return;
+    hideTypingIndicator();
+
+    const wrapper = document.createElement('div');
+    wrapper.id = 'typingIndicator';
+    wrapper.classList.add('chat-message-wrapper', 'ai-wrapper');
+
+    const bubble = document.createElement('div');
+    bubble.classList.add('chat-bubble', 'ai-bubble', 'typing-bubble');
+    bubble.innerHTML = `
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+    `;
+
+    wrapper.appendChild(bubble);
+    container.appendChild(wrapper);
+    container.scrollTop = container.scrollHeight;
+}
+
+function hideTypingIndicator() {
+    const indicator = document.getElementById('typingIndicator');
+    if (indicator) indicator.remove();
+}
+
+// ─────────────────────────────────────────────
+// 5. handleSendMessage
+// ─────────────────────────────────────────────
+async function handleSendMessage(e) {
+    e.preventDefault();
+    const input = document.getElementById('messageInput');
+    const message = input.value.trim();
     if (!message) return;
 
-    // Clear input
-    messageInput.value = '';
-    messageInput.style.height = 'auto';
+    input.value = '';
+    autoResizeTextarea(input);
 
-    // Hide welcome message
-    const welcomeMsg = document.querySelector('.welcome-message');
-    if (welcomeMsg) {
-        welcomeMsg.style.display = 'none';
-    }
+    const welcome = document.querySelector('.analysis-welcome');
+    if (welcome) welcome.style.display = 'none';
 
-    // Add user message to chat
     addMessageToChat(message, 'user');
 
-    // Show typing indicator
-    const typingId = addTypingIndicator();
+    const sendBtn = document.getElementById('sendBtn');
+    if (sendBtn) sendBtn.disabled = true;
+    showTypingIndicator();
 
     try {
         const response = await fetch(API_ENDPOINTS.AI_CHAT, {
             method: 'POST',
             headers: getAuthHeaders(),
-            body: JSON.stringify({ message })
+            body: JSON.stringify({ message: message, chat_id: currentChatId })
         });
 
         const data = await response.json();
-
-        // Remove typing indicator
-        removeTypingIndicator(typingId);
+        hideTypingIndicator();
 
         if (data.success) {
-            // Add AI response to chat
-            addMessageToChat(data.response.text, 'assistant');
-
-            // Show analysis results if available
-            if (data.analysis) {
-                displayAnalysisResults(data.analysis);
-            }
+            if (data.chat_id) currentChatId = data.chat_id;
+            addMessageToChat(data.response || data.message, 'assistant');
+            if (data.chart_data) renderAnalysisChart(data.chart_data);
         } else {
-            addMessageToChat(data.message || 'Sorry, I encountered an error.', 'error');
+            addMessageToChat('Sorry, I encountered an error. Please try again.', 'assistant');
+            if (typeof showToast === 'function') showToast(data.message || 'Analysis failed', 'error');
         }
-    } catch (error) {
-        removeTypingIndicator(typingId);
-        console.error('Chat error:', error);
-        addMessageToChat('Sorry, I encountered an error. Please try again.', 'error');
+    } catch (err) {
+        hideTypingIndicator();
+        addMessageToChat('Network error. Please check your connection.', 'assistant');
+        if (typeof showToast === 'function') showToast('Network error', 'error');
+    } finally {
+        if (sendBtn) sendBtn.disabled = false;
+        const msgInput = document.getElementById('messageInput');
+        if (msgInput) msgInput.focus();
     }
 }
 
-// Add message to chat
-function addMessageToChat(message, role) {
-    const chatContainer = document.getElementById('chatContainer');
-    
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${role}-message`;
-    
-    if (role === 'user') {
-        messageDiv.innerHTML = `
-            <div class="message-content">
-                <p>${escapeHtml(message)}</p>
-            </div>
-            <div class="message-avatar">
-                <i class="fas fa-user"></i>
-            </div>
-        `;
-    } else if (role === 'assistant') {
-        messageDiv.innerHTML = `
-            <div class="message-avatar">
-                <i class="fas fa-robot"></i>
-            </div>
-            <div class="message-content">
-                <div class="message-text">${formatMessage(message)}</div>
-            </div>
-        `;
-    } else if (role === 'error') {
-        messageDiv.innerHTML = `
-            <div class="message-avatar">
-                <i class="fas fa-exclamation-circle"></i>
-            </div>
-            <div class="message-content">
-                <p style="color: #ef4444;">${escapeHtml(message)}</p>
-            </div>
-        `;
-    }
-    
-    chatContainer.appendChild(messageDiv);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-}
+// ─────────────────────────────────────────────
+// 6. loadChatHistory
+// ─────────────────────────────────────────────
+async function loadChatHistory() {
+    try {
+        if (!API_ENDPOINTS.AI_CHATS) return;
 
-// Add typing indicator
-function addTypingIndicator() {
-    const chatContainer = document.getElementById('chatContainer');
-    
-    const typingDiv = document.createElement('div');
-    typingDiv.className = 'message assistant-message typing-indicator';
-    typingDiv.id = `typing-${Date.now()}`;
-    typingDiv.innerHTML = `
-        <div class="message-avatar">
-            <i class="fas fa-robot"></i>
-        </div>
-        <div class="message-content">
-            <div class="typing-dots">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        </div>
-    `;
-    
-    chatContainer.appendChild(typingDiv);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-    
-    return typingDiv.id;
-}
-
-// Remove typing indicator
-function removeTypingIndicator(id) {
-    const typingDiv = document.getElementById(id);
-    if (typingDiv) {
-        typingDiv.remove();
-    }
-}
-
-// Display analysis results
-function displayAnalysisResults(analysis) {
-    const resultsContainer = document.getElementById('analysisResults');
-    const resultsContent = document.getElementById('resultsContent');
-    
-    let html = '';
-    
-    // Insights
-    if (analysis.insights && analysis.insights.length > 0) {
-        html += '<div class="result-section"><h4>📊 Key Insights</h4><ul>';
-        analysis.insights.forEach(insight => {
-            html += `<li>${escapeHtml(insight)}</li>`;
+        const response = await fetch(API_ENDPOINTS.AI_CHATS, {
+            method: 'GET',
+            headers: getAuthHeaders()
         });
-        html += '</ul></div>';
-    }
-    
-    // Recommendations
-    if (analysis.recommendations && analysis.recommendations.length > 0) {
-        html += '<div class="result-section"><h4>💡 Recommendations</h4><ul>';
-        analysis.recommendations.forEach(rec => {
-            html += `<li>${escapeHtml(rec)}</li>`;
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (!data.success || !data.chats || data.chats.length === 0) return;
+
+        const sorted = data.chats.sort((a, b) => {
+            return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0);
         });
-        html += '</ul></div>';
-    }
-    
-    // Chart data
-    if (analysis.data) {
-        html += '<div class="result-section"><h4>📈 Visualization</h4>';
-        html += '<canvas id="analysisChart" style="max-height: 300px;"></canvas>';
-        html += '</div>';
-    }
-    
-    resultsContent.innerHTML = html;
-    resultsContainer.style.display = 'block';
-    
-    // Render chart if data available
-    if (analysis.data) {
-        setTimeout(() => renderAnalysisChart(analysis.data), 100);
+
+        const mostRecent = sorted[0];
+        currentChatId = mostRecent.id || mostRecent.chat_id || null;
+
+        const messages = mostRecent.messages || [];
+        if (messages.length === 0) return;
+
+        const welcome = document.querySelector('.analysis-welcome');
+        if (welcome) welcome.style.display = 'none';
+
+        messages.slice(-10).forEach(msg => {
+            addMessageToChat(msg.content || msg.message || '', msg.role === 'user' ? 'user' : 'assistant');
+        });
+    } catch (err) {
+        console.warn('Could not load chat history:', err);
     }
 }
 
-// Render analysis chart
-function renderAnalysisChart(data) {
-    const ctx = document.getElementById('analysisChart');
-    if (!ctx) return;
-    
-    if (currentChart) {
-        currentChart.destroy();
+// ─────────────────────────────────────────────
+// 7. loadMiniMetrics
+// ─────────────────────────────────────────────
+function loadMiniMetrics() {
+    let stats = null;
+
+    if (typeof DataCache !== 'undefined' && DataCache.get) {
+        const cached = DataCache.get();
+        if (cached && cached.stats) stats = cached.stats;
+        else if (cached) stats = cached;
     }
-    
-    const chartData = {
-        labels: Object.keys(data),
-        datasets: [{
-            label: 'Value',
-            data: Object.values(data),
-            backgroundColor: [
-                'rgba(99, 102, 241, 0.8)',
-                'rgba(16, 185, 129, 0.8)',
-                'rgba(245, 158, 11, 0.8)'
-            ],
-            borderColor: [
-                'rgba(99, 102, 241, 1)',
-                'rgba(16, 185, 129, 1)',
-                'rgba(245, 158, 11, 1)'
-            ],
-            borderWidth: 2
-        }]
+
+    if (!stats) {
+        try {
+            const raw = sessionStorage.getItem('dataxpert_stats_cache');
+            if (raw) stats = JSON.parse(raw);
+        } catch (_) {}
+    }
+
+    if (!stats) return;
+
+    const formatINR = (value) => {
+        if (value === undefined || value === null) return '—';
+        const num = parseFloat(value);
+        if (isNaN(num)) return '—';
+        return '₹' + num.toLocaleString('en-IN', { maximumFractionDigits: 0 });
     };
-    
-    currentChart = new Chart(ctx, {
-        type: 'bar',
-        data: chartData,
+
+    const formatCount = (value) => {
+        if (value === undefined || value === null) return '—';
+        const num = parseInt(value, 10);
+        if (isNaN(num)) return '—';
+        return num.toLocaleString('en-IN');
+    };
+
+    const setMini = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = `<span class="mono">${value}</span>`;
+    };
+
+    setMini('miniSales',    formatINR(stats.total_revenue  || stats.total_sales   || stats.revenue));
+    setMini('miniProfit',   formatINR(stats.total_profit   || stats.profit));
+    setMini('miniExpenses', formatINR(stats.total_expenses || stats.expenses));
+    setMini('miniEntries',  formatCount(stats.total_entries || stats.entries      || stats.count || stats.data_count));
+}
+
+// ─────────────────────────────────────────────
+// 8. autoResizeTextarea
+// ─────────────────────────────────────────────
+function autoResizeTextarea(textarea) {
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight, 10) || 20;
+    const maxHeight = lineHeight * 5 + 16;
+    const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = newHeight + 'px';
+    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
+}
+
+// ─────────────────────────────────────────────
+// 9. setupSuggestionChips
+// ─────────────────────────────────────────────
+function setupSuggestionChips() {
+    document.querySelectorAll('.suggestion-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const question = chip.dataset.question;
+            if (!question) return;
+            const input = document.getElementById('messageInput');
+            const form  = document.getElementById('chatForm');
+            if (input) input.value = question;
+            if (form)  form.dispatchEvent(new Event('submit'));
+        });
+    });
+}
+
+// ─────────────────────────────────────────────
+// 10. renderAnalysisChart
+// ─────────────────────────────────────────────
+function renderAnalysisChart(chartData) {
+    const resultsContent  = document.getElementById('resultsContent');
+    const analysisResults = document.getElementById('analysisResults');
+    if (!resultsContent || !analysisResults) return;
+
+    resultsContent.innerHTML = '';
+    analysisResults.style.display = 'block';
+
+    const canvas = document.createElement('canvas');
+    canvas.id = 'analysisChart';
+    canvas.style.maxHeight = '260px';
+    resultsContent.appendChild(canvas);
+
+    if (typeof Chart === 'undefined') {
+        resultsContent.innerHTML = '<p class="mono" style="font-size:0.8rem;opacity:0.6">Chart.js not loaded.</p>';
+        return;
+    }
+
+    if (window._analysisChartInstance) {
+        window._analysisChartInstance.destroy();
+        window._analysisChartInstance = null;
+    }
+
+    const ctx      = canvas.getContext('2d');
+    const type     = chartData.type     || 'bar';
+    const labels   = chartData.labels   || [];
+    const datasets = chartData.datasets || [];
+
+    const palette = [
+        'rgba(99,102,241,0.8)', 'rgba(34,211,238,0.8)',
+        'rgba(16,185,129,0.8)', 'rgba(245,158,11,0.8)', 'rgba(239,68,68,0.8)'
+    ];
+
+    const styledDatasets = datasets.map((ds, idx) => ({
+        borderWidth: 2,
+        borderRadius: type === 'bar' ? 6 : 0,
+        backgroundColor: ds.backgroundColor || palette[idx % palette.length],
+        borderColor: ds.borderColor || (ds.backgroundColor || palette[idx % palette.length]).replace('0.8', '1'),
+        ...ds
+    }));
+
+    window._analysisChartInstance = new Chart(ctx, {
+        type: type,
+        data: { labels, datasets: styledDatasets },
         options: {
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
-                legend: { display: false }
+                legend: { labels: { color: '#e2e8f0', font: { family: 'DM Mono, monospace' } } },
+                title: chartData.title
+                    ? { display: true, text: chartData.title, color: '#e2e8f0', font: { size: 14 } }
+                    : { display: false }
             },
-            scales: {
-                y: { beginAtZero: true }
-            }
+            scales: (type !== 'pie' && type !== 'doughnut') ? {
+                x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                y: {
+                    ticks: {
+                        color: '#94a3b8',
+                        callback: (val) => '₹' + Number(val).toLocaleString('en-IN')
+                    },
+                    grid: { color: 'rgba(148,163,184,0.1)' }
+                }
+            } : {}
         }
     });
 }
 
-// Load chat history
-async function loadChatHistory() {
-    try {
-        const response = await fetch(API_ENDPOINTS.AI_CHATS, {
-            headers: getAuthHeaders()
-        });
-
-        const data = await response.json();
-
-        if (data.success && data.chats && data.chats.length > 0) {
-            // Hide welcome message
-            const welcomeMsg = document.querySelector('.welcome-message');
-            if (welcomeMsg) {
-                welcomeMsg.style.display = 'none';
-            }
-
-            // Display last few chats
-            data.chats.slice(0, 10).reverse().forEach(chat => {
-                if (chat.message) {
-                    addMessageToChat(chat.message, 'user');
-                }
-                if (chat.response) {
-                    addMessageToChat(chat.response, 'assistant');
-                }
-            });
-        }
-    } catch (error) {
-        console.error('Error loading chat history:', error);
+// ─────────────────────────────────────────────
+// Initialization
+// ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof isAuthenticated === 'function' && !isAuthenticated()) {
+        window.location.href = 'index.html';
+        return;
     }
-}
 
-// Utility functions
-function formatMessage(message) {
-    // Convert newlines to <br>
-    message = escapeHtml(message);
-    message = message.replace(/\n/g, '<br>');
-    
-    // Convert markdown-style bold
-    message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // Convert markdown-style lists
-    message = message.replace(/^• /gm, '<li>');
-    
-    return message;
-}
+    loadMiniMetrics();
+    setupSuggestionChips();
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+    const chatForm = document.getElementById('chatForm');
+    if (chatForm) chatForm.addEventListener('submit', handleSendMessage);
+
+    const msgInput = document.getElementById('messageInput');
+    if (msgInput) {
+        msgInput.addEventListener('input', () => autoResizeTextarea(msgInput));
+        msgInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (chatForm) chatForm.dispatchEvent(new Event('submit'));
+            }
+        });
+    }
+
+    const closeResults = document.getElementById('closeResults');
+    if (closeResults) {
+        closeResults.addEventListener('click', () => {
+            const ar = document.getElementById('analysisResults');
+            if (ar) ar.style.display = 'none';
+        });
+    }
+
+    loadChatHistory();
+});

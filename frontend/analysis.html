@@ -1,186 +1,227 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Analysis - DataXpert</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/analysis.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Analysis — DataXpert</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/analysis.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="dashboard-page">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <span>DataXpert</span>
-            </div>
-        </div>
+<body class="app-page">
 
-        <nav class="sidebar-nav">
-            <a href="dashboard.html" class="nav-item">
-                <i class="fas fa-th-large"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="analysis.html" class="nav-item active">
-                <i class="fas fa-robot"></i>
-                <span>AI Analysis</span>
-            </a>
-            <a href="history.html" class="nav-item">
-                <i class="fas fa-history"></i>
-                <span>History</span>
-            </a>
-            <a href="profile.html" class="nav-item">
-                <i class="fas fa-user"></i>
-                <span>Profile</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <button class="btn btn-logout btn-full" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i>
-                Logout
-            </button>
-        </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Top Bar -->
-        <header class="topbar">
-            <div class="topbar-left">
-                <button class="menu-toggle" id="menuToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1>AI Analysis</h1>
-            </div>
-            <div class="topbar-right">
-                <button class="theme-toggle" onclick="openSearchModal()" title="Search (Ctrl+K)">
-                    <i class="fas fa-search"></i>
-                </button>
-                <div class="theme-toggle-wrapper" style="margin-left: 12px;">
-                    <button class="theme-toggle-switch" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark mode">
-                        <span class="theme-toggle-slider">
-                            <i class="theme-toggle-icon fas fa-sun"></i>
-                        </span>
-                    </button>
-                </div>
-                <a href="profile.html" class="header-profile" style="text-decoration: none; color: inherit; margin-left: 15px;">
-                    <div class="user-avatar">
-                        <img id="userAvatar" src="" alt="Profile" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                        <i class="fas fa-user" id="avatarFallback"></i>
-                    </div>
-                    <div class="user-details">
-                        <span id="userName" class="user-name">Loading...</span>
-                        <span id="userEmail" class="user-email"></span>
-                    </div>
-                </a>
-            </div>
-        </header>
-
-        <!-- Analysis Container -->
-        <div class="analysis-container">
-            <!-- Suggestions -->
-            <div class="suggestions">
-                <h3>💡 Try asking:</h3>
-                <div class="suggestion-chips">
-                    <button class="chip" data-question="What are my total sales?">What are my total sales?</button>
-                    <button class="chip" data-question="Show me profit analysis">Show me profit analysis</button>
-                    <button class="chip" data-question="Analyze my expenses">Analyze my expenses</button>
-                    <button class="chip" data-question="What are the trends?">What are the trends?</button>
-                    <button class="chip" data-question="Detect any anomalies">Detect any anomalies</button>
-                    <button class="chip" data-question="Give me business overview">Give me business overview</button>
-                </div>
-            </div>
-
-            <!-- Chat Container -->
-            <div class="chat-container" id="chatContainer">
-                <div class="welcome-message">
-                    <i class="fas fa-robot"></i>
-                    <h2>Hello! I'm your AI Business Analyst</h2>
-                    <p>I can help you analyze your business data, identify trends, and provide actionable insights.</p>
-                    <p>Ask me anything about your sales, profits, expenses, or business performance!</p>
-                </div>
-            </div>
-
-            <!-- Analysis Results -->
-            <div class="analysis-results" id="analysisResults" style="display: none;">
-                <div class="results-header">
-                    <h3><i class="fas fa-chart-bar"></i> Analysis Results</h3>
-                    <button class="btn btn-secondary btn-small" id="closeResults">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="results-content" id="resultsContent"></div>
-            </div>
-
-            <!-- Input Area -->
-            <div class="input-area">
-                <form id="chatForm">
-                    <div class="input-wrapper">
-                        <textarea id="messageInput" 
-                                  placeholder="Ask me anything about your business data..." 
-                                  rows="1"></textarea>
-                        <button type="submit" class="send-btn" id="sendBtn">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </main>
-
-    <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/theme.js"></script>
-    <script src="js/header-profile.js"></script>
-    <script src="js/analysis.js"></script>
-    <script>
-        // Search Modal
-        function openSearchModal() {
-            document.getElementById('searchModal').classList.add('active');
-            document.getElementById('searchInput').focus();
-        }
-        function closeSearchModal() {
-            document.getElementById('searchModal').classList.remove('active');
-        }
-        document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                openSearchModal();
-            }
-            if (e.key === 'Escape') closeSearchModal();
-        });
-    </script>
-    <style>
-        .header-profile { display: flex; align-items: center; gap: 10px; }
-        .user-details { display: flex; flex-direction: column; line-height: 1.2; }
-        .user-name { font-weight: 600; font-size: 14px; }
-        .user-email { font-size: 11px; color: var(--text-secondary); opacity: 0.8; }
-        .topbar-right { display: flex; align-items: center; gap: 8px; }
-        @media (max-width: 768px) { .user-details { display: none; } }
-    </style>
-
-    <!-- Search Modal -->
-    <div id="searchModal" class="search-modal">
-        <div class="search-modal-content">
-            <div class="search-header">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Search pages..." autofocus>
-                <kbd>ESC</kbd>
-            </div>
-            <div class="search-results">
-                <a href="dashboard.html" class="search-item"><i class="fas fa-th-large"></i> Dashboard</a>
-                <a href="analysis.html" class="search-item"><i class="fas fa-robot"></i> AI Analysis</a>
-                <a href="history.html" class="search-item"><i class="fas fa-history"></i> History</a>
-                <a href="profile.html" class="search-item"><i class="fas fa-user"></i> Profile</a>
-            </div>
-        </div>
+  <!-- Top Navbar (active: AI Analysis) -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <a href="dashboard.html" class="nav-logo">Data<span class="accent">Xpert</span></a>
     </div>
+    <div class="nav-center">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="analysis.html" class="nav-link active">AI Analysis</a>
+      <a href="history.html" class="nav-link">History</a>
+    </div>
+    <div class="nav-right">
+      <button class="nav-icon-btn" id="notificationBtn" title="Notifications">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span class="notif-dot"></span>
+      </button>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" id="themeIcon"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+      <div class="nav-avatar-wrap" id="avatarWrap">
+        <div class="nav-avatar" id="navAvatar">
+          <img id="navAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
+          <span id="navAvatarInitials">U</span>
+        </div>
+        <div class="nav-dropdown" id="navDropdown">
+          <div class="dropdown-user">
+            <strong id="dropdownName">Loading...</strong>
+            <span id="dropdownEmail"></span>
+          </div>
+          <hr class="dropdown-divider">
+          <a href="profile.html" class="dropdown-item">
+            <i class="fas fa-user" style="width:14px;margin-right:8px;"></i>Profile
+          </a>
+          <button class="dropdown-item danger" id="logoutBtn">
+            <i class="fas fa-sign-out-alt" style="width:14px;margin-right:8px;"></i>Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main-content" style="padding-bottom:0;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom:16px;">
+      <div>
+        <h1 class="page-title">AI Analysis</h1>
+        <div class="page-subtitle">Ask questions about your business data</div>
+      </div>
+    </div>
+
+    <!-- Analysis Layout: left + right -->
+    <div class="analysis-layout">
+      <!-- Left Panel -->
+      <div class="analysis-left">
+        <!-- Mini metrics -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">Overview</span></div>
+          <div class="card-body" style="padding:14px;">
+            <div class="mini-metrics">
+              <div class="mini-metric">
+                <div class="mini-metric-label">Sales</div>
+                <div class="mini-metric-value" id="miniSales">&#8212;</div>
+              </div>
+              <div class="mini-metric">
+                <div class="mini-metric-label">Profit</div>
+                <div class="mini-metric-value" id="miniProfit">&#8212;</div>
+              </div>
+              <div class="mini-metric">
+                <div class="mini-metric-label">Expenses</div>
+                <div class="mini-metric-value" id="miniExpenses">&#8212;</div>
+              </div>
+              <div class="mini-metric">
+                <div class="mini-metric-label">Entries</div>
+                <div class="mini-metric-value" id="miniEntries">&#8212;</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analysis type tabs -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">Analysis Type</span></div>
+          <div class="card-body" style="padding:14px;">
+            <div class="analysis-type-tabs">
+              <button class="analysis-tab active" data-type="revenue">Revenue</button>
+              <button class="analysis-tab" data-type="profit">Profit</button>
+              <button class="analysis-tab" data-type="expenses">Expenses</button>
+              <button class="analysis-tab" data-type="trends">Trends</button>
+              <button class="analysis-tab" data-type="anomalies">Anomalies</button>
+            </div>
+            <button class="btn-run-analysis" id="runAnalysisBtn" onclick="runQuickAnalysis()">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Run Analysis
+            </button>
+          </div>
+        </div>
+
+        <!-- Analysis Results panel -->
+        <div class="card" id="analysisResults" style="display:none;flex:1;">
+          <div class="card-header">
+            <span class="card-title">Results</span>
+            <button class="btn-ghost btn-sm" id="closeResults" style="height:28px;padding:0 10px;font-size:12px;">Clear</button>
+          </div>
+          <div class="card-body" style="padding:14px;" id="resultsContent"></div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Chat -->
+      <div class="analysis-right">
+        <!-- Chat output -->
+        <div class="chat-output" id="chatContainer">
+          <div class="analysis-welcome">
+            <div class="analysis-welcome-icon">&#x1F916;</div>
+            <h3>Hello! I'm your AI Analyst</h3>
+            <p>I can analyze your sales, profits, expenses, and trends. Ask me anything!</p>
+          </div>
+        </div>
+
+        <!-- Suggestion chips -->
+        <div class="suggestion-chips">
+          <button class="suggestion-chip" data-question="What are my total sales?">Total sales</button>
+          <button class="suggestion-chip" data-question="Show me profit analysis">Profit analysis</button>
+          <button class="suggestion-chip" data-question="Analyze my expenses">Expenses</button>
+          <button class="suggestion-chip" data-question="What are the trends?">Trends</button>
+          <button class="suggestion-chip" data-question="Detect any anomalies">Anomalies</button>
+          <button class="suggestion-chip" data-question="Give me business overview">Overview</button>
+        </div>
+
+        <!-- Chat input -->
+        <div class="chat-input-area">
+          <form id="chatForm" style="display:contents;">
+            <textarea id="messageInput" class="chat-textarea" placeholder="Ask about your business data..." rows="1"></textarea>
+            <button type="submit" class="chat-send-btn" id="sendBtn">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/header-profile.js"></script>
+  <script src="js/analysis.js"></script>
+  <script>
+    function closeModalById(id){const m=document.getElementById(id);if(m)m.classList.remove('open');}
+    function openModalById(id){const m=document.getElementById(id);if(m)m.classList.add('open');}
+    window.closeModal=closeModalById;
+
+    // Analysis type tabs
+    document.querySelectorAll('.analysis-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.analysis-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // Load mini metrics from cache
+    function loadMiniMetrics() {
+      if (typeof DataCache !== 'undefined') {
+        const data = DataCache.get();
+        if (data && data.records && data.records.length) {
+          const r = data.records;
+          const sum = (field) => r.reduce((s,row)=>s+(parseFloat(row[field])||0),0);
+          document.getElementById('miniSales').textContent = '\u20B9'+sum('sales').toLocaleString('en-IN',{maximumFractionDigits:0});
+          document.getElementById('miniProfit').textContent = '\u20B9'+sum('profit').toLocaleString('en-IN',{maximumFractionDigits:0});
+          document.getElementById('miniExpenses').textContent = '\u20B9'+sum('expenses').toLocaleString('en-IN',{maximumFractionDigits:0});
+          document.getElementById('miniEntries').textContent = r.length;
+          return;
+        }
+      }
+      // Fallback: load from dashboard stats
+      const userStr = localStorage.getItem('dataxpert_stats_cache');
+      if (userStr) {
+        try {
+          const stats = JSON.parse(userStr);
+          document.getElementById('miniSales').textContent = stats.total_sales ? '\u20B9'+parseFloat(stats.total_sales).toLocaleString('en-IN',{maximumFractionDigits:0}) : '\u2014';
+          document.getElementById('miniProfit').textContent = stats.total_profit ? '\u20B9'+parseFloat(stats.total_profit).toLocaleString('en-IN',{maximumFractionDigits:0}) : '\u2014';
+          document.getElementById('miniExpenses').textContent = stats.total_expenses ? '\u20B9'+parseFloat(stats.total_expenses).toLocaleString('en-IN',{maximumFractionDigits:0}) : '\u2014';
+          document.getElementById('miniEntries').textContent = stats.data_count || '\u2014';
+        } catch(e) {}
+      }
+    }
+
+    function runQuickAnalysis() {
+      const activeTab = document.querySelector('.analysis-tab.active');
+      const type = activeTab ? activeTab.dataset.type : 'revenue';
+      const questions = {
+        revenue: 'Give me a detailed revenue analysis',
+        profit: 'Analyze my profit trends and margins',
+        expenses: 'Break down my expenses and identify savings',
+        trends: 'What are the key trends in my data?',
+        anomalies: 'Detect any anomalies or unusual patterns in my data'
+      };
+      const q = questions[type] || 'Give me a business overview';
+      document.getElementById('messageInput').value = q;
+      document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadMiniMetrics();
+    });
+  </script>
 </body>
 </html>

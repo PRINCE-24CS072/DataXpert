@@ -1,416 +1,397 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DataXpert - AI-Powered Business Analytics</title>
-    <!-- Preload Google Sign-In for faster auth -->
-    <link rel="preconnect" href="https://accounts.google.com">
-    <link rel="preconnect" href="https://apis.google.com">
-    <link rel="dns-prefetch" href="https://accounts.google.com">
-    <script src="https://accounts.google.com/gsi/client" async></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DataXpert — AI-Powered Business Analytics</title>
+  <!-- Google OAuth preload -->
+  <link rel="preconnect" href="https://accounts.google.com">
+  <link rel="preconnect" href="https://apis.google.com">
+  <link rel="dns-prefetch" href="https://accounts.google.com">
+  <script src="https://accounts.google.com/gsi/client" async></script>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="container">
-            <div class="logo">
-                <span>DataXpert</span>
-            </div>
-            <ul class="nav-links">
-                <li><a href="#home" class="active">Home</a></li>
-                <li><a href="#features">Features</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-            <div class="nav-buttons">
-                <button class="btn btn-secondary" id="loginBtn">Login</button>
-                <button class="btn btn-primary" id="signupBtn">Sign Up</button>
-                <div class="theme-toggle-wrapper" style="margin-left: 15px;">
-                    <button class="theme-toggle-switch" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark mode">
-                        <span class="theme-toggle-slider">
-                            <i class="theme-toggle-icon fas fa-sun"></i>
-                        </span>
-                    </button>
-                </div>
-            </div>
+  <div class="auth-page">
+    <!-- Left panel: feature showcase -->
+    <div class="auth-left">
+      <div class="auth-brand">
+        <div class="auth-brand-logo">Data<span>Xpert</span></div>
+        <div class="auth-brand-tagline">AI-powered business analytics for modern teams</div>
+      </div>
+      <div class="auth-features">
+        <div class="auth-feature-card">
+          <div class="auth-feature-icon">
+            <!-- bar chart SVG icon -->
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="7" width="4" height="14"/><rect x="17" y="3" width="4" height="18"/></svg>
+          </div>
+          <div class="auth-feature-text">
+            <strong>Real-time Analytics</strong>
+            <span>Track sales, profits, and expenses as they happen</span>
+          </div>
         </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <section id="home" class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <h1 class="hero-title">Transform Your Business Data Into <span class="gradient-text">Actionable Insights</span></h1>
-                <p class="hero-subtitle">AI-powered analytics platform that helps you make data-driven decisions with confidence</p>
-                <div class="hero-buttons">
-                    <button class="btn btn-large btn-white" id="getStartedBtn">Get Started Free</button>
-                    <button class="btn btn-large btn-white" id="demoBtnHero">Try Demo</button>
-                </div>
-            </div>
-            <div class="hero-image">
-                <div class="floating-card">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Real-time Analytics</span>
-                </div>
-                <div class="floating-card" style="animation-delay: 0.5s;">
-                    <i class="fas fa-brain"></i>
-                    <span>AI Insights</span>
-                </div>
-                <div class="floating-card" style="animation-delay: 1s;">
-                    <i class="fas fa-users"></i>
-                    <span>Team Collaboration</span>
-                </div>
-            </div>
+        <div class="auth-feature-card">
+          <div class="auth-feature-icon">
+            <!-- brain/AI SVG icon -->
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          </div>
+          <div class="auth-feature-text">
+            <strong>AI Insights</strong>
+            <span>Chat with AI to unlock hidden patterns in your data</span>
+          </div>
         </div>
-    </section>
-
-    <!-- Features Section -->
-    <section id="features" class="features">
-        <div class="container">
-            <h2 class="section-title">Powerful Features</h2>
-            <p class="section-subtitle">Everything you need to manage and analyze your business data</p>
-            
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <h3>AI-Powered Analysis</h3>
-                    <p>Chat with AI to get instant insights about your sales, profits, and business trends</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h3>Interactive Dashboards</h3>
-                    <p>Visualize your business data with beautiful, interactive charts and graphs</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-upload"></i>
-                    </div>
-                    <h3>Smart Data Upload</h3>
-                    <p>Easily upload CSV and Excel files with automatic data validation and intelligent processing</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-bell"></i>
-                    </div>
-                    <h3>Anomaly Detection</h3>
-                    <p>Automatically detect unusual patterns and receive alerts for important changes</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-file-export"></i>
-                    </div>
-                    <h3>Data Export</h3>
-                    <p>Export your data and reports in multiple formats for presentations and meetings</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <h3>Secure & Reliable</h3>
-                    <p>Enterprise-grade security with encrypted data storage and backup</p>
-                </div>
-            </div>
+        <div class="auth-feature-card">
+          <div class="auth-feature-icon">
+            <!-- users SVG icon -->
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <div class="auth-feature-text">
+            <strong>Team Collaboration</strong>
+            <span>Share dashboards and insights with your team</span>
+          </div>
         </div>
-    </section>
-
-    <!-- About Section -->
-    <section id="about" class="about">
-        <div class="container">
-            <h2 class="section-title">About DataXpert</h2>
-            <div class="about-content">
-                <div class="about-text">
-                    <p>DataXpert is an advanced AI-assisted business analytics platform designed to help businesses of all sizes make better decisions through data. Our platform combines cutting-edge machine learning algorithms with an intuitive interface to provide actionable insights.</p>
-                    <p>Whether you're tracking sales, monitoring expenses, or analyzing customer behavior, DataXpert gives you the tools you need to succeed.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer id="contact" class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>DataXpert</h3>
-                    <p>AI-powered business analytics for modern businesses</p>
-                </div>
-                <div class="footer-section">
-                    <h4>SGP Group</h4>
-                    <ul>
-                        <li><a href="docs/index.html#sgp-group">About SGP Group</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Documentation</h4>
-                    <ul>
-                        <li><a href="docs/index.html">View Documentation</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 DataXpert. All rights reserved.</p>
-                <div class="social-links">
-                    <a href="mailto:dataxpert677276@gmail.com" title="Email us"><i class="fas fa-envelope"></i></a>
-                    <a href="https://www.instagram.com/dataxpert677276" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="https://x.com/DataXpert677276" target="_blank" title="X"><i class="fab fa-twitter"></i></a>
-                    <a href="https://github.com/dataXpert-677276/DataXpert" target="_blank" title="GitHub"><i class="fab fa-github"></i></a>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Login Modal -->
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <span class="close" data-modal="loginModal">&times;</span>
-            <h2>Welcome Back</h2>
-            <p>Login to access your dashboard</p>
-            
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="loginEmail">Email <span style="color: red;">*</span></label>
-                    <input type="email" id="loginEmail" required placeholder="your@email.com">
-                </div>
-                <div class="form-group">
-                    <label for="loginPassword">Password <span style="color: red;">*</span></label>
-                    <input type="password" id="loginPassword" required placeholder="••••••••">
-                </div>
-                <div class="form-options">
-                    <label class="remember-me">
-                        <input type="checkbox" id="rememberMe">
-                        <span>Remember me</span>
-                    </label>
-                    <a href="#" class="forgot-password" id="forgotPasswordLink">Forgot password?</a>
-                </div>
-                <button type="submit" class="btn btn-primary btn-full">Login</button>
-            </form>
-
-            <div class="divider">OR</div>
-
-            <div id="googleLoginBtn"></div>
-
-            <p class="modal-footer">Don't have an account? <a href="#" id="switchToSignup">Sign up</a></p>
-        </div>
+      </div>
     </div>
 
-    <!-- Signup Modal -->
-    <div id="signupModal" class="modal">
-        <div class="modal-content">
-            <span class="close" data-modal="signupModal">&times;</span>
-            <h2>Create Account</h2>
-            <p>Start your journey with DataXpert</p>
-            
-            <form id="signupForm">
-                <div class="form-group">
-                    <label for="signupUsername">Username <span style="color: red;">*</span></label>
-                    <input type="text" id="signupUsername" required placeholder="johndoe">
-                </div>
-                <div class="form-group">
-                    <label for="signupBusinessName">Business Name <span style="color: #888;">(Optional)</span></label>
-                    <input type="text" id="signupBusinessName" placeholder="Your Company Ltd">
-                    <small style="color: #666; font-size: 12px;">You can add this later in your profile</small>
-                </div>
-                <div class="form-group">
-                    <label for="signupEmail">Email <span style="color: red;">*</span></label>
-                    <input type="email" id="signupEmail" required placeholder="your@email.com">
-                </div>
-                <div class="form-group">
-                    <label for="signupPassword">Password <span style="color: red;">*</span></label>
-                    <input type="password" id="signupPassword" required placeholder="••••••••" minlength="6">
-                </div>
-                <div class="form-group">
-                    <label for="confirmPassword">Confirm Password <span style="color: red;">*</span></label>
-                    <input type="password" id="confirmPassword" required placeholder="••••••••" minlength="6">
-                </div>
-                <button type="submit" class="btn btn-primary btn-full">Sign Up</button>
-            </form>
-
-            <div class="divider">OR</div>
-
-            <div id="googleSignupBtn"></div>
-
-            <p class="modal-footer">Already have an account? <a href="#" id="switchToLogin">Login</a></p>
+    <!-- Right panel: auth form -->
+    <div class="auth-right">
+      <div class="auth-card">
+        <!-- Tab switcher -->
+        <div class="auth-tab-bar">
+          <button class="auth-tab active" id="loginTab" onclick="switchAuthTab('login')">Login</button>
+          <button class="auth-tab" id="signupTab" onclick="switchAuthTab('signup')">Sign Up</button>
         </div>
-    </div>
 
-    <!-- Forgot Password Modal -->
-    <div id="forgotPasswordModal" class="modal">
-        <div class="modal-content">
-            <span class="close" data-modal="forgotPasswordModal">&times;</span>
-            <h2>Reset Password</h2>
-            <p>Enter your email and we'll send you a reset link</p>
-            
-            <form id="forgotPasswordForm">
-                <div class="form-group">
-                    <label for="forgotEmail">Email Address</label>
-                    <input type="email" id="forgotEmail" required placeholder="your@email.com">
-                </div>
-                <button type="submit" class="btn btn-primary btn-full">Send Reset Link</button>
-            </form>
+        <!-- Login form -->
+        <div id="loginPanel">
+          <form class="auth-form" id="loginForm" autocomplete="on">
+            <!-- Error message - inline, NO blur overlay -->
+            <div class="auth-error-msg" id="loginError"></div>
 
-            <p class="modal-footer">Remember your password? <a href="#" id="backToLogin">Back to Login</a></p>
+            <div class="form-field">
+              <label for="loginEmail">Email</label>
+              <input type="email" id="loginEmail" class="form-input" placeholder="your@email.com" required autocomplete="email">
+            </div>
+            <div class="form-field">
+              <label for="loginPassword">Password</label>
+              <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+            <div style="display:flex; justify-content:flex-end; margin-top:-8px;">
+              <a href="#" id="forgotPasswordLink" style="font-size:12px; color:var(--accent-blue); text-decoration:none;">Forgot password?</a>
+            </div>
+            <button type="submit" class="btn-primary" style="width:100%; margin-top:4px;">
+              Login
+            </button>
+          </form>
+          <div class="auth-divider" style="margin:16px 0;"><span>or</span></div>
+          <div id="googleLoginBtn"></div>
         </div>
-    </div>
 
-    <!-- Profile Setup Modal (after signup) -->
-    <div id="profileSetupModal" class="modal">
-        <div class="modal-content">
-            <h2>Complete Your Profile</h2>
-            <p>Welcome! Add your full name and a profile photo to personalize your account.</p>
-            
-            <form id="profileSetupForm">
-                <!-- Profile Photo Upload -->
-                <div class="form-group" style="text-align: center; margin-bottom: 20px;">
-                    <div style="position: relative; display: inline-block;">
-                        <img id="setupProfilePreview" src="https://ui-avatars.com/api/?name=User&background=3b82f6&color=fff&size=200" alt="Profile" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid #3b82f6; cursor: pointer;" onclick="document.getElementById('setupProfileImageInput').click()">
-                        <div style="position: absolute; bottom: 5px; right: 5px; background: #3b82f6; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('setupProfileImageInput').click()">
-                            <i class="fas fa-camera"></i>
-                        </div>
-                    </div>
-                    <input type="file" id="setupProfileImageInput" accept="image/*" style="display: none;">
-                    <p style="font-size: 13px; color: #666; margin-top: 10px;">Click to add a profile photo</p>
-                </div>
-                
-                <div class="form-group">
-                    <label for="setupFullName">Full Name <span style="color: red;">*</span></label>
-                    <input type="text" id="setupFullName" required placeholder="Your full name">
-                </div>
-                
-                <button type="submit" class="btn btn-primary btn-full">Save & Continue</button>
-                <button type="button" class="btn btn-secondary btn-full" onclick="skipProfileSetup()" style="margin-top: 10px;">Skip for Now</button>
-            </form>
+        <!-- Signup form -->
+        <div id="signupPanel" style="display:none;">
+          <form class="auth-form" id="signupForm" autocomplete="on">
+            <!-- Error message - inline, NO blur overlay -->
+            <div class="auth-error-msg" id="signupError"></div>
+
+            <div class="form-field">
+              <label for="signupUsername">Username</label>
+              <input type="text" id="signupUsername" class="form-input" placeholder="johndoe" required autocomplete="username">
+            </div>
+            <div class="form-field">
+              <label for="signupBusinessName">Business Name <span style="color:var(--text-muted);font-size:11px;">(optional)</span></label>
+              <input type="text" id="signupBusinessName" class="form-input" placeholder="Your Company Ltd">
+            </div>
+            <div class="form-field">
+              <label for="signupEmail">Email</label>
+              <input type="email" id="signupEmail" class="form-input" placeholder="your@email.com" required autocomplete="email">
+            </div>
+            <div class="form-field">
+              <label for="signupPassword">Password</label>
+              <input type="password" id="signupPassword" class="form-input" placeholder="••••••••" required minlength="6" autocomplete="new-password" oninput="updatePasswordStrength(this.value, 'signupStrength', 'signupStrengthLabel')">
+              <div class="pw-strength" id="signupStrength">
+                <div class="pw-bar"></div><div class="pw-bar"></div><div class="pw-bar"></div>
+              </div>
+              <div class="pw-label" id="signupStrengthLabel"></div>
+            </div>
+            <div class="form-field">
+              <label for="confirmPassword">Confirm Password</label>
+              <input type="password" id="confirmPassword" class="form-input" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+            </div>
+            <button type="submit" class="btn-primary" style="width:100%;">
+              Create Account
+            </button>
+          </form>
+          <div class="auth-divider" style="margin:16px 0;"><span>or</span></div>
+          <div id="googleSignupBtn"></div>
         </div>
-    </div>
 
-    <!-- Google Profile Completion Modal -->
-    <div id="googleProfileModal" class="modal">
-        <div class="modal-content">
-            <h2>Complete Your Profile</h2>
-            <p>Welcome! Please add your business name to get started. You can also set a password for email login (optional).</p>
-            
-            <form id="googleProfileForm">
-                <!-- Profile Image Preview -->
-                <div class="form-group" style="text-align: center; margin-bottom: 20px;">
-                    <img id="googleProfileImage" src="" alt="Profile" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #6366f1;">
-                    <p style="font-size: 12px; color: #666; margin-top: 8px;">Your Google profile picture</p>
-                </div>
-                
-                <div class="form-group">
-                    <label for="googleUsername">Username</label>
-                    <input type="text" id="googleUsername" readonly placeholder="From Google Account" style="background-color: #f0f0f0;">
-                    <small style="color: #666;">Automatically retrieved from your Google account</small>
-                </div>
-                <div class="form-group">
-                    <label for="googleEmail">Email</label>
-                    <input type="email" id="googleEmail" readonly placeholder="From Google Account" style="background-color: #f0f0f0;">
-                    <small style="color: #666;">Automatically retrieved from your Google account</small>
-                </div>
-                <div class="form-group">
-                    <label for="googleBusinessName">Business Name <span style="color: red;">*</span></label>
-                    <input type="text" id="googleBusinessName" required placeholder="Your Company Ltd">
-                    <small style="color: #666;">Required: Your business or company name</small>
-                </div>
-                <div class="form-group">
-                    <label for="googlePassword">Create Password <span style="color: #888;">(Optional)</span></label>
-                    <input type="password" id="googlePassword" placeholder="••••••••" minlength="6">
-                    <small style="color: #666;">Optional: Create a password if you want to login with email too</small>
-                </div>
-                <div class="form-group">
-                    <label for="googleConfirmPassword">Confirm Password <span style="color: #888;">(Optional)</span></label>
-                    <input type="password" id="googleConfirmPassword" placeholder="••••••••" minlength="6">
-                </div>
-                <button type="submit" class="btn btn-primary btn-full">Complete Registration</button>
-                <button type="button" class="btn btn-secondary btn-full" onclick="skipProfileCompletion()" style="margin-top: 10px;">Skip for Now</button>
-            </form>
+        <!-- Forgot Password inline form (hidden by default) -->
+        <div id="forgotPanel" style="display:none;">
+          <div style="margin-bottom:20px;">
+            <button onclick="switchAuthTab('login')" style="background:none;border:none;color:var(--accent-blue);font-size:13px;cursor:pointer;padding:0;font-family:inherit;">← Back to Login</button>
+          </div>
+          <h3 style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:8px;">Reset Password</h3>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Enter your email to receive a reset link</p>
+          <form class="auth-form" id="forgotPasswordForm">
+            <div class="auth-error-msg" id="forgotError"></div>
+            <div class="form-field">
+              <label for="forgotEmail">Email Address</label>
+              <input type="email" id="forgotEmail" class="form-input" placeholder="your@email.com" required>
+            </div>
+            <button type="submit" class="btn-primary" style="width:100%;">Send Reset Link</button>
+          </form>
         </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Scripts (Google script already loaded in head for faster auth) -->
-    <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/theme.js"></script>
-    <script src="js/main.js"></script>
-    <script>
-        // Forgot Password Modal Handlers
-        document.getElementById('forgotPasswordLink')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('loginModal').style.display = 'none';
-            document.getElementById('forgotPasswordModal').style.display = 'block';
+  <!-- Hidden legacy modals (kept for backward compatibility with auth.js) -->
+  <div id="loginModal" style="display:none;">
+    <div class="modal-content" style="display:none;"></div>
+  </div>
+  <div id="signupModal" style="display:none;">
+    <div class="modal-content" style="display:none;"></div>
+  </div>
+
+  <!-- Profile setup modal (post-signup) -->
+  <div id="profileSetupModal" class="modal-overlay" style="display:none; opacity:0; pointer-events:none;">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>Complete Your Profile</h3>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Add your full name and a profile photo to personalize your account.</p>
+        <form id="profileSetupForm">
+          <div style="text-align:center;margin-bottom:20px;">
+            <div style="position:relative;display:inline-block;">
+              <img id="setupProfilePreview" src="https://ui-avatars.com/api/?name=User&background=2563eb&color=fff&size=200" alt="Profile" style="width:80px;height:80px;border-radius:50%;object-fit:cover; border:2px solid var(--border-subtle);cursor:pointer;" onclick="document.getElementById('setupProfileImageInput').click()">
+              <div style="position:absolute;bottom:2px;right:2px;background:var(--accent-blue);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;" onclick="document.getElementById('setupProfileImageInput').click()">
+                <i class="fas fa-camera"></i>
+              </div>
+            </div>
+            <input type="file" id="setupProfileImageInput" accept="image/*" style="display:none;">
+          </div>
+          <div class="field">
+            <label>Full Name</label>
+            <input type="text" id="setupFullName" required placeholder="Your full name">
+          </div>
+          <div class="modal-foot" style="padding:0;border:none;margin-top:16px;">
+            <button type="button" class="btn-ghost" onclick="skipProfileSetup()">Skip for now</button>
+            <button type="submit" class="btn-primary" style="padding:0 20px;">Save &amp; Continue</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Google Profile Completion Modal -->
+  <div id="googleProfileModal" class="modal-overlay" style="display:none; opacity:0; pointer-events:none;">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>Complete Your Profile</h3>
+      </div>
+      <div class="modal-body">
+        <div style="text-align:center;margin-bottom:20px;">
+          <img id="googleProfileImage" src="" alt="Profile" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--border-subtle);">
+        </div>
+        <form id="googleProfileForm">
+          <div class="field">
+            <label>Username</label>
+            <input type="text" id="googleUsername" readonly style="opacity:0.6;">
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="googleEmail" readonly style="opacity:0.6;">
+          </div>
+          <div class="field">
+            <label>Business Name</label>
+            <input type="text" id="googleBusinessName" required placeholder="Your Company Ltd">
+          </div>
+          <div class="field">
+            <label>Password <span style="color:var(--text-muted);font-size:11px;">(optional)</span></label>
+            <input type="password" id="googlePassword" placeholder="••••••••" minlength="6">
+          </div>
+          <div class="field">
+            <label>Confirm Password <span style="color:var(--text-muted);font-size:11px;">(optional)</span></label>
+            <input type="password" id="googleConfirmPassword" placeholder="••••••••" minlength="6">
+          </div>
+          <div class="modal-foot" style="padding:0;border:none;margin-top:16px;">
+            <button type="button" class="btn-ghost" onclick="skipProfileCompletion()">Skip for now</button>
+            <button type="submit" class="btn-primary" style="padding:0 20px;">Complete Registration</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // Tab switching
+    function switchAuthTab(tab) {
+      const loginPanel = document.getElementById('loginPanel');
+      const signupPanel = document.getElementById('signupPanel');
+      const forgotPanel = document.getElementById('forgotPanel');
+      const loginTab = document.getElementById('loginTab');
+      const signupTab = document.getElementById('signupTab');
+
+      loginPanel.style.display = 'none';
+      signupPanel.style.display = 'none';
+      forgotPanel.style.display = 'none';
+      loginTab.classList.remove('active');
+      signupTab.classList.remove('active');
+
+      if (tab === 'login') {
+        loginPanel.style.display = 'block';
+        loginTab.classList.add('active');
+        clearAuthErrors();
+      } else if (tab === 'signup') {
+        signupPanel.style.display = 'block';
+        signupTab.classList.add('active');
+        clearAuthErrors();
+      } else if (tab === 'forgot') {
+        forgotPanel.style.display = 'block';
+        clearAuthErrors();
+      }
+    }
+
+    function clearAuthErrors() {
+      document.querySelectorAll('.auth-error-msg').forEach(el => {
+        el.classList.remove('visible');
+        el.textContent = '';
+      });
+    }
+
+    // Password strength
+    function updatePasswordStrength(val, barId, labelId) {
+      const bars = document.querySelectorAll('#' + barId + ' .pw-bar');
+      const label = document.getElementById(labelId);
+      if (!bars.length) return;
+
+      let strength = 0;
+      if (val.length >= 8) strength++;
+      if (/[A-Z]/.test(val)) strength++;
+      if (/[0-9]/.test(val)) strength++;
+      if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+      bars.forEach(b => { b.className = 'pw-bar'; });
+
+      if (val.length === 0) { if(label) label.textContent = ''; return; }
+
+      if (strength <= 1) {
+        bars[0].classList.add('weak');
+        if(label) { label.textContent = 'Weak'; label.style.color = 'var(--accent-red)'; }
+      } else if (strength <= 2) {
+        bars[0].classList.add('fair'); bars[1].classList.add('fair');
+        if(label) { label.textContent = 'Fair'; label.style.color = 'var(--accent-amber)'; }
+      } else {
+        bars.forEach(b => b.classList.add('strong'));
+        if(label) { label.textContent = 'Strong'; label.style.color = 'var(--accent-green)'; }
+      }
+    }
+
+    // Forgot password link
+    document.getElementById('forgotPasswordLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      switchAuthTab('forgot');
+    });
+
+    // Forgot password form
+    document.getElementById('forgotPasswordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('forgotEmail').value.trim();
+      const btn = e.target.querySelector('button[type="submit"]');
+      const orig = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      try {
+        const response = await fetch(API_ENDPOINTS.BASE + '/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
         });
-        
-        document.getElementById('backToLogin')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('forgotPasswordModal').style.display = 'none';
-            document.getElementById('loginModal').style.display = 'block';
-        });
-        
-        document.getElementById('forgotPasswordForm')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('forgotEmail').value.trim();
-            const btn = e.target.querySelector('button[type="submit"]');
-            const originalText = btn.innerHTML;
-            
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-            
-            try {
-                const response = await fetch(API_ENDPOINTS.BASE + '/auth/forgot-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showMessage('Password reset link sent to your email!', 'success');
-                    document.getElementById('forgotPasswordModal').style.display = 'none';
-                } else {
-                    showMessage(data.message || 'Failed to send reset link', 'error');
-                }
-            } catch (error) {
-                showMessage('Error sending reset link. Please try again.', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
-        });
-        
-        // Remember Me Handler
-        document.getElementById('loginForm')?.addEventListener('submit', function() {
-            const rememberMe = document.getElementById('rememberMe')?.checked;
-            if (rememberMe) {
-                localStorage.setItem('dataxpert_remember_email', document.getElementById('loginEmail').value);
-            } else {
-                localStorage.removeItem('dataxpert_remember_email');
-            }
-        });
-        
-        // Auto-fill remembered email
-        document.addEventListener('DOMContentLoaded', () => {
-            const rememberedEmail = localStorage.getItem('dataxpert_remember_email');
-            if (rememberedEmail) {
-                const emailInput = document.getElementById('loginEmail');
-                const rememberCheckbox = document.getElementById('rememberMe');
-                if (emailInput) emailInput.value = rememberedEmail;
-                if (rememberCheckbox) rememberCheckbox.checked = true;
-            }
-        });
-    </script>
+        const data = await response.json();
+        if (data.success) {
+          showToast('Reset link sent to your email!', 'success');
+          switchAuthTab('login');
+        } else {
+          showInlineError('forgotError', data.message || 'Failed to send reset link');
+        }
+      } catch (err) {
+        showInlineError('forgotError', 'Connection error. Please try again.');
+      }
+      btn.disabled = false;
+      btn.textContent = orig;
+    });
+
+    // Show inline auth error (no blur, no overlay)
+    function showInlineError(id, msg) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.add('visible');
+      // Find parent form and shake it
+      const form = el.closest('form') || el.closest('.auth-form');
+      if (form) {
+        form.classList.remove('shake');
+        void form.offsetWidth;
+        form.classList.add('shake');
+        setTimeout(() => form.classList.remove('shake'), 400);
+      }
+      // Auto-dismiss after 4 seconds
+      setTimeout(() => {
+        el.classList.remove('visible');
+        el.textContent = '';
+      }, 4000);
+    }
+    window.showInlineError = showInlineError;
+
+    // Switch to signup (used by auth.js compat)
+    document.getElementById('switchToSignup') && document.getElementById('switchToSignup').addEventListener('click', (e) => {
+      e.preventDefault(); switchAuthTab('signup');
+    });
+    document.getElementById('switchToLogin') && document.getElementById('switchToLogin').addEventListener('click', (e) => {
+      e.preventDefault(); switchAuthTab('login');
+    });
+
+    // Legacy openModal/closeModal compatibility (used by main.js/auth.js)
+    window.openModal = function(modalId) {
+      if (modalId === 'loginModal') switchAuthTab('login');
+      else if (modalId === 'signupModal') switchAuthTab('signup');
+    };
+    window.closeModal = function(modalId) {};
+
+    // Profile setup modal show/hide compatibility
+    window.showProfileSetupModal = function(user) {
+      const modal = document.getElementById('profileSetupModal');
+      if(!modal) return;
+      modal.style.display = 'flex';
+      setTimeout(() => { modal.style.opacity = '1'; modal.style.pointerEvents = 'auto'; }, 10);
+    };
+
+    // Redirect if already authenticated
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof isAuthenticated === 'function' && isAuthenticated()) {
+        window.location.href = 'dashboard.html';
+      }
+      // Auto-fill remembered email
+      const remembered = localStorage.getItem('dataxpert_remember_email');
+      if (remembered) {
+        const emailEl = document.getElementById('loginEmail');
+        if (emailEl) emailEl.value = remembered;
+      }
+    });
+  </script>
 </body>
 </html>

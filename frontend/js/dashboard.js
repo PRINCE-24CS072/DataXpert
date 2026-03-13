@@ -1,1464 +1,1033 @@
-// Dashboard JavaScript
+// ============================================================
+// DataXpert - Dashboard JS
+// Handles: metrics, charts, filters, modals, table, compare
+// ============================================================
 
-let charts = {
-    sales: null,
-    profitExpense: null,
-    category: null
-};
+// ---- CHART INSTANCES ----
+window.salesChartInstance = null;
+window.profitExpenseChartInstance = null;
+window.categoryChartInstance = null;
 
-// Check authentication on page load
-document.addEventListener('DOMContentLoaded', async () => {
-    if (!isAuthenticated()) {
+// ---- STATE ----
+let activeFilter = 'all';
+let dashboardData = null;
+let lastUpdatedTimestamp = null;
+let lastUpdatedInterval = null;
+
+// ---- CHART DEFAULTS (applied after DOMContentLoaded) ----
+function applyChartDefaults() {
+    if (typeof Chart === 'undefined') return;
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.borderColor = 'rgba(148,163,184,0.12)';
+    Chart.defaults.font = Chart.defaults.font || {};
+    Chart.defaults.font.family = "'DM Mono', 'Inter', sans-serif";
+}
+
+// =============================================================
+// UTILITY — HTML escape
+// =============================================================
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function formatDate(dateStr) {
+    try {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return d.toISOString().split('T')[0];
+    } catch (e) {
+        return dateStr;
+    }
+}
+
+function toISODate(d) {
+    return d.toISOString().split('T')[0];
+}
+
+// =============================================================
+// COUNT-UP ANIMATION
+// =============================================================
+function countUp(element, target, prefix, suffix) {
+    if (!element) return;
+    prefix = prefix || '';
+    suffix = suffix || '';
+    const duration = 800;
+    const step = target / (duration / 16);
+    let current = 0;
+    function tick() {
+        current = Math.min(current + step, target);
+        element.textContent = prefix + Math.round(current).toLocaleString('en-IN') + suffix;
+        if (current < target) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+}
+
+// =============================================================
+// SKELETON HELPERS
+// =============================================================
+function showSkeletons() {
+    ['totalSales', 'totalProfit', 'totalExpenses', 'dataCount'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.classList.add('skeleton'); el.textContent = ''; }
+    });
+    ['salesSkeleton', 'profitSkeleton', 'expensesSkeleton', 'countSkeleton'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'block';
+    });
+}
+
+function hideSkeletons() {
+    ['totalSales', 'totalProfit', 'totalExpenses', 'dataCount'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('skeleton');
+    });
+    ['salesSkeleton', 'profitSkeleton', 'expensesSkeleton', 'countSkeleton'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+}
+
+// =============================================================
+// LAST UPDATED TIMER
+// =============================================================
+function startLastUpdatedTimer() {
+    lastUpdatedTimestamp = Date.now();
+    const el = document.getElementById('lastUpdatedTime');
+    if (!el) return;
+    el.textContent = 'Just now';
+    if (lastUpdatedInterval) clearInterval(lastUpdatedInterval);
+    lastUpdatedInterval = setInterval(() => {
+        if (!lastUpdatedTimestamp) return;
+        const diff = Math.floor((Date.now() - lastUpdatedTimestamp) / 1000);
+        if (diff < 60) {
+            el.textContent = 'Just now';
+        } else if (diff < 3600) {
+            el.textContent = Math.floor(diff / 60) + ' min ago';
+        } else {
+            el.textContent = Math.floor(diff / 3600) + ' hr ago';
+        }
+    }, 30000);
+}
+
+// =============================================================
+// LOAD DASHBOARD DATA
+// =============================================================
+async function loadDashboardData() {
+    // Check cache first — avoid unnecessary network call
+    if (typeof DataCache !== 'undefined' && DataCache.isValid()) {
+        const cached = DataCache.get();
+        if (cached) {
+            dashboardData = cached;
+            renderDashboard(cached);
+            startLastUpdatedTimer();
+            return;
+        }
+    }
+
+    showSkeletons();
+
+    try {
+        const response = await fetch(API_ENDPOINTS.DASHBOARD_STATS, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+
+        if (response.status === 401) {
+            if (typeof logout === 'function') logout();
+            return;
+        }
+
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        const result = await response.json();
+        if (result.success === false) throw new Error(result.message || 'Load failed');
+
+        dashboardData = result;
+        if (typeof DataCache !== 'undefined') DataCache.set(result);
+
+        renderDashboard(result);
+        startLastUpdatedTimer();
+
+    } catch (err) {
+        hideSkeletons();
+        console.error('Dashboard load error:', err);
+        if (typeof showToast === 'function') showToast('Failed to load data. Try refreshing.', 'error');
+        renderEmptyState();
+    }
+}
+
+function renderEmptyState() {
+    ['totalSales', 'totalProfit', 'totalExpenses', 'dataCount'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '—';
+    });
+    renderRecentData([]);
+}
+
+// =============================================================
+// RENDER DASHBOARD
+// =============================================================
+function renderDashboard(data) {
+    hideSkeletons();
+
+    const stats = data.stats || {};
+    const changes = data.changes || {};
+
+    const totalSales    = parseFloat(stats.total_sales     || stats.totalSales     || 0);
+    const totalProfit   = parseFloat(stats.total_profit    || stats.totalProfit    || 0);
+    const totalExpenses = parseFloat(stats.total_expenses  || stats.totalExpenses  || 0);
+    const dataCount     = parseInt(stats.data_count        || stats.dataCount      || stats.count || 0, 10);
+
+    const salesEl    = document.getElementById('totalSales');
+    const profitEl   = document.getElementById('totalProfit');
+    const expensesEl = document.getElementById('totalExpenses');
+    const countEl    = document.getElementById('dataCount');
+
+    if (salesEl)    { salesEl.style.fontVariantNumeric    = 'tabular-nums'; countUp(salesEl,    totalSales,    '\u20b9', ''); }
+    if (profitEl)   { profitEl.style.fontVariantNumeric   = 'tabular-nums'; countUp(profitEl,   totalProfit,   '\u20b9', ''); }
+    if (expensesEl) { expensesEl.style.fontVariantNumeric = 'tabular-nums'; countUp(expensesEl, totalExpenses, '\u20b9', ''); }
+    if (countEl)    { countEl.style.fontVariantNumeric    = 'tabular-nums'; countUp(countEl,    dataCount,     '',       ''); }
+
+    renderChangeIndicator('salesChange',     changes.sales     || changes.total_sales     || 0);
+    renderChangeIndicator('profitChange',    changes.profit    || changes.total_profit    || 0);
+    renderChangeIndicator('expensesChange',  changes.expenses  || changes.total_expenses  || 0);
+    renderChangeIndicator('dataCountChange', changes.count     || changes.data_count      || 0);
+
+    const chartData     = data.charts         || {};
+    const salesTrend    = chartData.sales_trend    || chartData.salesTrend    || {};
+    const profitExpense = chartData.profit_expense || chartData.profitExpense || {};
+    const categoryData  = chartData.categories     || {};
+
+    renderSalesChart(salesTrend.labels || [], salesTrend.values || []);
+    renderProfitExpenseChart(
+        profitExpense.profit   || [],
+        profitExpense.expenses || [],
+        profitExpense.labels   || []
+    );
+    renderCategoryChart(categoryData.labels || [], categoryData.values || []);
+
+    const rows = data.recent_data || data.recentData || [];
+    renderRecentData(rows);
+}
+
+// =============================================================
+// CHANGE INDICATORS
+// =============================================================
+function renderChangeIndicator(elementId, value) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const num = parseFloat(value) || 0;
+    const abs = Math.abs(num).toFixed(1);
+    if (num > 0) {
+        el.innerHTML = `<span style="color:var(--accent-green,#22c55e)">&#9650; ${abs}%</span>`;
+    } else if (num < 0) {
+        el.innerHTML = `<span style="color:var(--accent-red,#ef4444)">&#9660; ${abs}%</span>`;
+    } else {
+        el.innerHTML = `<span style="color:var(--text-muted,#64748b)">&#8212; 0%</span>`;
+    }
+}
+
+// =============================================================
+// CHART RENDERING — dark-themed Chart.js
+// =============================================================
+function renderSalesChart(labels, values) {
+    const canvas = document.getElementById('salesChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    if (window.salesChartInstance) { window.salesChartInstance.destroy(); window.salesChartInstance = null; }
+
+    const ctx = canvas.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.offsetHeight || 280);
+    gradient.addColorStop(0, 'rgba(99,102,241,0.35)');
+    gradient.addColorStop(1, 'rgba(99,102,241,0.0)');
+
+    window.salesChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Sales (\u20b9)',
+                data: values,
+                borderColor: '#6366f1',
+                backgroundColor: gradient,
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.42,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#6366f1',
+                pointBorderColor: '#0d1117',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(15,23,42,0.95)',
+                    borderColor: 'rgba(99,102,241,0.4)',
+                    borderWidth: 1,
+                    titleColor: '#e2e8f0',
+                    bodyColor: '#94a3b8',
+                    padding: 12,
+                    callbacks: {
+                        label: ctx => ` \u20b9${Number(ctx.parsed.y).toLocaleString('en-IN')}`
+                    }
+                }
+            },
+            scales: {
+                x: { grid: { color: 'rgba(148,163,184,0.08)' }, ticks: { color: '#64748b', font: { size: 11 } } },
+                y: {
+                    grid: { color: 'rgba(148,163,184,0.08)' },
+                    ticks: {
+                        color: '#64748b', font: { size: 11 },
+                        callback: v => `\u20b9${Number(v).toLocaleString('en-IN')}`
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderProfitExpenseChart(profitData, expenseData, labels) {
+    const canvas = document.getElementById('profitExpenseChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    if (window.profitExpenseChartInstance) { window.profitExpenseChartInstance.destroy(); window.profitExpenseChartInstance = null; }
+
+    window.profitExpenseChartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Profit',
+                    data: profitData,
+                    backgroundColor: 'rgba(34,197,94,0.75)',
+                    borderColor: 'rgba(34,197,94,1)',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    borderSkipped: false
+                },
+                {
+                    label: 'Expenses',
+                    data: expenseData,
+                    backgroundColor: 'rgba(239,68,68,0.65)',
+                    borderColor: 'rgba(239,68,68,1)',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    borderSkipped: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: { color: '#94a3b8', boxWidth: 12, padding: 16, font: { size: 12 } }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15,23,42,0.95)',
+                    borderColor: 'rgba(148,163,184,0.18)',
+                    borderWidth: 1,
+                    titleColor: '#e2e8f0',
+                    bodyColor: '#94a3b8',
+                    padding: 12,
+                    callbacks: {
+                        label: ctx => ` ${ctx.dataset.label}: \u20b9${Number(ctx.parsed.y).toLocaleString('en-IN')}`
+                    }
+                }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 11 } } },
+                y: {
+                    grid: { color: 'rgba(148,163,184,0.08)' },
+                    ticks: {
+                        color: '#64748b', font: { size: 11 },
+                        callback: v => `\u20b9${Number(v).toLocaleString('en-IN')}`
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderCategoryChart(categories, values) {
+    const canvas = document.getElementById('categoryChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    if (window.categoryChartInstance) { window.categoryChartInstance.destroy(); window.categoryChartInstance = null; }
+
+    const palette = ['#6366f1','#22c55e','#f59e0b','#ef4444','#06b6d4','#a855f7','#ec4899','#14b8a6','#f97316','#3b82f6'];
+    const bgColors = categories.map((_, i) => palette[i % palette.length]);
+
+    window.categoryChartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: categories,
+            datasets: [{
+                data: values,
+                backgroundColor: bgColors,
+                borderColor: '#0d1117',
+                borderWidth: 3,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        color: '#94a3b8',
+                        boxWidth: 12,
+                        padding: 14,
+                        font: { size: 12 },
+                        generateLabels: chart => {
+                            const d = chart.data;
+                            if (!d.labels.length) return [];
+                            const total = d.datasets[0].data.reduce((a, b) => a + b, 0);
+                            return d.labels.map((label, i) => {
+                                const val = d.datasets[0].data[i];
+                                const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+                                return {
+                                    text: `${label} (${pct}%)`,
+                                    fillStyle: d.datasets[0].backgroundColor[i],
+                                    strokeStyle: d.datasets[0].borderColor,
+                                    lineWidth: 1,
+                                    index: i
+                                };
+                            });
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15,23,42,0.95)',
+                    borderColor: 'rgba(148,163,184,0.18)',
+                    borderWidth: 1,
+                    titleColor: '#e2e8f0',
+                    bodyColor: '#94a3b8',
+                    padding: 12,
+                    callbacks: {
+                        label: ctx => {
+                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : '0.0';
+                            return ` \u20b9${Number(ctx.parsed).toLocaleString('en-IN')} (${pct}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// =============================================================
+// TIME FILTER SYSTEM
+// =============================================================
+function filterDataByRange(data, filter) {
+    if (!data || !Array.isArray(data)) return [];
+    if (filter === 'all') return data;
+
+    const now = new Date();
+    let cutoff;
+
+    if (filter === 'week')     cutoff = new Date(now - 7   * 86400000);
+    else if (filter === 'month')    cutoff = new Date(now - 30  * 86400000);
+    else if (filter === '3months')  cutoff = new Date(now - 90  * 86400000);
+    else if (filter === '6months')  cutoff = new Date(now - 180 * 86400000);
+    else if (filter === 'year')     cutoff = new Date(now - 365 * 86400000);
+    else if (filter === 'custom') {
+        const fromEl = document.getElementById('customFrom');
+        const toEl   = document.getElementById('customTo');
+        const from   = fromEl && fromEl.value ? new Date(fromEl.value) : null;
+        const to     = toEl   && toEl.value   ? new Date(toEl.value + 'T23:59:59') : null;
+        return data.filter(row => {
+            const d = new Date(row.date || row.Date || row.created_at || '');
+            if (isNaN(d.getTime())) return false;
+            if (from && d < from) return false;
+            if (to   && d > to)   return false;
+            return true;
+        });
+    } else {
+        return data;
+    }
+
+    return data.filter(row => {
+        const d = new Date(row.date || row.Date || row.created_at || '');
+        return !isNaN(d.getTime()) && d >= cutoff;
+    });
+}
+
+function applyFilter(filter) {
+    activeFilter = filter;
+
+    const pillMap = {
+        filterAll:      'all',
+        filterYear:     'year',
+        filter6months:  '6months',
+        filter3months:  '3months',
+        filterMonth:    'month',
+        filterWeek:     'week',
+        filterCustom:   'custom'
+    };
+
+    Object.entries(pillMap).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.toggle('active', val === filter);
+    });
+
+    const customRow = document.getElementById('customRangeRow');
+    if (customRow) customRow.style.display = filter === 'custom' ? 'flex' : 'none';
+
+    const badge     = document.getElementById('activeFilterBadge');
+    const badgeText = document.getElementById('activeFilterText');
+    const labels    = { all: null, year: 'Last Year', '6months': 'Last 6 Months', '3months': 'Last 3 Months', month: 'Last 30 Days', week: 'Last 7 Days', custom: 'Custom Range' };
+
+    if (badge)     badge.style.display = filter === 'all' ? 'none' : 'inline-flex';
+    if (badgeText && labels[filter]) badgeText.textContent = labels[filter];
+
+    if (dashboardData) {
+        const allRows  = dashboardData.recent_data || dashboardData.recentData || [];
+        const filtered = filterDataByRange(allRows, filter);
+        renderRecentData(filtered);
+        rebuildChartsFromFilter(filtered);
+    }
+}
+
+function rebuildChartsFromFilter(rows) {
+    if (!rows || rows.length === 0) {
+        renderSalesChart([], []);
+        renderProfitExpenseChart([], [], []);
+        renderCategoryChart([], []);
+        return;
+    }
+
+    const monthMap = {}, catMap = {}, profitByMonth = {}, expenseByMonth = {};
+
+    rows.forEach(row => {
+        const d = new Date(row.date || row.Date || row.created_at || '');
+        if (isNaN(d.getTime())) return;
+
+        const key    = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        const label  = d.toLocaleString('en-IN', { month: 'short', year: '2-digit' });
+        const amount = parseFloat(row.amount || row.Amount || 0);
+        const type   = (row.type || row.Type || row.data_type || '').toLowerCase();
+        const cat    = row.category || row.Category || 'Other';
+
+        if (!monthMap[key])       monthMap[key]       = { label, value: 0 };
+        if (!profitByMonth[key])  profitByMonth[key]  = { label, value: 0 };
+        if (!expenseByMonth[key]) expenseByMonth[key] = { label, value: 0 };
+
+        if (['sale','sales','income','revenue'].includes(type)) {
+            monthMap[key].value      += amount;
+            profitByMonth[key].value += amount;
+        } else if (['expense','expenses','cost'].includes(type)) {
+            expenseByMonth[key].value += amount;
+        } else if (type === 'profit') {
+            profitByMonth[key].value += amount;
+        }
+
+        catMap[cat] = (catMap[cat] || 0) + amount;
+    });
+
+    const sortedKeys     = Object.keys(monthMap).sort();
+    const salesLabels    = sortedKeys.map(k => monthMap[k].label);
+    const salesValues    = sortedKeys.map(k => monthMap[k].value);
+    const profitValues   = sortedKeys.map(k => (profitByMonth[k]  || {}).value || 0);
+    const expenseValues  = sortedKeys.map(k => (expenseByMonth[k] || {}).value || 0);
+    const catKeys        = Object.keys(catMap);
+    const catValues      = catKeys.map(k => catMap[k]);
+
+    renderSalesChart(salesLabels, salesValues);
+    renderProfitExpenseChart(profitValues, expenseValues, salesLabels);
+    renderCategoryChart(catKeys, catValues);
+}
+
+// =============================================================
+// RECENT DATA TABLE
+// =============================================================
+function renderRecentData(rows) {
+    const tbody = document.getElementById('recentData');
+    if (!tbody) return;
+
+    if (!rows || rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted,#64748b);padding:2rem;">No data available for the selected period.</td></tr>';
+        return;
+    }
+
+    let html = '';
+    rows.slice(0, 10).forEach(row => {
+        const id          = row.id   || row._id || '';
+        const dateStr     = row.date || row.Date || row.created_at || '';
+        const type        = row.type || row.Type || row.data_type  || '';
+        const amount      = parseFloat(row.amount || row.Amount || 0);
+        const category    = row.category    || row.Category    || '—';
+        const description = row.description || row.Description || row.notes || '—';
+
+        const typeLower = type.toLowerCase();
+        let pillClass = 'status-pill';
+        if (['sale','sales','income','revenue'].includes(typeLower)) pillClass += ' status-sale';
+        else if (['expense','expenses','cost'].includes(typeLower))  pillClass += ' status-expense';
+        else if (typeLower === 'profit')                             pillClass += ' status-profit';
+
+        const displayType = type ? type.charAt(0).toUpperCase() + type.slice(1).toLowerCase() : '—';
+
+        html += `<tr>
+            <td class="mono" style="font-variant-numeric:tabular-nums">${escapeHtml(formatDate(dateStr))}</td>
+            <td><span class="${pillClass}">${escapeHtml(displayType)}</span></td>
+            <td class="mono" style="font-variant-numeric:tabular-nums">&#8377;${amount.toLocaleString('en-IN')}</td>
+            <td>${escapeHtml(category)}</td>
+            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(description)}</td>
+            <td>
+                ${id ? `
+                <button class="btn-icon-sm" onclick="editRow('${escapeHtml(String(id))}')" title="Edit" style="margin-right:4px">
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="btn-icon-sm btn-danger-sm" onclick="deleteRow('${escapeHtml(String(id))}')" title="Delete">
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button>` : ''}
+            </td>
+        </tr>`;
+    });
+    tbody.innerHTML = html;
+}
+
+// =============================================================
+// EDIT / DELETE ROW
+// =============================================================
+async function editRow(id) {
+    try {
+        const response = await fetch(`${API_ENDPOINTS.BUSINESS_DATA}/${id}`, { headers: getAuthHeaders() });
+        if (!response.ok) throw new Error('Could not fetch row');
+        const result = await response.json();
+        const row = result.data || result;
+
+        const set = (elId, val) => { const el = document.getElementById(elId); if (el) el.value = val || ''; };
+        set('dataDate',        (row.date || '').split('T')[0]);
+        set('dataType',        row.type        || row.data_type || '');
+        set('dataAmount',      row.amount      || '');
+        set('dataCategory',    row.category    || '');
+        set('dataDescription', row.description || row.notes || '');
+
+        const form = document.getElementById('addDataForm');
+        if (form) {
+            form.dataset.editId = id;
+            const btn = form.querySelector('button[type="submit"]');
+            if (btn) btn.textContent = 'Update Entry';
+        }
+        const title = document.querySelector('#addDataModal .modal-title');
+        if (title) title.textContent = 'Edit Entry';
+
+        if (typeof openModal  === 'function') openModal('addDataModal');
+        else { const m = document.getElementById('addDataModal'); if (m) m.classList.add('open'); }
+
+    } catch (err) {
+        console.error('editRow error:', err);
+        if (typeof showToast === 'function') showToast('Could not load entry for editing.', 'error');
+    }
+}
+
+async function deleteRow(id) {
+    if (!window.confirm('Delete this entry? This cannot be undone.')) return;
+    try {
+        const response = await fetch(`${API_ENDPOINTS.BUSINESS_DATA}/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        if (typeof DataCache !== 'undefined') DataCache.invalidate();
+        if (typeof showToast === 'function') showToast('Entry deleted.', 'success');
+        loadDashboardData();
+    } catch (err) {
+        if (typeof showToast === 'function') showToast('Failed to delete entry.', 'error');
+    }
+}
+
+// =============================================================
+// ADD / EDIT DATA FORM
+// =============================================================
+function setupAddDataForm() {
+    const form = document.getElementById('addDataForm');
+    if (form) form.addEventListener('submit', handleAddData);
+}
+
+async function handleAddData(e) {
+    e.preventDefault();
+    const form = document.getElementById('addDataForm');
+    if (!form) return;
+
+    const get = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+
+    const date        = get('dataDate');
+    const type        = get('dataType');
+    const amountStr   = get('dataAmount');
+    const category    = get('dataCategory');
+    const description = get('dataDescription');
+    const amount      = parseFloat(amountStr);
+
+    if (!date)                      { if (typeof showToast === 'function') showToast('Please select a date.', 'warning');  return; }
+    if (!type)                      { if (typeof showToast === 'function') showToast('Please select a type.', 'warning');  return; }
+    if (isNaN(amount) || amount <= 0) { if (typeof showToast === 'function') showToast('Amount must be a positive number.', 'warning'); return; }
+
+    const payload  = { date, type, amount, category, description };
+    const editId   = form.dataset.editId;
+    const isEdit   = !!editId;
+    const url      = isEdit ? `${API_ENDPOINTS.BUSINESS_DATA}/${editId}` : API_ENDPOINTS.BUSINESS_DATA;
+    const method   = isEdit ? 'PUT' : 'POST';
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = isEdit ? 'Updating...' : 'Adding...'; }
+
+    try {
+        const response = await fetch(url, { method, headers: getAuthHeaders(), body: JSON.stringify(payload) });
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.message || 'HTTP ' + response.status);
+        }
+        if (typeof DataCache !== 'undefined') DataCache.invalidate();
+        if (typeof closeModal === 'function') closeModal('addDataModal');
+        else { const m = document.getElementById('addDataModal'); if (m) m.classList.remove('open'); }
+        resetAddDataForm();
+        if (typeof showToast === 'function') showToast(isEdit ? 'Entry updated.' : 'Data added.', 'success');
+        loadDashboardData();
+    } catch (err) {
+        if (typeof showToast === 'function') showToast(err.message || 'Failed to save.', 'error');
+    } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = isEdit ? 'Update Entry' : 'Add Entry'; }
+    }
+}
+
+function resetAddDataForm() {
+    const form = document.getElementById('addDataForm');
+    if (!form) return;
+    form.reset();
+    delete form.dataset.editId;
+    const btn   = form.querySelector('button[type="submit"]');
+    const title = document.querySelector('#addDataModal .modal-title');
+    if (btn)   btn.textContent   = 'Add Entry';
+    if (title) title.textContent = 'Add Data';
+}
+
+// =============================================================
+// CLEAR DATA
+// =============================================================
+function setupClearData() {
+    const btn = document.getElementById('confirmClearBtn');
+    if (btn) btn.addEventListener('click', confirmClearData);
+}
+
+async function confirmClearData() {
+    const btn = document.getElementById('confirmClearBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Clearing...'; }
+    try {
+        const response = await fetch(API_ENDPOINTS.BUSINESS_DATA_CLEAR, { method: 'DELETE', headers: getAuthHeaders() });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        if (typeof DataCache !== 'undefined') DataCache.invalidate();
+        if (typeof closeModal === 'function') closeModal('clearDataModal');
+        else { const m = document.getElementById('clearDataModal'); if (m) m.classList.remove('open'); }
+        if (typeof showToast === 'function') showToast('All data cleared.', 'success');
+        loadDashboardData();
+    } catch (err) {
+        if (typeof showToast === 'function') showToast('Failed to clear data.', 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Yes, Clear All'; }
+    }
+}
+
+// =============================================================
+// COMPARE PANEL
+// =============================================================
+function openComparePanel()  { const p = document.getElementById('comparePanel'); if (p) p.classList.add('open'); }
+function closeComparePanel() { const p = document.getElementById('comparePanel'); if (p) p.classList.remove('open'); }
+
+function setupComparePanel() {
+    const closeBtn = document.getElementById('closePanelBtn');
+    if (closeBtn) closeBtn.addEventListener('click', closeComparePanel);
+
+    ['A', 'B'].forEach(period => {
+        const sel = document.getElementById(`period${period}Type`);
+        if (sel) sel.addEventListener('change', function() { updatePeriodDates(period, this.value); });
+    });
+
+    const runBtn = document.getElementById('runCompareBtn');
+    if (runBtn) runBtn.addEventListener('click', runComparison);
+}
+
+function updatePeriodDates(period, type) {
+    const startEl = document.getElementById(`period${period}Start`);
+    const endEl   = document.getElementById(`period${period}End`);
+    if (!startEl || !endEl) return;
+
+    const now = new Date();
+    let start = '', end = toISODate(now);
+
+    if (type === 'this-week')       { start = toISODate(new Date(now - 7*86400000)); }
+    else if (type === 'last-week')  { start = toISODate(new Date(now - 14*86400000)); end = toISODate(new Date(now - 7*86400000)); }
+    else if (type === 'this-month') { start = toISODate(new Date(now - 30*86400000)); }
+    else if (type === 'last-month') {
+        const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lmEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        start = toISODate(lm); end = toISODate(lmEnd);
+    }
+    else if (type === 'this-quarter') { start = toISODate(new Date(now - 90*86400000)); }
+    else if (type === 'last-quarter') { start = toISODate(new Date(now - 180*86400000)); end = toISODate(new Date(now - 90*86400000)); }
+    else if (type === 'this-year')    { start = toISODate(new Date(now - 365*86400000)); }
+    else if (type === 'last-year')    { start = toISODate(new Date(now.getFullYear() - 1, 0, 1)); end = toISODate(new Date(now.getFullYear() - 1, 11, 31)); }
+
+    startEl.value = start;
+    endEl.value   = end;
+}
+
+async function runComparison() {
+    const aFrom = document.getElementById('periodAStart')?.value;
+    const aTo   = document.getElementById('periodAEnd')?.value;
+    const bFrom = document.getElementById('periodBStart')?.value;
+    const bTo   = document.getElementById('periodBEnd')?.value;
+    const resultsEl = document.getElementById('compareResults');
+
+    if (!aFrom || !aTo || !bFrom || !bTo) {
+        if (typeof showToast === 'function') showToast('Please set dates for both periods.', 'warning');
+        return;
+    }
+
+    const runBtn = document.getElementById('runCompareBtn');
+    if (runBtn) { runBtn.disabled = true; runBtn.textContent = 'Comparing...'; }
+    if (resultsEl) resultsEl.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted,#64748b)">Loading comparison...</div>';
+
+    try {
+        // Delegate to comparison-analysis.js if available
+        if (typeof runPeriodComparison === 'function') {
+            await runPeriodComparison({ from: aFrom, to: aTo }, { from: bFrom, to: bTo });
+            return;
+        }
+
+        const allRows = (dashboardData && (dashboardData.recent_data || dashboardData.recentData)) || [];
+        const periodA = filterByDateRange(allRows, aFrom, aTo);
+        const periodB = filterByDateRange(allRows, bFrom, bTo);
+        const aStats  = computePeriodStats(periodA);
+        const bStats  = computePeriodStats(periodB);
+
+        if (resultsEl) resultsEl.innerHTML = buildCompareResultsHtml(aStats, bStats, `${aFrom} – ${aTo}`, `${bFrom} – ${bTo}`);
+
+    } catch (err) {
+        console.error('Comparison error:', err);
+        if (resultsEl) resultsEl.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--accent-red,#ef4444)">Comparison failed.</div>';
+    } finally {
+        if (runBtn) { runBtn.disabled = false; runBtn.textContent = 'Run Comparison'; }
+    }
+}
+
+function filterByDateRange(rows, from, to) {
+    const fromDate = from ? new Date(from) : null;
+    const toDate   = to   ? new Date(to + 'T23:59:59') : null;
+    return rows.filter(row => {
+        const d = new Date(row.date || row.Date || row.created_at || '');
+        if (isNaN(d.getTime())) return false;
+        if (fromDate && d < fromDate) return false;
+        if (toDate   && d > toDate)   return false;
+        return true;
+    });
+}
+
+function computePeriodStats(rows) {
+    let sales = 0, expenses = 0, profit = 0;
+    rows.forEach(row => {
+        const amount = parseFloat(row.amount || row.Amount || 0);
+        const type   = (row.type || row.Type || row.data_type || '').toLowerCase();
+        if (['sale','sales','income','revenue'].includes(type)) sales    += amount;
+        else if (['expense','expenses','cost'].includes(type))  expenses += amount;
+        else if (type === 'profit')                             profit   += amount;
+    });
+    return { sales, expenses, profit: profit || (sales - expenses), count: rows.length };
+}
+
+function buildCompareResultsHtml(a, b, labelA, labelB) {
+    const pct = (a, b) => {
+        if (b === 0) return a > 0 ? '+100%' : '—';
+        const p = ((a - b) / Math.abs(b) * 100).toFixed(1);
+        return (parseFloat(p) > 0 ? '+' : '') + p + '%';
+    };
+    const clr = (a, b) => a >= b ? 'var(--accent-green,#22c55e)' : 'var(--accent-red,#ef4444)';
+    const fmt = n => '\u20b9' + Number(n).toLocaleString('en-IN');
+
+    let html = `<div style="padding:1rem">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem">
+            <div></div>
+            <div style="text-align:center;font-weight:600">${escapeHtml(labelA)}</div>
+            <div style="text-align:center;font-weight:600">${escapeHtml(labelB)}</div>
+        </div>`;
+
+    [
+        { label: 'Sales',     ka: a.sales,    kb: b.sales    },
+        { label: 'Expenses',  ka: a.expenses, kb: b.expenses },
+        { label: 'Profit',    ka: a.profit,   kb: b.profit   },
+        { label: 'Entries',   ka: a.count,    kb: b.count,  isCount: true }
+    ].forEach(r => {
+        const diff = pct(r.ka, r.kb);
+        const c    = clr(r.ka, r.kb);
+        html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;padding:.75rem 0;border-top:1px solid rgba(148,163,184,0.1)">
+            <div style="color:var(--text-muted,#64748b);font-size:.875rem">${r.label}</div>
+            <div style="text-align:center;font-variant-numeric:tabular-nums">${r.isCount ? r.ka : fmt(r.ka)}</div>
+            <div style="text-align:center;font-variant-numeric:tabular-nums">${r.isCount ? r.kb : fmt(r.kb)} <span style="font-size:.75rem;color:${c}">${diff}</span></div>
+        </div>`;
+    });
+
+    html += '</div>';
+    return html;
+}
+
+// =============================================================
+// FILTER PILLS SETUP
+// =============================================================
+function setupFilterPills() {
+    const pillMap = { filterAll: 'all', filterYear: 'year', filter6months: '6months', filter3months: '3months', filterMonth: 'month', filterWeek: 'week', filterCustom: 'custom' };
+    Object.entries(pillMap).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', () => applyFilter(val));
+    });
+    const applyBtn = document.getElementById('applyCustomFilter');
+    if (applyBtn) applyBtn.addEventListener('click', () => applyFilter('custom'));
+}
+
+// =============================================================
+// UPLOAD ZONE SETUP
+// =============================================================
+function setupUploadZone() {
+    const zone      = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('excelFileInput');
+    const errorBox  = document.getElementById('uploadErrorBox');
+    if (!zone || !fileInput) return;
+
+    zone.addEventListener('click', e => { if (e.target !== fileInput) fileInput.click(); });
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragenter', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', ()  => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        if (errorBox) { errorBox.textContent = ''; errorBox.style.display = 'none'; }
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) handleUploadFile(files[0]);
+    });
+
+    fileInput.addEventListener('change', function() {
+        if (errorBox) { errorBox.textContent = ''; errorBox.style.display = 'none'; }
+        if (this.files && this.files.length > 0) handleUploadFile(this.files[0]);
+    });
+}
+
+function handleUploadFile(file) {
+    const errorBox = document.getElementById('uploadErrorBox');
+    const allowed  = ['.xlsx', '.xls', '.csv'];
+    const ext      = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+    if (!allowed.includes(ext)) {
+        if (errorBox) { errorBox.textContent = 'Invalid file type. Use .xlsx, .xls, or .csv'; errorBox.style.display = 'block'; }
+        return;
+    }
+
+    // Prefer uploadFile from data-import-export.js if available (does full validation)
+    if (typeof uploadFile === 'function') {
+        uploadFile(file);
+        return;
+    }
+
+    const zone     = document.getElementById('uploadZone');
+    const token    = localStorage.getItem('dataxpert_token');
+    const formData = new FormData();
+    formData.append('file', file);
+
+    if (zone) zone.classList.add('uploading');
+
+    fetch(API_ENDPOINTS.BUSINESS_DATA_UPLOAD, {
+        method: 'POST',
+        headers: { 'Authorization': token ? `Bearer ${token}` : '' },
+        body: formData
+    })
+    .then(res => res.json().then(data => ({ ok: res.ok, data })))
+    .then(result => {
+        if (zone) zone.classList.remove('uploading');
+        if (result.ok && result.data.success !== false) {
+            if (typeof DataCache !== 'undefined') DataCache.invalidate();
+            const m = document.getElementById('uploadDataModal');
+            if (m) m.classList.remove('open');
+            if (typeof showToast === 'function') showToast('File uploaded successfully.', 'success');
+            loadDashboardData();
+        } else {
+            throw new Error((result.data && result.data.message) || 'Upload failed');
+        }
+    })
+    .catch(err => {
+        if (zone) zone.classList.remove('uploading');
+        if (errorBox) { errorBox.textContent = err.message || 'Upload failed'; errorBox.style.display = 'block'; }
+        if (typeof showToast === 'function') showToast('Upload failed: ' + (err.message || 'Unknown error'), 'error');
+    });
+}
+
+// =============================================================
+// MODAL SETUP
+// =============================================================
+function setupModals() {
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', e => {
+            if (e.target === overlay) {
+                overlay.classList.remove('open');
+                if (overlay.id === 'addDataModal') resetAddDataForm();
+            }
+        });
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.open').forEach(m => {
+                m.classList.remove('open');
+                if (m.id === 'addDataModal') resetAddDataForm();
+            });
+        }
+    });
+
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            const icon = refreshBtn.querySelector('svg');
+            if (icon) icon.style.animation = 'spinning 1s linear infinite';
+            if (typeof DataCache !== 'undefined') DataCache.invalidate();
+            loadDashboardData().then(() => { if (icon) icon.style.animation = ''; }).catch(() => { if (icon) icon.style.animation = ''; });
+            if (typeof showToast === 'function') showToast('Refreshing dashboard...', 'info');
+        });
+    }
+
+    setupClearData();
+}
+
+// =============================================================
+// INITIALIZATION
+// =============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof isAuthenticated === 'function' && !isAuthenticated()) {
         window.location.href = 'index.html';
         return;
     }
 
-    const verified = await verifyAuth();
-    if (!verified) {
-        return;
-    }
-
-    loadUserInfo();
-    checkProfileCompletion();  // Check if profile needs completion
+    applyChartDefaults();
     loadDashboardData();
-    setupEventListeners();
-    setupExcelUploadHandlers();
-    setupHistoryLink();
+    setupFilterPills();
+    setupUploadZone();
+    setupComparePanel();
+    setupAddDataForm();
+    setupModals();
 });
-
-// Load user information
-function loadUserInfo() {
-    const userStr = localStorage.getItem(STORAGE_KEYS.USER);
-    if (userStr) {
-        const user = JSON.parse(userStr);
-        document.getElementById('userName').textContent = user.name || 'User';
-        
-        // Update user avatar
-        const avatarImg = document.getElementById('userAvatar');
-        const avatarFallback = document.getElementById('avatarFallback');
-        if (avatarImg) {
-            const profileUrl = user.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=6366f1&color=fff&size=200`;
-            avatarImg.src = profileUrl;
-            avatarImg.style.display = 'block';
-            if (avatarFallback) avatarFallback.style.display = 'none';
-        }
-    }
-}
-
-// Check if profile needs completion and show banner
-function checkProfileCompletion() {
-    const showBanner = localStorage.getItem('dataxpert_show_banner');
-    const bannerDismissed = sessionStorage.getItem('dataxpert_banner_dismissed');
-    
-    if (showBanner && !bannerDismissed) {
-        const banner = document.getElementById('profileCompletionBanner');
-        
-        if (banner) {
-            // Show banner
-            banner.style.display = 'block';
-            
-            // Auto-hide after 12 seconds (between 10-15 as requested)
-            setTimeout(() => {
-                banner.style.transition = 'opacity 0.5s ease-out';
-                banner.style.opacity = '0';
-                
-                setTimeout(() => {
-                    banner.style.display = 'none';
-                    // Clear the flag after auto-hide
-                    localStorage.removeItem('dataxpert_show_banner');
-                    sessionStorage.setItem('dataxpert_banner_dismissed', 'true');
-                }, 500);
-            }, 12000); // 12 seconds
-        }
-    }
-}
-
-// Dismiss profile completion banner
-function dismissProfileBanner() {
-    const banner = document.getElementById('profileCompletionBanner');
-    if (banner) {
-        banner.style.transition = 'opacity 0.3s ease-out';
-        banner.style.opacity = '0';
-        
-        setTimeout(() => {
-            banner.style.display = 'none';
-            // Remember dismissal for this session
-            sessionStorage.setItem('dataxpert_banner_dismissed', 'true');
-            localStorage.removeItem('dataxpert_show_banner');
-        }, 300);
-    }
-}
-
-// Load dashboard data
-async function loadDashboardData() {
-    try {
-        // Load stats
-        const statsResponse = await fetch(API_ENDPOINTS.DASHBOARD_STATS, {
-            headers: getAuthHeaders()
-        });
-        const statsData = await statsResponse.json();
-
-        if (statsData.success) {
-            updateStats(statsData.stats);
-            updateRecentData(statsData.stats.recent_data);
-        }
-
-        // Load charts in parallel
-        const chartsResponse = await fetch(API_ENDPOINTS.DASHBOARD_CHARTS, {
-            headers: getAuthHeaders()
-        });
-        const chartsData = await chartsResponse.json();
-
-        if (chartsData.success) {
-            renderCharts(chartsData.charts);
-        }
-
-    } catch (error) {
-        console.error('Error loading dashboard:', error);
-        showMessage('Error loading dashboard data', 'error');
-    }
-}
-
-// Update stats - shows only real user data
-function updateStats(stats) {
-    const totalSales = stats.total_sales || 0;
-    const totalProfit = stats.total_profit || 0;
-    const totalExpenses = stats.total_expenses || 0;
-    const dataCount = stats.data_count || 0;
-    
-    document.getElementById('totalSales').textContent = `₹${formatNumber(totalSales)}`;
-    document.getElementById('totalProfit').textContent = `₹${formatNumber(totalProfit)}`;
-    document.getElementById('totalExpenses').textContent = `₹${formatNumber(totalExpenses)}`;
-    document.getElementById('dataCount').textContent = dataCount;
-    
-    // Update change indicators based on actual data
-    const salesChangeEl = document.getElementById('salesChange');
-    const profitChangeEl = document.getElementById('profitChange');
-    const expenseChangeEl = document.getElementById('expenseChange');
-    
-    if (dataCount === 0) {
-        // No data yet - show neutral state
-        salesChangeEl.textContent = '--';
-        salesChangeEl.className = 'stat-change neutral';
-        profitChangeEl.textContent = '--';
-        profitChangeEl.className = 'stat-change neutral';
-        expenseChangeEl.textContent = '--';
-        expenseChangeEl.className = 'stat-change neutral';
-    } else {
-        // Show actual values
-        salesChangeEl.textContent = totalSales > 0 ? 'Active' : '--';
-        salesChangeEl.className = totalSales > 0 ? 'stat-change positive' : 'stat-change neutral';
-        
-        profitChangeEl.textContent = totalProfit > 0 ? 'Positive' : (totalProfit < 0 ? 'Negative' : '--');
-        profitChangeEl.className = totalProfit > 0 ? 'stat-change positive' : (totalProfit < 0 ? 'stat-change negative' : 'stat-change neutral');
-        
-        expenseChangeEl.textContent = totalExpenses > 0 ? 'Tracked' : '--';
-        expenseChangeEl.className = 'stat-change neutral';
-    }
-}
-
-// Update recent data - shows only user's actual data
-function updateRecentData(recentData) {
-    const container = document.getElementById('recentData');
-    
-    if (!recentData || recentData.length === 0) {
-        container.innerHTML = `
-            <div class="no-data-state">
-                <i class="fas fa-inbox" style="font-size: 32px; color: #9CA3AF; margin-bottom: 10px;"></i>
-                <p class="no-data">No recent activity</p>
-                <p style="color: #9CA3AF; font-size: 12px;">Upload data to see your activity here</p>
-            </div>
-        `;
-        return;
-    }
-
-    // Only show valid user data (filter out any legacy/dummy entries)
-    const validData = recentData.filter(item => item && item.sales !== undefined);
-    
-    if (validData.length === 0) {
-        container.innerHTML = `
-            <div class="no-data-state">
-                <i class="fas fa-inbox" style="font-size: 32px; color: #9CA3AF; margin-bottom: 10px;"></i>
-                <p class="no-data">No recent activity</p>
-                <p style="color: #9CA3AF; font-size: 12px;">Upload data to see your activity here</p>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = validData.slice(0, 5).map(item => `
-        <div class="data-item">
-            <div class="data-info">
-                <span class="data-category">${item.category || 'General'}</span>
-                <span class="data-date">${formatDate(item.record_date)}</span>
-            </div>
-            <div class="data-values">
-                <span class="data-sales">Sales: ₹${formatNumber(item.sales || 0)}</span>
-                <span class="data-profit ${(item.profit || 0) >= 0 ? 'positive' : 'negative'}">
-                    Profit: ₹${formatNumber(item.profit || 0)}
-                </span>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Render charts
-function renderCharts(chartsData) {
-    // Sales Chart
-    const salesCtx = document.getElementById('salesChart').getContext('2d');
-    if (charts.sales) charts.sales.destroy();
-    
-    if (chartsData.sales && chartsData.sales.labels && chartsData.sales.labels.length > 0 && 
-        chartsData.sales.datasets && chartsData.sales.datasets[0] && chartsData.sales.datasets[0].data.some(v => v > 0)) {
-        charts.sales = new Chart(salesCtx, {
-            type: 'line',
-            data: chartsData.sales,
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: { beginAtZero: true }
-                }
-            }
-        });
-    } else {
-        // Show empty state message
-        showEmptyChartState(salesCtx, 'No sales data yet');
-    }
-
-    // Profit vs Expense Chart
-    const profitExpenseCtx = document.getElementById('profitExpenseChart').getContext('2d');
-    if (charts.profitExpense) charts.profitExpense.destroy();
-    
-    if (chartsData.profitExpense && chartsData.profitExpense.labels && chartsData.profitExpense.labels.length > 0 &&
-        chartsData.profitExpense.datasets && chartsData.profitExpense.datasets.some(ds => ds.data && ds.data.some(v => v !== 0))) {
-        charts.profitExpense = new Chart(profitExpenseCtx, {
-            type: 'bar',
-            data: chartsData.profitExpense,
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { display: true, position: 'top' }
-                },
-                scales: {
-                    y: { beginAtZero: true }
-                }
-            }
-        });
-    } else {
-        showEmptyChartState(profitExpenseCtx, 'No profit/expense data yet');
-    }
-
-    // Category Chart
-    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-    if (charts.category) charts.category.destroy();
-    
-    if (chartsData.category && chartsData.category.labels && chartsData.category.labels.length > 0 &&
-        chartsData.category.datasets && chartsData.category.datasets[0] && chartsData.category.datasets[0].data.some(v => v > 0)) {
-        charts.category = new Chart(categoryCtx, {
-            type: 'doughnut',
-            data: chartsData.category,
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { display: true, position: 'bottom' }
-                }
-            }
-        });
-    } else {
-        showEmptyChartState(categoryCtx, 'No category data yet');
-    }
-}
-
-// Show empty state message in chart canvas
-function showEmptyChartState(ctx, message) {
-    const canvas = ctx.canvas;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#9CA3AF';
-    ctx.font = '14px Inter, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(message, canvas.width / 2, canvas.height / 2);
-    ctx.fillText('Upload data to see visualizations', canvas.width / 2, canvas.height / 2 + 25);
-}
-
-// Setup event listeners
-function setupEventListeners() {
-    // Add data button
-    const addDataBtn = document.getElementById('addDataBtn');
-    if (addDataBtn) {
-        addDataBtn.addEventListener('click', () => openModal('addDataModal'));
-    }
-
-    // Add data form
-    const addDataForm = document.getElementById('addDataForm');
-    if (addDataForm) {
-        addDataForm.addEventListener('submit', handleAddData);
-        
-        // Auto-calculate profit
-        const salesInput = document.getElementById('sales');
-        const expensesInput = document.getElementById('expenses');
-        const profitInput = document.getElementById('profit');
-        
-        function calculateProfit() {
-            const sales = parseFloat(salesInput.value) || 0;
-            const expenses = parseFloat(expensesInput.value) || 0;
-            profitInput.value = (sales - expenses).toFixed(2);
-        }
-        
-        salesInput.addEventListener('input', calculateProfit);
-        expensesInput.addEventListener('input', calculateProfit);
-    }
-
-    // Close buttons
-    document.querySelectorAll('.close').forEach(button => {
-        button.addEventListener('click', () => {
-            const modalId = button.getAttribute('data-modal');
-            closeModal(modalId);
-        });
-    });
-
-    // Menu toggle
-    const menuToggle = document.getElementById('menuToggle');
-    const sidebar = document.querySelector('.sidebar');
-    if (menuToggle && sidebar) {
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-        });
-    }
-}
-
-// Handle add data
-async function handleAddData(event) {
-    event.preventDefault();
-    
-    const data = {
-        record_date: document.getElementById('recordDate').value,
-        category: document.getElementById('category').value,
-        sales: parseFloat(document.getElementById('sales').value),
-        expenses: parseFloat(document.getElementById('expenses').value),
-        profit: parseFloat(document.getElementById('profit').value)
-    };
-
-    try {
-        const response = await fetch(API_ENDPOINTS.BUSINESS_DATA, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify(data)
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showMessage('Data added successfully!', 'success');
-            closeModal('addDataModal');
-            document.getElementById('addDataForm').reset();
-            loadDashboardData(); // Reload dashboard
-        } else {
-            showMessage(result.message || 'Failed to add data', 'error');
-        }
-    } catch (error) {
-        console.error('Error adding data:', error);
-        showMessage('Error adding data', 'error');
-    }
-}
-
-// Utility functions
-function formatNumber(num) {
-    return new Intl.NumberFormat('en-IN', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(num);
-}
-
-function formatDate(dateString) {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-    });
-}
-
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = 'block';
-        setTimeout(() => {
-            modal.querySelector('.modal-content').classList.add('show');
-        }, 10);
-    }
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.querySelector('.modal-content').classList.remove('show');
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 300);
-    }
-}
-
-// ==================== HISTORY LINK ====================
-
-function setupHistoryLink() {
-    const historyBtn = document.getElementById('historySidebarBtn');
-    if (historyBtn) {
-        historyBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.location.href = 'history.html';
-        });
-    }
-}
-
-// ==================== PROFILE MANAGEMENT ====================
-
-function setupProfileHandlers() {
-    // Profile button click
-    const profileBtn = document.getElementById('profileSidebarBtn');
-    if (profileBtn) {
-        profileBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            loadProfileData();
-            openModal('profileModal');
-        });
-    }
-
-    // Profile image upload
-    const profileImageInput = document.getElementById('profileImageInput');
-    if (profileImageInput) {
-        profileImageInput.addEventListener('change', handleProfileImageUpload);
-    }
-
-    // Update profile form
-    const updateProfileForm = document.getElementById('updateProfileForm');
-    if (updateProfileForm) {
-        updateProfileForm.addEventListener('submit', handleUpdateProfile);
-   }
-
-    // Change password form
-    const changePasswordForm = document.getElementById('changePasswordForm');
-    if (changePasswordForm) {
-        changePasswordForm.addEventListener('submit', handleChangePassword);
-    }
-}
-
-async function loadProfileData() {
-    const userStr = localStorage.getItem(STORAGE_KEYS.USER);
-    if (!userStr) return;
-
-    const user = JSON.parse(userStr);
-    
-    document.getElementById('profileName').value = user.name || '';
-    document.getElementById('profileEmail').value = user.email || '';
-    document.getElementById('profileBusinessName').value = user.business_name || '';
-    
-    const profileImage = document.getElementById('profileImagePreview');
-    if (profileImage) {
-        profileImage.src = user.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=6366f1&color=fff&size=200`;
-    }
-}
-
-async function handleProfileImageUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-        showMessage('Please select an image file', 'error');
-        return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-        showMessage('Image size must be less than 5MB', 'error');
-        return;
-    }
-
-    try {
-        // Show preview immediately
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('profileImagePreview').src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-
-        // Upload to server
-        const formData = new FormData();
-        formData.append('profile_image', file);
-
-        const response = await fetch(`${API_BASE_URL}/users/upload-profile-image`, {
-            method: 'POST',
-            headers: getAuthHeadersForFormData(),
-            body: formData
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            // Update local storage
-            const userStr = localStorage.getItem(STORAGE_KEYS.USER);
-            if (userStr) {
-                const user = JSON.parse(userStr);
-                user.profile_image = result.profile_image;
-                localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-            }
-            showMessage('Profile image updated successfully!', 'success');
-        } else {
-            showMessage(result.message || 'Failed to upload image', 'error');
-        }
-    } catch (error) {
-        console.error('Error uploading profile image:', error);
-        showMessage('Error uploading image', 'error');
-    }
-}
-
-async function handleUpdateProfile(event) {
-    event.preventDefault();
-
-    const name = document.getElementById('profileName').value;
-    const businessName = document.getElementById('profileBusinessName').value;
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/users/update-profile`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
-                name,
-                business_name: businessName
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            // Update local storage
-            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(result.user));
-            showMessage('Profile updated successfully!', 'success');
-            loadUserInfo();
-        } else {
-            showMessage(result.message || 'Failed to update profile', 'error');
-        }
-    } catch (error) {
-        console.error('Error updating profile:', error);
-        showMessage('Error updating profile', 'error');
-    }
-}
-
-async function handleChangePassword(event) {
-    event.preventDefault();
-
-    const currentPassword = document.getElementById('currentPassword').value;
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
-
-    if (newPassword !== confirmNewPassword) {
-        showMessage('New passwords do not match', 'error');
-        return;
-    }
-
-    if (newPassword.length < 6) {
-        showMessage('Password must be at least 6 characters', 'error');
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/users/change-password`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
-                current_password: currentPassword,
-                new_password: newPassword
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showMessage('Password changed successfully!', 'success');
-            document.getElementById('changePasswordForm').reset();
-        } else {
-            showMessage(result.message || 'Failed to change password', 'error');
-        }
-    } catch (error) {
-        console.error('Error changing password:', error);
-        showMessage('Error changing password', 'error');
-    }
-}
-
-// ==================== EXCEL/CSV UPLOAD ====================
-
-// Upload state management
-let uploadState = {
-    currentStep: 1,
-    selectedFile: null,
-    fileData: null,  // Store file content in memory
-    fileName: null,
-    fileType: null,
-    fileAnalysis: null,
-    graphSuggestions: []
-};
-
-function setupExcelUploadHandlers() {
-    // Upload button click
-    const uploadBtn = document.getElementById('uploadDataBtn');
-    if (uploadBtn) {
-        uploadBtn.addEventListener('click', () => {
-            resetUploadState();
-            openModal('uploadDataModal');
-        });
-    }
-
-    // Clear data button click
-    const clearDataBtn = document.getElementById('clearDataBtn');
-    if (clearDataBtn) {
-        clearDataBtn.addEventListener('click', () => {
-            openClearDataModal();
-        });
-    }
-
-    // File input change
-    const fileInput = document.getElementById('excelFileInput');
-    if (fileInput) {
-        fileInput.addEventListener('change', handleExcelFileSelect);
-    }
-
-    // Drag and drop
-    const uploadZone = document.getElementById('uploadZone');
-    if (uploadZone) {
-        uploadZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadZone.classList.add('dragover');
-        });
-
-        uploadZone.addEventListener('dragleave', () => {
-            uploadZone.classList.remove('dragover');
-        });
-
-        uploadZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadZone.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFileSelection(files[0]);
-            }
-        });
-    }
-
-    // Toggle option checkbox listeners
-    const removeOutliersCheckbox = document.getElementById('removeOutliers');
-    if (removeOutliersCheckbox) {
-        removeOutliersCheckbox.addEventListener('change', (e) => {
-            document.getElementById('outlierOptions').style.display = e.target.checked ? 'flex' : 'none';
-        });
-    }
-
-    const fillMissingCheckbox = document.getElementById('fillMissing');
-    if (fillMissingCheckbox) {
-        fillMissingCheckbox.addEventListener('change', (e) => {
-            document.getElementById('fillOptions').style.display = e.target.checked ? 'flex' : 'none';
-        });
-    }
-}
-
-function resetUploadState() {
-    uploadState = {
-        currentStep: 1,
-        selectedFile: null,
-        fileData: null,
-        fileName: null,
-        fileType: null,
-        fileAnalysis: null,
-        graphSuggestions: []
-    };
-    
-    // Reset UI
-    document.getElementById('uploadStep1').style.display = 'block';
-    document.getElementById('uploadStep2').style.display = 'none';
-    document.getElementById('uploadStep3').style.display = 'none';
-    document.getElementById('uploadProgress').style.display = 'none';
-    document.getElementById('filePreview').style.display = 'none';
-    document.getElementById('backStepBtn').style.display = 'none';
-    document.getElementById('nextStepBtn').style.display = 'none';
-    document.getElementById('processUploadBtn').style.display = 'none';
-    
-    // Clear file input
-    const fileInput = document.getElementById('excelFileInput');
-    if (fileInput) fileInput.value = '';
-}
-
-async function handleExcelFileSelect(event) {
-    const file = event.target.files[0];
-    if (file) {
-        await handleFileSelection(file);
-    }
-}
-
-async function handleFileSelection(file) {
-    // Validate file type
-    const fileExtension = file.name.split('.').pop().toLowerCase();
-    const validExtensions = ['xlsx', 'xls', 'csv'];
-
-    if (!validExtensions.includes(fileExtension)) {
-        showMessage('Please select a valid Excel or CSV file', 'error');
-        return;
-    }
-
-    uploadState.selectedFile = file;
-    uploadState.fileName = file.name;
-    uploadState.fileType = fileExtension;
-    
-    // Store file content in memory to avoid stream consumption issue
-    try {
-        const arrayBuffer = await file.arrayBuffer();
-        uploadState.fileData = arrayBuffer;
-    } catch (error) {
-        console.error('Error reading file:', error);
-        showMessage('Error reading file', 'error');
-        return;
-    }
-    
-    // Show file preview
-    document.getElementById('filePreview').style.display = 'block';
-    document.getElementById('selectedFileName').textContent = file.name;
-    document.getElementById('nextStepBtn').style.display = 'inline-flex';
-    
-    // Analyze file using stored data
-    await analyzeUploadedFile();
-}
-
-function clearSelectedFile() {
-    uploadState.selectedFile = null;
-    document.getElementById('filePreview').style.display = 'none';
-    document.getElementById('nextStepBtn').style.display = 'none';
-    document.getElementById('excelFileInput').value = '';
-}
-
-async function analyzeUploadedFile() {
-    if (!uploadState.fileData) {
-        console.error('No file data available');
-        return;
-    }
-    
-    try {
-        // Create a new Blob from stored array buffer
-        const blob = new Blob([uploadState.fileData]);
-        const file = new File([blob], uploadState.fileName, { type: uploadState.selectedFile.type });
-        
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await fetch(`${API_BASE_URL}/business-data/analyze-file`, {
-            method: 'POST',
-            headers: getAuthHeadersForFormData(),
-            body: formData
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            uploadState.fileAnalysis = result.analysis;
-            uploadState.graphSuggestions = result.graph_suggestions;
-            
-            // Update analysis preview
-            updateAnalysisPreview(result.analysis, result.preview);
-            
-            // Update graph options
-            updateGraphOptions(result.graph_suggestions);
-        } else {
-            showMessage(result.message || 'Error analyzing file', 'error');
-        }
-    } catch (error) {
-        console.error('Error analyzing file:', error);
-        showMessage('Error analyzing file. Please try again.', 'error');
-    }
-}
-
-function updateAnalysisPreview(analysis, preview) {
-    const container = document.getElementById('dataAnalysisPreview');
-    if (!container) return;
-    
-    let html = `
-        <div class="analysis-summary">
-            <div class="summary-item">
-                <i class="fas fa-table"></i>
-                <span><strong>${analysis.total_rows}</strong> rows</span>
-            </div>
-            <div class="summary-item">
-                <i class="fas fa-columns"></i>
-                <span><strong>${analysis.total_columns}</strong> columns</span>
-            </div>
-    `;
-    
-    // Show missing values if any
-    const missingCount = Object.keys(analysis.missing_values).length;
-    if (missingCount > 0) {
-        html += `
-            <div class="summary-item warning">
-                <i class="fas fa-exclamation-circle"></i>
-                <span><strong>${missingCount}</strong> columns with missing data</span>
-            </div>
-        `;
-    }
-    
-    html += `</div>`;
-    
-    // Show recommendations
-    if (analysis.recommendations && analysis.recommendations.length > 0) {
-        html += `
-            <div class="recommendations">
-                <h4><i class="fas fa-lightbulb"></i> AI Recommendations</h4>
-                <ul>
-                    ${analysis.recommendations.map(rec => `<li>${rec}</li>`).join('')}
-                </ul>
-            </div>
-        `;
-    }
-    
-    // Show data preview
-    if (preview && preview.length > 0) {
-        html += `
-            <div class="data-preview">
-                <h4><i class="fas fa-eye"></i> Data Preview (first 5 rows)</h4>
-                <div class="preview-table-wrapper">
-                    <table class="preview-table">
-                        <thead>
-                            <tr>${Object.keys(preview[0]).map(key => `<th>${key}</th>`).join('')}</tr>
-                        </thead>
-                        <tbody>
-                            ${preview.map(row => `<tr>${Object.values(row).map(val => `<td>${val !== null ? val : '-'}</td>`).join('')}</tr>`).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
-    }
-    
-    container.innerHTML = html;
-}
-
-function updateGraphOptions(suggestions) {
-    const container = document.getElementById('graphOptions');
-    if (!container) return;
-    
-    let html = '';
-    
-    if (!suggestions || suggestions.length === 0) {
-        html = `
-            <div class="no-suggestions">
-                <i class="fas fa-chart-bar"></i>
-                <p>Default charts will be generated based on your data.</p>
-                <span class="hint">Charts will be created automatically after upload.</span>
-            </div>
-        `;
-        container.innerHTML = html;
-        return;
-    }
-    
-    suggestions.forEach((suggestion, index) => {
-        const iconMap = {
-            'line': 'fa-chart-line',
-            'bar': 'fa-chart-bar',
-            'pie': 'fa-chart-pie',
-            'doughnut': 'fa-chart-pie',
-            'area': 'fa-chart-area',
-            'scatter': 'fa-braille',
-            'radar': 'fa-spider'
-        };
-        
-        html += `
-            <label class="graph-option ${suggestion.recommended ? 'recommended' : ''}">
-                <input type="checkbox" name="selectedGraphs" value="${index}" ${suggestion.recommended ? 'checked' : ''}>
-                <div class="graph-option-content">
-                    <i class="fas ${iconMap[suggestion.type] || 'fa-chart-bar'}"></i>
-                    <div class="graph-details">
-                        <span class="graph-title">${suggestion.title}</span>
-                        <span class="graph-description">${suggestion.description}</span>
-                    </div>
-                    ${suggestion.recommended ? '<span class="recommended-badge">Recommended</span>' : ''}
-                </div>
-            </label>
-        `;
-    });
-    
-    container.innerHTML = html;
-}
-
-function nextUploadStep() {
-    if (uploadState.currentStep === 1 && !uploadState.selectedFile) {
-        showMessage('Please select a file first', 'error');
-        return;
-    }
-    
-    uploadState.currentStep++;
-    updateUploadStepUI();
-}
-
-function previousUploadStep() {
-    if (uploadState.currentStep > 1) {
-        uploadState.currentStep--;
-        updateUploadStepUI();
-    }
-}
-
-function updateUploadStepUI() {
-    // Hide all steps
-    document.getElementById('uploadStep1').style.display = 'none';
-    document.getElementById('uploadStep2').style.display = 'none';
-    document.getElementById('uploadStep3').style.display = 'none';
-    
-    // Show current step
-    document.getElementById(`uploadStep${uploadState.currentStep}`).style.display = 'block';
-    
-    // Update buttons
-    document.getElementById('backStepBtn').style.display = uploadState.currentStep > 1 ? 'inline-flex' : 'none';
-    document.getElementById('nextStepBtn').style.display = uploadState.currentStep < 3 ? 'inline-flex' : 'none';
-    document.getElementById('processUploadBtn').style.display = uploadState.currentStep === 3 ? 'inline-flex' : 'none';
-}
-
-async function processAndUploadData() {
-    if (!uploadState.fileData) {
-        showMessage('No file data available', 'error');
-        return;
-    }
-    
-    // Show progress
-    document.getElementById('uploadStep3').style.display = 'none';
-    document.getElementById('uploadProgress').style.display = 'block';
-    document.getElementById('backStepBtn').style.display = 'none';
-    document.getElementById('processUploadBtn').style.display = 'none';
-    
-    const progressFill = document.getElementById('progressFill');
-    const uploadStatus = document.getElementById('uploadStatus');
-    const processingSteps = document.getElementById('processingSteps');
-    
-    // Get processing options
-    const removeOutliers = document.getElementById('removeOutliers').checked;
-    const fillMissing = document.getElementById('fillMissing').checked;
-    const outlierMethod = document.getElementById('outlierMethod').value;
-    const fillMethod = document.getElementById('fillMethod').value;
-    
-    // Create fresh file from stored data
-    const blob = new Blob([uploadState.fileData]);
-    const file = new File([blob], uploadState.fileName, { type: uploadState.selectedFile.type });
-    
-    // Build form data
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('remove_outliers', removeOutliers);
-    formData.append('fill_missing', fillMissing);
-    formData.append('outlier_method', outlierMethod);
-    formData.append('fill_method', fillMethod);
-    
-    // Simulate progress steps
-    const steps = [
-        'Scanning file...',
-        'Auto-detecting column types...',
-        'Cleaning data...',
-        fillMissing ? 'Filling missing values...' : null,
-        removeOutliers ? 'Removing outliers...' : null,
-        'Calculating derived values...',
-        'Uploading to database...'
-    ].filter(Boolean);
-    
-    let currentStepIndex = 0;
-    
-    const updateProgress = () => {
-        if (currentStepIndex < steps.length) {
-            const progress = ((currentStepIndex + 1) / steps.length) * 80;
-            progressFill.style.width = progress + '%';
-            uploadStatus.textContent = steps[currentStepIndex];
-            processingSteps.innerHTML = steps.slice(0, currentStepIndex + 1)
-                .map((step, i) => `<div class="step-item ${i < currentStepIndex ? 'completed' : i === currentStepIndex ? 'active' : ''}">
-                    <i class="fas ${i < currentStepIndex ? 'fa-check-circle' : i === currentStepIndex ? 'fa-spinner fa-spin' : 'fa-circle'}"></i>
-                    ${step}
-                </div>`).join('');
-            currentStepIndex++;
-        }
-    };
-    
-    // Start progress animation
-    updateProgress();
-    const progressInterval = setInterval(updateProgress, 800);
-    
-    try {
-        const response = await fetch(`${API_BASE_URL}/business-data/upload-smart`, {
-            method: 'POST',
-            headers: getAuthHeadersForFormData(),
-            body: formData
-        });
-        
-        clearInterval(progressInterval);
-        progressFill.style.width = '100%';
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            uploadStatus.textContent = 'Upload complete!';
-            processingSteps.innerHTML = `
-                <div class="success-summary">
-                    <i class="fas fa-check-circle"></i>
-                    <div class="summary-details">
-                        <p><strong>${result.records_added}</strong> records added successfully</p>
-                        ${result.outliers_removed > 0 ? `<p><i class="fas fa-filter"></i> ${result.outliers_removed} outliers removed</p>` : ''}
-                        ${result.missing_filled > 0 ? `<p><i class="fas fa-magic"></i> ${result.missing_filled} missing values filled</p>` : ''}
-                    </div>
-                </div>
-            `;
-            
-            showMessage(`Successfully processed and uploaded ${result.records_added} records!`, 'success');
-            
-            setTimeout(() => {
-                closeModal('uploadDataModal');
-                resetUploadState();
-                loadDashboardData();
-            }, 2500);
-        } else {
-            uploadStatus.textContent = 'Upload failed';
-            processingSteps.innerHTML = `
-                <div class="error-summary">
-                    <i class="fas fa-times-circle"></i>
-                    <p>${result.message || 'An error occurred during processing'}</p>
-                </div>
-            `;
-            showMessage(result.message || 'Failed to upload file', 'error');
-        }
-    } catch (error) {
-        clearInterval(progressInterval);
-        console.error('Error uploading file:', error);
-        uploadStatus.textContent = 'Upload error';
-        processingSteps.innerHTML = `
-            <div class="error-summary">
-                <i class="fas fa-times-circle"></i>
-                <p>Network error. Please try again.</p>
-            </div>
-        `;
-        showMessage('Error uploading file', 'error');
-    }
-}
-
-// Legacy upload function for backwards compatibility
-async function handleExcelFileUpload(file) {
-    await handleFileSelection(file);
-}
-
-// ==================== CLEAR DATA ====================
-
-// Show clear data modal with record count
-async function openClearDataModal() {
-    openModal('clearDataModal');
-    
-    // Load current data count
-    try {
-        const response = await fetch(`${API_BASE_URL}/dashboard/stats`, {
-            headers: getAuthHeaders()
-        });
-        const data = await response.json();
-        
-        if (data.success && data.stats) {
-            const count = data.stats.data_count || 0;
-            const summaryDiv = document.getElementById('clearSummary');
-            if (summaryDiv) {
-                summaryDiv.innerHTML = `
-                    <div class="summary-info">
-                        <i class="fas fa-database"></i>
-                        <span>You have <strong>${count}</strong> data records that will be affected.</span>
-                    </div>
-                `;
-            }
-        }
-    } catch (error) {
-        console.error('Error loading data count:', error);
-    }
-}
-
-async function confirmClearData() {
-    const clearType = document.querySelector('input[name="clearType"]:checked')?.value || 'backup';
-    const createBackup = clearType === 'backup';
-    
-    try {
-        const response = await fetch(`${API_BASE_URL}/business-data/clear`, {
-            method: 'DELETE',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
-                create_backup: createBackup,
-                backup_days: 30
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            let message = `Successfully cleared ${result.deleted_count} records.`;
-            if (result.backup) {
-                message += ` Backup created (expires in 30 days).`;
-            }
-            showMessage(message, 'success');
-            closeModal('clearDataModal');
-            loadDashboardData();
-        } else {
-            showMessage(result.message || 'Failed to clear data', 'error');
-        }
-    } catch (error) {
-        console.error('Error clearing data:', error);
-        showMessage('Error clearing data', 'error');
-    }
-}
-
-// ==================== HISTORY MANAGEMENT ====================
-
-let currentHistoryTab = 'all';
-
-function setupHistoryHandlers() {
-    const historyBtn = document.getElementById('historySidebarBtn');
-    if (historyBtn) {
-        historyBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            openHistoryModal();
-        });
-    }
-}
-
-async function openHistoryModal() {
-    openModal('historyModal');
-    await loadHistoryData('all');
-}
-
-async function showHistoryTab(tab) {
-    currentHistoryTab = tab;
-    
-    // Update tab buttons
-    document.querySelectorAll('.history-tabs .tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.target.classList.add('active');
-    
-    await loadHistoryData(tab);
-}
-
-async function loadHistoryData(tab) {
-    const container = document.getElementById('historyContent');
-    container.innerHTML = '<p class="loading-text">Loading history...</p>';
-    
-    try {
-        let endpoint = '';
-        switch (tab) {
-            case 'uploads':
-                endpoint = `${API_BASE_URL}/history/uploads`;
-                break;
-            case 'analysis':
-                endpoint = `${API_BASE_URL}/history/analysis`;
-                break;
-            case 'backups':
-                endpoint = `${API_BASE_URL}/history/backups`;
-                break;
-            default:
-                endpoint = `${API_BASE_URL}/history/activity`;
-        }
-        
-        const response = await fetch(endpoint, {
-            headers: getAuthHeaders()
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            renderHistoryContent(tab, result);
-        } else {
-            container.innerHTML = '<p class="no-data">Error loading history</p>';
-        }
-    } catch (error) {
-        console.error('Error loading history:', error);
-        container.innerHTML = '<p class="no-data">Error loading history</p>';
-    }
-}
-
-function renderHistoryContent(tab, result) {
-    const container = document.getElementById('historyContent');
-    
-    switch (tab) {
-        case 'uploads':
-            renderUploadHistory(container, result.uploads || []);
-            break;
-        case 'analysis':
-            renderAnalysisHistory(container, result.analyses || []);
-            break;
-        case 'backups':
-            renderBackupsHistory(container, result.backups || []);
-            break;
-        default:
-            renderActivityHistory(container, result.activities || []);
-    }
-}
-
-function renderActivityHistory(container, activities) {
-    if (!activities || activities.length === 0) {
-        container.innerHTML = '<p class="no-data">No activity recorded yet</p>';
-        return;
-    }
-    
-    const iconMap = {
-        'upload': 'fa-upload',
-        'clear': 'fa-trash',
-        'delete': 'fa-trash-alt',
-        'analysis': 'fa-chart-line',
-        'restore': 'fa-undo',
-        'login': 'fa-sign-in-alt',
-        'export': 'fa-download'
-    };
-    
-    container.innerHTML = `
-        <div class="history-list">
-            ${activities.map(activity => `
-                <div class="history-item">
-                    <div class="history-icon ${activity.action_type}">
-                        <i class="fas ${iconMap[activity.action_type] || 'fa-circle'}"></i>
-                    </div>
-                    <div class="history-details">
-                        <span class="history-action">${activity.action_description || activity.action_type}</span>
-                        <span class="history-meta">
-                            <i class="fas fa-clock"></i> ${formatDateTime(activity.created_at)}
-                        </span>
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-    `;
-}
-
-function renderUploadHistory(container, uploads) {
-    if (!uploads || uploads.length === 0) {
-        container.innerHTML = '<p class="no-data">No uploads yet</p>';
-        return;
-    }
-    
-    container.innerHTML = `
-        <div class="history-list">
-            ${uploads.map(upload => `
-                <div class="history-item upload-item">
-                    <div class="history-icon upload">
-                        <i class="fas fa-file-excel"></i>
-                    </div>
-                    <div class="history-details">
-                        <span class="history-filename">${upload.filename}</span>
-                        <div class="history-stats">
-                            <span><i class="fas fa-plus-circle"></i> ${upload.records_added} added</span>
-                            ${upload.outliers_removed > 0 ? `<span><i class="fas fa-filter"></i> ${upload.outliers_removed} outliers</span>` : ''}
-                            ${upload.missing_filled > 0 ? `<span><i class="fas fa-magic"></i> ${upload.missing_filled} filled</span>` : ''}
-                        </div>
-                        <span class="history-meta">
-                            <i class="fas fa-clock"></i> ${formatDateTime(upload.created_at)}
-                            <span class="status-badge ${upload.status}">${upload.status}</span>
-                        </span>
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-    `;
-}
-
-function renderAnalysisHistory(container, analyses) {
-    if (!analyses || analyses.length === 0) {
-        container.innerHTML = '<p class="no-data">No analysis history yet</p>';
-        return;
-    }
-    
-    container.innerHTML = `
-        <div class="history-list">
-            ${analyses.map(analysis => `
-                <div class="history-item analysis-item">
-                    <div class="history-icon analysis">
-                        <i class="fas fa-brain"></i>
-                    </div>
-                    <div class="history-details">
-                        <span class="history-query">"${truncateText(analysis.query_text, 60)}"</span>
-                        <span class="history-type">${analysis.analysis_type || 'General Analysis'}</span>
-                        <span class="history-summary">${truncateText(analysis.result_summary, 100)}</span>
-                        <span class="history-meta">
-                            <i class="fas fa-clock"></i> ${formatDateTime(analysis.created_at)}
-                        </span>
-                    </div>
-                    <button class="btn btn-sm btn-secondary" onclick="viewAnalysisDetail(${analysis.id})">
-                        <i class="fas fa-eye"></i> View
-                    </button>
-                </div>
-            `).join('')}
-        </div>
-    `;
-}
-
-function renderBackupsHistory(container, backups) {
-    if (!backups || backups.length === 0) {
-        container.innerHTML = '<p class="no-data">No backups available</p>';
-        return;
-    }
-    
-    container.innerHTML = `
-        <div class="history-list">
-            ${backups.map(backup => {
-                const expiresDate = new Date(backup.expires_at);
-                const isExpired = expiresDate < new Date();
-                const daysLeft = Math.ceil((expiresDate - new Date()) / (1000 * 60 * 60 * 24));
-                
-                return `
-                    <div class="history-item backup-item ${isExpired ? 'expired' : ''} ${backup.restored ? 'restored' : ''}">
-                        <div class="history-icon backup">
-                            <i class="fas fa-archive"></i>
-                        </div>
-                        <div class="history-details">
-                            <span class="backup-type">${backup.backup_type === 'pre_clear' ? 'Pre-Clear Backup' : 'Manual Backup'}</span>
-                            <span class="backup-count"><strong>${backup.record_count}</strong> records</span>
-                            <span class="history-meta">
-                                <i class="fas fa-clock"></i> ${formatDateTime(backup.created_at)}
-                                ${!isExpired && !backup.restored ? `<span class="expires-badge">Expires in ${daysLeft} days</span>` : ''}
-                                ${backup.restored ? '<span class="restored-badge">Restored</span>' : ''}
-                                ${isExpired ? '<span class="expired-badge">Expired</span>' : ''}
-                            </span>
-                        </div>
-                        ${!isExpired && !backup.restored ? `
-                            <button class="btn btn-sm btn-primary" onclick="restoreBackup(${backup.id})">
-                                <i class="fas fa-undo"></i> Restore
-                            </button>
-                        ` : ''}
-                    </div>
-                `;
-            }).join('')}
-        </div>
-    `;
-}
-
-async function restoreBackup(backupId) {
-    if (!confirm('Are you sure you want to restore this backup? This will add the backed up data to your current data.')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_BASE_URL}/history/backups/${backupId}/restore`, {
-            method: 'POST',
-            headers: getAuthHeaders()
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showMessage(`Successfully restored ${result.restored_count} records!`, 'success');
-            loadHistoryData('backups');
-            loadDashboardData();
-        } else {
-            showMessage(result.message || 'Failed to restore backup', 'error');
-        }
-    } catch (error) {
-        console.error('Error restoring backup:', error);
-        showMessage('Error restoring backup', 'error');
-    }
-}
-
-function viewAnalysisDetail(analysisId) {
-    showMessage('Analysis detail view coming soon!', 'info');
-}
-
-// Helper functions
-function formatDateTime(dateString) {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}
-
-function truncateText(text, maxLength) {
-    if (!text) return '';
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
-}
-
-// ==================== CUSTOM CHART GENERATION ====================
-
-let customChartInstance = null;
-
-async function previewCustomChart() {
-    const chartType = document.getElementById('chartTypeSelect').value;
-    const yFieldCheckboxes = document.querySelectorAll('input[name="yFields"]:checked');
-    const yFields = Array.from(yFieldCheckboxes).map(cb => cb.value);
-    const groupBy = document.getElementById('groupBySelect').value || null;
-    
-    if (yFields.length === 0) {
-        showMessage('Please select at least one metric to display', 'error');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_BASE_URL}/business-data/generate-chart`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
-                chart_type: chartType,
-                x_field: 'record_date',
-                y_fields: yFields,
-                group_by: groupBy
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            renderCustomChartPreview(result.chart_data, chartType);
-        } else {
-            showMessage(result.message || 'Failed to generate chart', 'error');
-        }
-    } catch (error) {
-        console.error('Error generating chart:', error);
-        showMessage('Error generating chart', 'error');
-    }
-}
-
-function renderCustomChartPreview(chartData, chartType) {
-    const canvas = document.getElementById('customChartPreview');
-    const ctx = canvas.getContext('2d');
-    
-    if (customChartInstance) {
-        customChartInstance.destroy();
-    }
-    
-    customChartInstance = new Chart(ctx, {
-        type: chartType,
-        data: chartData,
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: chartType === 'pie' || chartType === 'doughnut' ? 'bottom' : 'top'
-                }
-            },
-            scales: chartType !== 'pie' && chartType !== 'doughnut' && chartType !== 'radar' ? {
-                y: { beginAtZero: true }
-            } : undefined
-        }
-    });
-}
-
-function saveCustomChart() {
-    showMessage('Custom chart saved to dashboard!', 'success');
-    closeModal('customChartModal');
-}
-
-// Helper function for FormData auth headers
-function getAuthHeadersForFormData() {
-    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-    return {
-        'Authorization': `Bearer ${token}`
-        // Don't set Content-Type for FormData - browser will set it with boundary
-    };
-}

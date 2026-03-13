@@ -1,620 +1,508 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - DataXpert</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile — DataXpert</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="dashboard-page">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <span>DataXpert</span>
-            </div>
+<body class="app-page">
+
+  <!-- Top Navbar (no active in center nav) -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <a href="dashboard.html" class="nav-logo">Data<span class="accent">Xpert</span></a>
+    </div>
+    <div class="nav-center">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="analysis.html" class="nav-link">AI Analysis</a>
+      <a href="history.html" class="nav-link">History</a>
+    </div>
+    <div class="nav-right">
+      <button class="nav-icon-btn" id="notificationBtn" title="Notifications">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span class="notif-dot"></span>
+      </button>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" id="themeIcon"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+      <div class="nav-avatar-wrap" id="avatarWrap">
+        <div class="nav-avatar" id="navAvatar">
+          <img id="navAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
+          <span id="navAvatarInitials">U</span>
         </div>
-
-        <nav class="sidebar-nav">
-            <a href="dashboard.html" class="nav-item">
-                <i class="fas fa-th-large"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="analysis.html" class="nav-item">
-                <i class="fas fa-robot"></i>
-                <span>AI Analysis</span>
-            </a>
-            <a href="history.html" class="nav-item">
-                <i class="fas fa-history"></i>
-                <span>History</span>
-            </a>
-            <a href="profile.html" class="nav-item active">
-                <i class="fas fa-user"></i>
-                <span>Profile</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <button class="btn btn-logout btn-full" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i>
-                Logout
-            </button>
+        <div class="nav-dropdown" id="navDropdown">
+          <div class="dropdown-user">
+            <strong id="dropdownName">Loading...</strong>
+            <span id="dropdownEmail"></span>
+          </div>
+          <hr class="dropdown-divider">
+          <a href="profile.html" class="dropdown-item">
+            <i class="fas fa-user" style="width:14px;margin-right:8px;"></i>Profile
+          </a>
+          <button class="dropdown-item danger" id="logoutBtn">
+            <i class="fas fa-sign-out-alt" style="width:14px;margin-right:8px;"></i>Logout
+          </button>
         </div>
-    </aside>
+      </div>
+    </div>
+  </nav>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Top Bar -->
-        <header class="topbar">
-            <div class="topbar-left">
-                <button class="menu-toggle" id="menuToggle">
-                    <i class="fas fa-bars"></i>
+  <div class="main-content">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom:24px;">
+      <h1 class="page-title">Profile Settings</h1>
+    </div>
+
+    <div class="profile-grid">
+      <!-- Left: Avatar column -->
+      <div>
+        <div class="card">
+          <div class="card-body" style="padding:24px;">
+            <div class="profile-avatar-section">
+              <div class="profile-avatar-wrap">
+                <img id="profilePhoto" src="" alt="Profile" class="profile-avatar-img" style="display:none;">
+                <div class="profile-avatar-initials" id="profileInitials">U</div>
+                <button class="profile-avatar-change-btn" onclick="document.getElementById('profileImageInput').click()" title="Change photo">
+                  <i class="fas fa-camera"></i>
                 </button>
-                <h1>Profile</h1>
+              </div>
+              <input type="file" id="profileImageInput" accept="image/*" style="display:none;">
+              <div class="profile-name" id="profileDisplayName">Loading...</div>
+              <div class="profile-email" id="profileDisplayEmail"></div>
+              <div class="profile-auth-badge" id="authMethodBadge">
+                <i class="fas fa-envelope" style="font-size:10px;"></i>
+                <span>Email login</span>
+              </div>
             </div>
-            <div class="topbar-right">
-                <button class="theme-toggle" onclick="openSearchModal()" title="Search (Ctrl+K)">
-                    <i class="fas fa-search"></i>
-                </button>
-                <div class="theme-toggle-wrapper" style="margin-left: 12px;">
-                    <button class="theme-toggle-switch" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark mode">
-                        <span class="theme-toggle-slider">
-                            <i class="theme-toggle-icon fas fa-sun"></i>
-                        </span>
-                    </button>
-                </div>
-                <a href="profile.html" class="header-profile" style="text-decoration: none; color: inherit; margin-left: 15px;">
-                    <div class="user-avatar">
-                        <img id="userAvatar" src="" alt="Profile" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                        <i class="fas fa-user" id="avatarFallback"></i>
-                    </div>
-                    <div class="user-details">
-                        <span id="userName" class="user-name">Loading...</span>
-                        <span id="userEmail" class="user-email"></span>
-                    </div>
-                </a>
-            </div>
-        </header>
-
-        <!-- Profile Content -->
-        <div class="dashboard-container">
-            <div class="profile-simple-grid">
-                <!-- Profile Photo Card -->
-                <div class="chart-card profile-photo-card">
-                    <div class="profile-photo-center">
-                        <div class="profile-photo-wrapper-large">
-                            <img id="profilePhoto" src="" alt="Profile Photo" class="profile-photo-large">
-                            <div class="photo-overlay" onclick="document.getElementById('profileImageInput').click()">
-                                <i class="fas fa-camera"></i>
-                                <span>Change Photo</span>
-                            </div>
-                        </div>
-                        <input type="file" id="profileImageInput" accept="image/*" style="display:none;">
-                        <p class="photo-hint">Click to change photo</p>
-                    </div>
-                </div>
-
-                <!-- Change Name Card -->
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3><i class="fas fa-user-edit"></i> Change Name</h3>
-                    </div>
-                    <form id="updateNameForm" class="simple-form">
-                        <div class="form-group">
-                            <label for="profileName">Full Name</label>
-                            <input type="text" id="profileName" required placeholder="Enter your name">
-                        </div>
-                        <button type="submit" class="btn btn-blue btn-full">
-                            <i class="fas fa-save"></i> Save Name
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Change Password Card -->
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3><i class="fas fa-lock"></i> Change Password</h3>
-                    </div>
-                    <form id="changePasswordForm" class="simple-form">
-                        <div class="form-group">
-                            <label for="currentPassword">Current Password</label>
-                            <div class="password-input-wrapper">
-                                <input type="password" id="currentPassword" required placeholder="Enter current password">
-                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('currentPassword')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="newPassword">New Password</label>
-                            <div class="password-input-wrapper">
-                                <input type="password" id="newPassword" required minlength="6" placeholder="Enter new password">
-                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('newPassword')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="confirmPassword">Confirm New Password</label>
-                            <div class="password-input-wrapper">
-                                <input type="password" id="confirmPassword" required minlength="6" placeholder="Confirm new password">
-                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmPassword')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-blue btn-full">
-                            <i class="fas fa-key"></i> Update Password
-                        </button>
-                    </form>
-                    <div class="forgot-password-link">
-                        <a href="#" onclick="openForgotPasswordModal()">
-                            <i class="fas fa-question-circle"></i> Forgot your password?
-                        </a>
-                    </div>
-                </div>
-            </div>
+          </div>
         </div>
-    </main>
+      </div>
 
-    <!-- Forgot Password Modal -->
-    <div id="forgotPasswordModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeForgotPasswordModal()">&times;</span>
-            <h2><i class="fas fa-unlock-alt"></i> Reset Password</h2>
-            <p>Enter your email to receive a password reset link</p>
-            <form id="forgotPasswordForm">
-                <div class="form-group">
-                    <label for="resetEmail">Email Address</label>
-                    <input type="email" id="resetEmail" required placeholder="your@email.com">
-                </div>
-                <button type="submit" class="btn btn-primary btn-full">
-                    <i class="fas fa-paper-plane"></i> Send Reset Link
-                </button>
+      <!-- Right: Settings sections -->
+      <div class="profile-sections">
+        <!-- Section 1: Personal Info -->
+        <div class="profile-section">
+          <div class="profile-section-header">
+            <div class="profile-section-title">Personal Information</div>
+          </div>
+          <div class="profile-section-body">
+            <form id="updateNameForm">
+              <div class="field">
+                <label>Full Name</label>
+                <input type="text" id="profileName" required placeholder="Your full name">
+              </div>
+              <div class="field">
+                <label>Email Address</label>
+                <input type="email" id="profileEmail" placeholder="your@email.com">
+              </div>
+              <button type="submit" class="btn-primary" style="padding:0 20px;width:auto;">
+                Save Changes
+              </button>
             </form>
+          </div>
         </div>
-    </div>
 
-    <!-- Search Modal -->
-    <div id="searchModal" class="search-modal">
-        <div class="search-modal-content">
-            <div class="search-header">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Search pages..." autofocus>
-                <kbd>ESC</kbd>
+        <!-- Section 2: Password/Security -->
+        <div class="profile-section" id="passwordSection">
+          <div class="profile-section-header">
+            <div class="profile-section-title">Password &amp; Security</div>
+          </div>
+          <div class="profile-section-body">
+            <!-- Google OAuth notice (shown only for Google users) -->
+            <div class="google-auth-notice" id="googleAuthNotice" style="display:none;">
+              <svg width="24" height="24" viewBox="0 0 24 24" style="flex-shrink:0;">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              <div style="flex:1;">
+                <strong>Signed in with Google</strong>
+                <p>Your account uses Google Sign-In. Password management is handled by Google.</p>
+              </div>
+              <a href="https://myaccount.google.com/security" target="_blank" class="btn-ghost btn-sm">
+                Manage on Google &#x2192;
+              </a>
             </div>
-            <div class="search-results">
-                <a href="dashboard.html" class="search-item"><i class="fas fa-th-large"></i> Dashboard</a>
-                <a href="analysis.html" class="search-item"><i class="fas fa-robot"></i> AI Analysis</a>
-                <a href="history.html" class="search-item"><i class="fas fa-history"></i> History</a>
-                <a href="profile.html" class="search-item"><i class="fas fa-user"></i> Profile</a>
-            </div>
+
+            <!-- Password form (shown only for email/password users) -->
+            <form id="changePasswordForm">
+              <div class="field">
+                <label>Current Password</label>
+                <div style="position:relative;">
+                  <input type="password" id="currentPassword" required placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" style="padding-right:40px;">
+                  <button type="button" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;" onclick="togglePwVis('currentPassword',this)">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="field">
+                <label>New Password</label>
+                <div style="position:relative;">
+                  <input type="password" id="newPassword" required minlength="8" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" style="padding-right:40px;" oninput="updatePwStrengthProfile(this.value)">
+                  <button type="button" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;" onclick="togglePwVis('newPassword',this)">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                </div>
+                <!-- Strength bar -->
+                <div class="pw-strength-bar">
+                  <div class="pw-seg" id="pwSeg1"></div>
+                  <div class="pw-seg" id="pwSeg2"></div>
+                  <div class="pw-seg" id="pwSeg3"></div>
+                </div>
+                <div class="pw-strength-label" id="pwStrengthLabel"></div>
+                <div class="pw-requirements" id="pwRequirements">
+                  <div class="pw-req" id="reqLen"><i class="fas fa-circle" style="font-size:6px;"></i> 8+ characters</div>
+                  <div class="pw-req" id="reqUpper"><i class="fas fa-circle" style="font-size:6px;"></i> 1 uppercase letter</div>
+                  <div class="pw-req" id="reqNum"><i class="fas fa-circle" style="font-size:6px;"></i> 1 number</div>
+                  <div class="pw-req" id="reqSpecial"><i class="fas fa-circle" style="font-size:6px;"></i> 1 special character</div>
+                </div>
+              </div>
+              <div class="field">
+                <label>Confirm New Password</label>
+                <div style="position:relative;">
+                  <input type="password" id="confirmPassword" required minlength="8" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" style="padding-right:40px;">
+                  <button type="button" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;" onclick="togglePwVis('confirmPassword',this)">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                </div>
+              </div>
+              <button type="submit" class="btn-primary" style="padding:0 20px;width:auto;">Update Password</button>
+            </form>
+          </div>
         </div>
+
+        <!-- Section 3: Preferences -->
+        <div class="profile-section">
+          <div class="profile-section-header">
+            <div class="profile-section-title">Preferences</div>
+          </div>
+          <div class="profile-section-body">
+            <div class="pref-row">
+              <div class="pref-row-label">
+                <strong>Dark Mode</strong>
+                <span>Toggle between dark and light theme</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="themePreference" onchange="if(this.checked){setTheme('dark');}else{setTheme('light');}">
+                <span class="toggle-slider-track"></span>
+              </label>
+            </div>
+            <div class="pref-row">
+              <div class="pref-row-label">
+                <strong>Email Notifications</strong>
+                <span>Receive updates and insights via email</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="emailNotifications" checked>
+                <span class="toggle-slider-track"></span>
+              </label>
+            </div>
+            <div class="pref-row" style="border-bottom:none;">
+              <div class="pref-row-label">
+                <strong>Display Currency</strong>
+                <span>Currency used for data display</span>
+              </div>
+              <select id="currencySelect" style="height:34px;padding:0 10px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;font-size:13px;outline:none;">
+                <option value="INR">&#x20B9; INR</option>
+                <option value="USD">$ USD</option>
+                <option value="EUR">&#x20AC; EUR</option>
+                <option value="GBP">&#xA3; GBP</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Danger Zone -->
+        <div class="profile-section">
+          <div class="profile-section-header">
+            <div class="profile-section-title" style="color:var(--accent-red);">Danger Zone</div>
+          </div>
+          <div class="profile-section-body">
+            <div class="danger-zone">
+              <h3>Delete Account</h3>
+              <p>Permanently delete your account and all data. This action cannot be undone.</p>
+              <button class="btn-danger" onclick="openModalById('deleteAccountModal')">Delete My Account</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/theme.js"></script>
-    <script src="js/header-profile.js"></script>
-    <script>
-        // Check auth on load
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!isAuthenticated()) {
-                window.location.href = 'index.html';
-                return;
-            }
-            loadProfileData();
+  <!-- Delete Account Modal -->
+  <div class="modal-overlay" id="deleteAccountModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>Delete Account</h3>
+        <button class="modal-close" onclick="closeModalById('deleteAccountModal')">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">This will permanently delete your account and all data. Type <strong style="color:var(--accent-red);font-family:'DM Mono',monospace;">DELETE</strong> to confirm.</p>
+        <div class="field">
+          <label>Confirmation</label>
+          <input type="text" id="deleteConfirmInput" placeholder="Type DELETE" oninput="document.getElementById('confirmDeleteBtn').disabled = this.value !== 'DELETE'">
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-ghost" onclick="closeModalById('deleteAccountModal')">Cancel</button>
+        <button class="btn-danger" id="confirmDeleteBtn" disabled onclick="deleteAccount()">Delete Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Forgot password modal -->
+  <div id="forgotPasswordModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>Reset Password</h3>
+        <button class="modal-close" onclick="closeModalById('forgotPasswordModal')">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="forgotPasswordForm">
+          <div class="field"><label>Email Address</label><input type="email" id="resetEmail" required placeholder="your@email.com"></div>
+          <button type="submit" class="btn-primary" style="width:100%;">Send Reset Link</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/header-profile.js"></script>
+  <script>
+    function closeModalById(id){const m=document.getElementById(id);if(m)m.classList.remove('open');}
+    function openModalById(id){const m=document.getElementById(id);if(m)m.classList.add('open');}
+    window.closeModal=closeModalById;
+    document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+    // Toggle password visibility
+    function togglePwVis(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+      }
+    }
+
+    // Password strength for profile page
+    function updatePwStrengthProfile(val) {
+      const segs = [document.getElementById('pwSeg1'), document.getElementById('pwSeg2'), document.getElementById('pwSeg3')];
+      const label = document.getElementById('pwStrengthLabel');
+      segs.forEach(s => { s.className = 'pw-seg'; });
+
+      const reqLen = document.getElementById('reqLen');
+      const reqUpper = document.getElementById('reqUpper');
+      const reqNum = document.getElementById('reqNum');
+      const reqSpecial = document.getElementById('reqSpecial');
+
+      const checks = {
+        len: val.length >= 8,
+        upper: /[A-Z]/.test(val),
+        num: /[0-9]/.test(val),
+        special: /[^A-Za-z0-9]/.test(val)
+      };
+
+      if (reqLen) reqLen.className = 'pw-req' + (checks.len ? ' met' : '');
+      if (reqUpper) reqUpper.className = 'pw-req' + (checks.upper ? ' met' : '');
+      if (reqNum) reqNum.className = 'pw-req' + (checks.num ? ' met' : '');
+      if (reqSpecial) reqSpecial.className = 'pw-req' + (checks.special ? ' met' : '');
+
+      const score = Object.values(checks).filter(Boolean).length;
+      if (!val) { if(label) label.textContent=''; return; }
+      if (score <= 1) {
+        segs[0].classList.add('filled-weak');
+        if(label){label.textContent='Weak';label.style.color='var(--accent-red)';}
+      } else if (score <= 2) {
+        segs[0].classList.add('filled-fair'); segs[1].classList.add('filled-fair');
+        if(label){label.textContent='Fair';label.style.color='var(--accent-amber)';}
+      } else {
+        segs.forEach(s=>s.classList.add('filled-strong'));
+        if(label){label.textContent='Strong';label.style.color='var(--accent-green)';}
+      }
+    }
+
+    // Load profile data
+    function loadProfileData() {
+      const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+      if (!userStr) return;
+      const user = JSON.parse(userStr);
+
+      document.getElementById('profileName').value = user.name || '';
+      document.getElementById('profileEmail').value = user.email || '';
+      document.getElementById('profileDisplayName').textContent = user.name || 'User';
+      document.getElementById('profileDisplayEmail').textContent = user.email || '';
+      document.getElementById('resetEmail').value = user.email || '';
+
+      // Initials
+      const name = user.name || 'U';
+      const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      document.getElementById('profileInitials').textContent = initials;
+      if (document.getElementById('navAvatarInitials')) {
+        document.getElementById('navAvatarInitials').textContent = initials;
+      }
+
+      // Profile photo
+      if (user.profile_image) {
+        const img = document.getElementById('profilePhoto');
+        img.src = user.profile_image;
+        img.style.display = 'block';
+        document.getElementById('profileInitials').style.display = 'none';
+      }
+
+      // Theme preference toggle
+      const currentTheme = localStorage.getItem('dataxpert_theme') || 'dark';
+      document.getElementById('themePreference').checked = currentTheme === 'dark';
+
+      // Detect Google user
+      const isGoogleUser = user.auth_provider === 'google' || user.google_id !== null;
+      if (isGoogleUser) {
+        document.getElementById('googleAuthNotice').style.display = 'flex';
+        document.getElementById('changePasswordForm').style.display = 'none';
+        document.getElementById('authMethodBadge').innerHTML =
+          '<svg width="10" height="10" viewBox="0 0 24 24">' +
+            '<path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>' +
+            '<path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>' +
+            '<path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>' +
+            '<path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>' +
+          '</svg>' +
+          '<span>Google account</span>';
+      }
+    }
+
+    // Update name form
+    document.getElementById('updateNameForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('profileName').value.trim();
+      const email = document.getElementById('profileEmail').value.trim();
+      const btn = e.target.querySelector('button[type="submit"]');
+      const orig = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Saving...';
+      try {
+        const res = await fetch(API_ENDPOINTS.USER_PROFILE, {
+          method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify({ name, email })
         });
+        const data = await res.json();
+        if (data.success) {
+          const user = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER));
+          user.name = name; if(email) user.email = email;
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+          loadProfileData();
+          if (typeof loadHeaderProfile === 'function') loadHeaderProfile();
+          showToast('Profile updated successfully', 'success');
+        } else { showToast(data.message || 'Failed to update', 'error'); }
+      } catch(err) { showToast('Error updating profile', 'error'); }
+      btn.disabled = false; btn.textContent = orig;
+    });
 
-        // Load profile data
-        function loadProfileData() {
-            const userStr = localStorage.getItem(STORAGE_KEYS.USER);
-            if (!userStr) return;
-            
-            const user = JSON.parse(userStr);
-            document.getElementById('profileName').value = user.name || '';
-            document.getElementById('resetEmail').value = user.email || '';
-            
-            // Load profile photo
-            const photoEl = document.getElementById('profilePhoto');
-            if (user.profile_image) {
-                photoEl.src = user.profile_image;
-            } else {
-                photoEl.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23667eea"/><text x="50" y="60" text-anchor="middle" fill="white" font-size="40">' + (user.name ? user.name[0].toUpperCase() : 'U') + '</text></svg>';
-            }
-        }
-
-        // Update name form
-        document.getElementById('updateNameForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('profileName').value;
-            const btn = e.target.querySelector('button[type="submit"]');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-            
-            try {
-                const response = await fetch(`${API_ENDPOINTS.USER_PROFILE}`, {
-                    method: 'PUT',
-                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name })
-                });
-                
-                const result = await response.json();
-                if (result.success) {
-                    // Update localStorage
-                    const user = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER));
-                    user.name = name;
-                    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-                    loadHeaderProfile();
-                    showMessage('Name updated successfully!', 'success');
-                } else {
-                    showMessage(result.message || 'Failed to update name', 'error');
-                }
-            } catch (err) {
-                showMessage('Error updating name', 'error');
-            }
-            
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-save"></i> Save Name';
+    // Change password form
+    document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const current = document.getElementById('currentPassword').value;
+      const newPw = document.getElementById('newPassword').value;
+      const confirm = document.getElementById('confirmPassword').value;
+      if (newPw !== confirm) { showToast('Passwords do not match', 'error'); return; }
+      const btn = e.target.querySelector('button[type="submit"]');
+      const orig = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Updating...';
+      try {
+        const res = await fetch(API_ENDPOINTS.CHANGE_PASSWORD, {
+          method: 'POST', headers: getAuthHeaders(),
+          body: JSON.stringify({ current_password: current, new_password: newPw })
         });
+        const data = await res.json();
+        if (data.success) { showToast('Password updated successfully', 'success'); e.target.reset(); }
+        else { showToast(data.message || 'Failed to update password', 'error'); }
+      } catch(err) { showToast('Error updating password', 'error'); }
+      btn.disabled = false; btn.textContent = orig;
+    });
 
-        // Change password form
-        document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const currentPassword = document.getElementById('currentPassword').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            
-            if (newPassword !== confirmPassword) {
-                showMessage('Passwords do not match', 'error');
-                return;
-            }
-            
-            const btn = e.target.querySelector('button[type="submit"]');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
-            
-            try {
-                const response = await fetch(`${API_ENDPOINTS.CHANGE_PASSWORD}`, {
-                    method: 'POST',
-                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
-                });
-                
-                const result = await response.json();
-                if (result.success) {
-                    showMessage('Password updated successfully!', 'success');
-                    e.target.reset();
-                } else {
-                    showMessage(result.message || 'Failed to update password', 'error');
-                }
-            } catch (err) {
-                showMessage('Error updating password', 'error');
-            }
-            
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-key"></i> Update Password';
+    // Profile image upload
+    document.getElementById('profileImageInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        document.getElementById('profilePhoto').src = ev.target.result;
+        document.getElementById('profilePhoto').style.display = 'block';
+        document.getElementById('profileInitials').style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+      const formData = new FormData();
+      formData.append('profile_image', file);
+      try {
+        const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+        const res = await fetch(API_ENDPOINTS.UPLOAD_PROFILE_IMAGE, {
+          method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: formData
         });
+        const data = await res.json();
+        if (data.success && data.profile_image) {
+          const user = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER));
+          user.profile_image = data.profile_image;
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+          if (typeof loadHeaderProfile === 'function') loadHeaderProfile();
+          showToast('Photo updated!', 'success');
+        } else { showToast(data.message || 'Failed to upload photo', 'error'); }
+      } catch(err) { showToast('Error uploading photo', 'error'); }
+    });
 
-        // Profile photo upload
-        document.getElementById('profileImageInput').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            // Preview immediately
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                document.getElementById('profilePhoto').src = event.target.result;
-            };
-            reader.readAsDataURL(file);
-            
-            // Upload to server
-            const formData = new FormData();
-            formData.append('profile_image', file);
-            
-            try {
-                const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-                const response = await fetch(`${API_ENDPOINTS.UPLOAD_PROFILE_IMAGE}`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
-                });
-                
-                const result = await response.json();
-                if (result.success && result.profile_image) {
-                    const user = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER));
-                    user.profile_image = result.profile_image;
-                    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-                    loadHeaderProfile();
-                    showMessage('Photo updated!', 'success');
-                } else {
-                    showMessage(result.message || 'Failed to upload photo', 'error');
-                }
-            } catch (err) {
-                showMessage('Error uploading photo', 'error');
-            }
+    // Delete account
+    async function deleteAccount() {
+      try {
+        const res = await fetch(API_ENDPOINTS.BASE + '/auth/delete-account', {
+          method: 'DELETE', headers: getAuthHeaders()
         });
+        const data = await res.json();
+        if (data.success) {
+          localStorage.clear(); sessionStorage.clear();
+          window.location.href = 'index.html';
+        } else { showToast(data.message || 'Failed to delete account', 'error'); }
+      } catch(err) { showToast('Error deleting account', 'error'); }
+    }
 
-        // Toggle password visibility
-        function togglePasswordVisibility(inputId) {
-            const input = document.getElementById(inputId);
-            const icon = input.nextElementSibling?.querySelector('i') || input.parentElement.querySelector('.toggle-password i');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.replace('fa-eye', 'fa-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.replace('fa-eye-slash', 'fa-eye');
-            }
-        }
-
-        // Forgot password modal
-        function openForgotPasswordModal() {
-            document.getElementById('forgotPasswordModal').style.display = 'block';
-        }
-        
-        function closeForgotPasswordModal() {
-            document.getElementById('forgotPasswordModal').style.display = 'none';
-        }
-
-        document.getElementById('forgotPasswordForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('resetEmail').value;
-            const btn = e.target.querySelector('button[type="submit"]');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-            
-            try {
-                const response = await fetch(`${API_BASE_URL}/forgot-password`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-                
-                showMessage('If your email exists, you will receive a reset link', 'success');
-                closeForgotPasswordModal();
-            } catch (err) {
-                showMessage('Error sending reset link', 'error');
-            }
-            
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Reset Link';
+    // Forgot password
+    document.getElementById('forgotPasswordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('resetEmail').value;
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.disabled = true; btn.textContent = 'Sending...';
+      try {
+        await fetch(API_ENDPOINTS.BASE + '/auth/forgot-password', {
+          method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email})
         });
+        showToast('If your email exists, a reset link was sent', 'success');
+        closeModalById('forgotPasswordModal');
+      } catch(err) { showToast('Error sending reset link', 'error'); }
+      btn.disabled = false; btn.textContent = 'Send Reset Link';
+    });
 
-        // Search modal
-        function openSearchModal() {
-            document.getElementById('searchModal').classList.add('active');
-            document.getElementById('searchInput').focus();
-        }
-        
-        function closeSearchModal() {
-            document.getElementById('searchModal').classList.remove('active');
-        }
-        
-        document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                openSearchModal();
-            }
-            if (e.key === 'Escape') closeSearchModal();
-        });
-        
-        document.getElementById('searchModal').addEventListener('click', (e) => {
-            if (e.target.classList.contains('search-modal')) closeSearchModal();
-        });
+    // Legacy functions
+    window.openForgotPasswordModal = () => openModalById('forgotPasswordModal');
+    window.closeForgotPasswordModal = () => closeModalById('forgotPasswordModal');
+    window.showMessage = (msg, type) => showToast(msg, type);
 
-        // Message display
-        function showMessage(msg, type) {
-            const existing = document.querySelector('.toast-message');
-            if (existing) existing.remove();
-            
-            const toast = document.createElement('div');
-            toast.className = `toast-message toast-${type}`;
-            toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${msg}`;
-            toast.style.cssText = 'position:fixed;top:20px;right:20px;padding:15px 25px;border-radius:8px;z-index:9999;animation:slideIn .3s ease;';
-            toast.style.background = type === 'success' ? '#10b981' : '#ef4444';
-            toast.style.color = 'white';
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-
-        // Menu toggle
-        document.getElementById('menuToggle').addEventListener('click', () => {
-            document.querySelector('.sidebar').classList.toggle('active');
-        });
-    </script>
-
-    <style>
-        .profile-simple-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            max-width: 1000px;
-        }
-
-        .profile-photo-card {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px;
-        }
-
-        .profile-photo-center {
-            text-align: center;
-        }
-
-        .profile-photo-wrapper-large {
-            position: relative;
-            width: 150px;
-            height: 150px;
-            margin: 0 auto;
-            border-radius: 50%;
-            overflow: hidden;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .profile-photo-large {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .photo-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.6);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            transition: opacity .3s;
-            color: white;
-        }
-
-        .profile-photo-wrapper-large:hover .photo-overlay {
-            opacity: 1;
-        }
-
-        .photo-overlay i {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        .photo-overlay span {
-            font-size: 12px;
-        }
-
-        .photo-hint {
-            margin-top: 15px;
-            color: var(--text-secondary);
-            font-size: 13px;
-        }
-
-        .simple-form {
-            padding: 20px;
-        }
-
-        .simple-form .form-group {
-            margin-bottom: 20px;
-        }
-
-        .simple-form label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-
-        .simple-form input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color .2s, box-shadow .2s;
-        }
-
-        .simple-form input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .password-input-wrapper {
-            position: relative;
-        }
-
-        .password-input-wrapper input {
-            padding-right: 45px;
-        }
-
-        .toggle-password {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-        }
-
-        .forgot-password-link {
-            text-align: center;
-            padding: 15px;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .forgot-password-link a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        .forgot-password-link a:hover {
-            text-decoration: underline;
-        }
-
-        .btn-full {
-            width: 100%;
-        }
-
-        .btn-blue {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .btn-blue:hover {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        }
-
-        /* Header profile styles */
-        .header-profile {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .user-details {
-            display: flex;
-            flex-direction: column;
-            line-height: 1.2;
-        }
-
-        .user-name {
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .user-email {
-            font-size: 11px;
-            color: var(--text-secondary);
-            opacity: 0.8;
-        }
-
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        @media (max-width: 768px) {
-            .user-details {
-                display: none;
-            }
-        }
-    </style>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!isAuthenticated()) { window.location.href = 'index.html'; return; }
+      loadProfileData();
+    });
+  </script>
 </body>
 </html>
