@@ -238,20 +238,48 @@ async function loadChatHistory() {
 // ─────────────────────────────────────────────
 // 7. loadMiniMetrics
 // ─────────────────────────────────────────────
-function loadMiniMetrics() {
+async function loadMiniMetrics() {
     let stats = null;
 
+    // Try to get from cache first
     if (typeof DataCache !== 'undefined' && DataCache.get) {
         const cached = DataCache.get();
         if (cached && cached.stats) stats = cached.stats;
         else if (cached) stats = cached;
     }
 
+    // If not in cache, try sessionStorage
     if (!stats) {
         try {
-            const raw = sessionStorage.getItem('dataxpert_stats_cache');
-            if (raw) stats = JSON.parse(raw);
+            const raw = sessionStorage.getItem('dx_cache');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.data && parsed.data.stats) stats = parsed.data.stats;
+                else if (parsed && parsed.data) stats = parsed.data;
+            }
         } catch (_) {}
+    }
+
+    // If still no stats, fetch from API
+    if (!stats) {
+        try {
+            const response = await fetch(API_ENDPOINTS.DASHBOARD_STATS, { 
+                method: 'GET', 
+                headers: getAuthHeaders() 
+            });
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.stats) {
+                    stats = result.stats;
+                    // Cache it for future use
+                    if (typeof DataCache !== 'undefined') {
+                        DataCache.set({ stats });
+                    }
+                }
+            }
+        } catch (err) {
+            console.warn('Could not load stats:', err);
+        }
     }
 
     if (!stats) return;
@@ -389,6 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // Load stats asynchronously
     loadMiniMetrics();
     setupSuggestionChips();
 

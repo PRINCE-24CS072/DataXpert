@@ -432,6 +432,32 @@ def add_business_data(current_user):
     except Exception as e:
         return jsonify({'message': f'Add data error: {str(e)}', 'success': False}), 500
 
+@app.route('/api/business/data/<data_id>', methods=['PUT'])
+@token_required
+def update_business_data(current_user, data_id):
+    """Update existing business data entry"""
+    try:
+        data = request.get_json()
+        
+        # Don't allow changing user_id
+        if 'user_id' in data:
+            del data['user_id']
+        
+        result = db_client.update_business_data(current_user['id'], data_id, data)
+        return jsonify(result), 200 if result['success'] else 400
+    except Exception as e:
+        return jsonify({'message': f'Update data error: {str(e)}', 'success': False}), 500
+
+@app.route('/api/business/data/<data_id>', methods=['DELETE'])
+@token_required
+def delete_business_data(current_user, data_id):
+    """Delete a business data entry"""
+    try:
+        result = db_client.delete_business_data(current_user['id'], data_id)
+        return jsonify(result), 200 if result['success'] else 400
+    except Exception as e:
+        return jsonify({'message': f'Delete data error: {str(e)}', 'success': False}), 500
+
 @app.route('/api/business/summary', methods=['GET'])
 @token_required
 def get_business_summary(current_user):
@@ -996,14 +1022,26 @@ def get_analysis_results(current_user, chat_id):
 @app.route('/api/dashboard/stats', methods=['GET'])
 @token_required
 def get_dashboard_stats(current_user):
-    """Get dashboard statistics"""
+    """Get dashboard statistics - optimized single call"""
     try:
+        # Get all business data at once
+        business_data = db_client.get_user_business_data(current_user['id'])
+        
+        # Calculate all metrics from single dataset
+        total_sales = sum(item.get('sales', 0) for item in business_data)
+        total_profit = sum(item.get('profit', 0) for item in business_data)
+        total_expenses = sum(item.get('expenses', 0) for item in business_data)
+        data_count = len(business_data)
+        
+        # Get recent data (already fetched)
+        recent_data = business_data[:10] if business_data else []
+        
         stats = {
-            'total_sales': db_client.get_total_sales(current_user['id']),
-            'total_profit': db_client.get_total_profit(current_user['id']),
-            'total_expenses': db_client.get_total_expenses(current_user['id']),
-            'data_count': db_client.get_data_count(current_user['id']),
-            'recent_data': db_client.get_recent_business_data(current_user['id'], limit=10)
+            'total_sales': total_sales,
+            'total_profit': total_profit,
+            'total_expenses': total_expenses,
+            'data_count': data_count,
+            'recent_data': recent_data
         }
         
         return jsonify({
@@ -1011,23 +1049,36 @@ def get_dashboard_stats(current_user):
             'stats': stats
         }), 200
     except Exception as e:
-        return jsonify({'message': f'Error fetching stats: {str(e)}', 'success': False}), 500
+        return jsonify({
+            'success': False,
+            'message': f'Error fetching stats: {str(e)}',
+            'stats': {
+                'total_sales': 0,
+                'total_profit': 0,
+                'total_expenses': 0,
+                'data_count': 0,
+                'recent_data': []
+            }
+        }), 500
 
 @app.route('/api/dashboard/charts', methods=['GET'])
 @token_required
 def get_chart_data(current_user):
     """Get data for dashboard charts"""
     try:
-        chart_data = analysis_engine.prepare_chart_data(
-            db_client.get_user_business_data(current_user['id'])
-        )
+        business_data = db_client.get_user_business_data(current_user['id'])
+        chart_data = analysis_engine.prepare_chart_data(business_data)
         
         return jsonify({
             'success': True,
             'charts': chart_data
         }), 200
     except Exception as e:
-        return jsonify({'message': f'Error fetching chart data: {str(e)}', 'success': False}), 500
+        return jsonify({
+            'success': False,
+            'message': f'Error fetching chart data: {str(e)}',
+            'charts': {}
+        }), 500
 
 # ==================== HEALTH CHECK ====================
 

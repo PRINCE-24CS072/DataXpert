@@ -632,11 +632,13 @@ async function editRow(id) {
         const row = result.data || result;
 
         const set = (elId, val) => { const el = document.getElementById(elId); if (el) el.value = val || ''; };
-        set('dataDate',        (row.date || '').split('T')[0]);
-        set('dataType',        row.type        || row.data_type || '');
-        set('dataAmount',      row.amount      || '');
-        set('dataCategory',    row.category    || '');
-        set('dataDescription', row.description || row.notes || '');
+        
+        // Map database fields to form field IDs
+        set('recordDate',   (row.record_date || row.date || '').split('T')[0]);
+        set('category',     row.category || '');
+        set('sales',        row.sales || '');
+        set('expenses',     row.expenses || '');
+        set('profit',       row.profit || '');
 
         const form = document.getElementById('addDataForm');
         if (form) {
@@ -644,7 +646,7 @@ async function editRow(id) {
             const btn = form.querySelector('button[type="submit"]');
             if (btn) btn.textContent = 'Update Entry';
         }
-        const title = document.querySelector('#addDataModal .modal-title');
+        const title = document.querySelector('#addDataModal .modal-head h3');
         if (title) title.textContent = 'Edit Entry';
 
         if (typeof openModal  === 'function') openModal('addDataModal');
@@ -675,6 +677,24 @@ async function deleteRow(id) {
 function setupAddDataForm() {
     const form = document.getElementById('addDataForm');
     if (form) form.addEventListener('submit', handleAddData);
+    
+    // Setup profit auto-calculation
+    const salesInput = document.getElementById('sales');
+    const expensesInput = document.getElementById('expenses');
+    const profitInput = document.getElementById('profit');
+    
+    const updateProfit = () => {
+        const sales = parseFloat(salesInput?.value || 0);
+        const expenses = parseFloat(expensesInput?.value || 0);
+        if (profitInput && !isNaN(sales) && !isNaN(expenses)) {
+            profitInput.value = (sales - expenses).toFixed(2);
+        }
+    };
+    
+    if (salesInput) salesInput.addEventListener('change', updateProfit);
+    if (salesInput) salesInput.addEventListener('input', updateProfit);
+    if (expensesInput) expensesInput.addEventListener('change', updateProfit);
+    if (expensesInput) expensesInput.addEventListener('input', updateProfit);
 }
 
 async function handleAddData(e) {
@@ -683,19 +703,30 @@ async function handleAddData(e) {
     if (!form) return;
 
     const get = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    const getNum = id => parseFloat(get(id)) || 0;
 
-    const date        = get('dataDate');
-    const type        = get('dataType');
-    const amountStr   = get('dataAmount');
-    const category    = get('dataCategory');
-    const description = get('dataDescription');
-    const amount      = parseFloat(amountStr);
+    const date        = get('recordDate');
+    const category    = get('category');
+    const sales       = getNum('sales');
+    const expenses    = getNum('expenses');
+    const profit      = getNum('profit') || (sales - expenses);
 
     if (!date)                      { if (typeof showToast === 'function') showToast('Please select a date.', 'warning');  return; }
-    if (!type)                      { if (typeof showToast === 'function') showToast('Please select a type.', 'warning');  return; }
-    if (isNaN(amount) || amount <= 0) { if (typeof showToast === 'function') showToast('Amount must be a positive number.', 'warning'); return; }
+    if (isNaN(sales) || sales < 0)  { if (typeof showToast === 'function') showToast('Sales must be a valid number.', 'warning'); return; }
+    if (isNaN(expenses) || expenses < 0) { if (typeof showToast === 'function') showToast('Expenses must be a valid number.', 'warning'); return; }
 
-    const payload  = { date, type, amount, category, description };
+    // Recalculate profit
+    const calculatedProfit = sales - expenses;
+
+    const payload = { 
+        record_date: date, 
+        date: date,
+        category, 
+        sales, 
+        expenses, 
+        profit: calculatedProfit 
+    };
+    
     const editId   = form.dataset.editId;
     const isEdit   = !!editId;
     const url      = isEdit ? `${API_ENDPOINTS.BUSINESS_DATA}/${editId}` : API_ENDPOINTS.BUSINESS_DATA;
@@ -719,7 +750,7 @@ async function handleAddData(e) {
     } catch (err) {
         if (typeof showToast === 'function') showToast(err.message || 'Failed to save.', 'error');
     } finally {
-        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = isEdit ? 'Update Entry' : 'Add Entry'; }
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = isEdit ? 'Update Entry' : 'Add Data'; }
     }
 }
 
@@ -729,9 +760,9 @@ function resetAddDataForm() {
     form.reset();
     delete form.dataset.editId;
     const btn   = form.querySelector('button[type="submit"]');
-    const title = document.querySelector('#addDataModal .modal-title');
-    if (btn)   btn.textContent   = 'Add Entry';
-    if (title) title.textContent = 'Add Data';
+    const title = document.querySelector('#addDataModal .modal-head h3');
+    if (btn)   btn.textContent   = 'Add Data';
+    if (title) title.textContent = 'Add Business Data';
 }
 
 // =============================================================

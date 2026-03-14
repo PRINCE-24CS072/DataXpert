@@ -551,9 +551,9 @@ class AnalysisEngine:
         """Prepare data for charts - handles empty data gracefully"""
         if not business_data:
             return {
-                'sales': {'labels': [], 'datasets': []},
-                'profitExpense': {'labels': [], 'datasets': []},
-                'category': {'labels': [], 'datasets': []}
+                'sales_trend': {'labels': [], 'values': []},
+                'profit_expense': {'labels': [], 'profit': [], 'expenses': []},
+                'categories': {'labels': [], 'values': []}
             }
         
         df = pd.DataFrame(business_data)
@@ -568,87 +568,65 @@ class AnalysisEngine:
                 return 0
             return val
         
-        # Sales over time
-        sales_data = []
-        labels = []
+        # Sales trend over time (up to 20 recent entries)
+        sales_labels = []
+        sales_values = []
         for i, item in enumerate(business_data[:20]):
-            labels.append(str(item.get('record_date', f"Entry {i}")))
-            sales_data.append(to_native(item.get('sales', 0)))
+            try:
+                date_str = str(item.get('record_date', item.get('date', f"Entry {i}")))
+                # Format date nicely if it's a full ISO date
+                if 'T' in date_str:
+                    date_str = date_str.split('T')[0]
+                sales_labels.append(date_str)
+                sales_values.append(to_native(item.get('sales', 0)))
+            except:
+                pass
         
-        sales_chart = {
-            'labels': labels,
-            'datasets': [{
-                'label': 'Sales',
-                'data': sales_data,
-                'borderColor': 'rgb(75, 192, 192)',
-                'backgroundColor': 'rgba(75, 192, 192, 0.2)'
-            }]
+        sales_trend = {
+            'labels': sales_labels,
+            'values': sales_values
         }
         
         # Profit vs Expenses
-        profit_data = [to_native(item.get('profit', 0)) for item in business_data[:20]]
-        expenses_data = [to_native(item.get('expenses', 0)) for item in business_data[:20]]
+        profit_labels = []
+        profit_data = []
+        expenses_data = []
+        for i, item in enumerate(business_data[:20]):
+            try:
+                date_str = str(item.get('record_date', item.get('date', f"Entry {i}")))
+                if 'T' in date_str:
+                    date_str = date_str.split('T')[0]
+                profit_labels.append(date_str)
+                profit_data.append(to_native(item.get('profit', 0)))
+                expenses_data.append(to_native(item.get('expenses', 0)))
+            except:
+                pass
         
-        profit_expense_chart = {
-            'labels': labels,
-            'datasets': [
-                {
-                    'label': 'Profit',
-                    'data': profit_data,
-                    'borderColor': 'rgb(54, 162, 235)',
-                    'backgroundColor': 'rgba(54, 162, 235, 0.2)'
-                },
-                {
-                    'label': 'Expenses',
-                    'data': expenses_data,
-                    'borderColor': 'rgb(255, 99, 132)',
-                    'backgroundColor': 'rgba(255, 99, 132, 0.2)'
-                }
-            ]
+        profit_expense = {
+            'labels': profit_labels,
+            'profit': profit_data,
+            'expenses': expenses_data
         }
         
         # Category breakdown (if available)
-        category_chart = {'labels': [], 'datasets': []}
+        categories = {'labels': [], 'values': []}
         if 'category' in df.columns:
             # Filter out None/NaN categories and group
             df_with_category = df[df['category'].notna() & (df['category'] != '')]
             if len(df_with_category) > 0:
-                category_sales = df_with_category.groupby('category')['sales'].sum()
-                
-                # Dynamic color palette for any number of categories
-                base_colors = [
-                    'rgba(255, 99, 132, 0.8)',   # Red
-                    'rgba(54, 162, 235, 0.8)',   # Blue
-                    'rgba(255, 206, 86, 0.8)',   # Yellow
-                    'rgba(75, 192, 192, 0.8)',   # Teal
-                    'rgba(153, 102, 255, 0.8)', # Purple
-                    'rgba(255, 159, 64, 0.8)',   # Orange
-                    'rgba(99, 102, 241, 0.8)',   # Indigo
-                    'rgba(16, 185, 129, 0.8)',   # Green
-                    'rgba(236, 72, 153, 0.8)',   # Pink
-                    'rgba(245, 158, 11, 0.8)',   # Amber
-                    'rgba(59, 130, 246, 0.8)',   # Sky Blue
-                    'rgba(168, 85, 247, 0.8)',   # Violet
-                ]
-                
-                # Generate enough colors for all categories
-                num_categories = len(category_sales)
-                colors = []
-                for i in range(num_categories):
-                    colors.append(base_colors[i % len(base_colors)])
-                
-                category_chart = {
-                    'labels': [str(label) for label in category_sales.index.tolist()],
-                    'datasets': [{
-                        'data': [to_native(val) for val in category_sales.values.tolist()],
-                        'backgroundColor': colors
-                    }]
-                }
+                try:
+                    category_sales = df_with_category.groupby('category')['sales'].sum()
+                    categories = {
+                        'labels': [str(label) for label in category_sales.index.tolist()],
+                        'values': [to_native(val) for val in category_sales.values.tolist()]
+                    }
+                except:
+                    pass
         
         return {
-            'sales': sales_chart,
-            'profitExpense': profit_expense_chart,
-            'category': category_chart
+            'sales_trend': sales_trend,
+            'profit_expense': profit_expense,
+            'categories': categories
         }
     
     def generate_custom_chart(self, df, chart_type, x_field, y_fields, group_by=None):

@@ -170,25 +170,109 @@ class SupabaseClient:
         except Exception as e:
             return {}
     
+    def get_dashboard_summary(self, user_id):
+        """Get dashboard summary - optimized to fetch data once (no N+1 queries)"""
+        try:
+            data = self.get_user_business_data(user_id)
+            
+            total_sales = sum(item.get('sales', 0) for item in data)
+            total_expenses = sum(item.get('expenses', 0) for item in data)
+            total_profit = sum(item.get('profit', 0) for item in data)
+            
+            # Calculate changes (simplified - can be enhanced with date ranges)
+            changes = {
+                'sales': 0.0,
+                'profit': 0.0,
+                'expenses': 0.0,
+                'count': 0.0
+            }
+            
+            return {
+                'total_sales': total_sales,
+                'total_expenses': total_expenses,
+                'total_profit': total_profit,
+                'data_count': len(data),
+                'recent_data': data[:10] if data else []
+            }
+        except Exception as e:
+            return {
+                'total_sales': 0,
+                'total_expenses': 0,
+                'total_profit': 0,
+                'data_count': 0,
+                'recent_data': []
+            }
+    
     def get_total_sales(self, user_id):
         """Get total sales"""
-        data = self.get_user_business_data(user_id)
-        return sum(item.get('sales', 0) for item in data)
+        try:
+            data = self.get_user_business_data(user_id)
+            return sum(item.get('sales', 0) for item in data)
+        except Exception:
+            return 0
     
     def get_total_profit(self, user_id):
         """Get total profit"""
-        data = self.get_user_business_data(user_id)
-        return sum(item.get('profit', 0) for item in data)
+        try:
+            data = self.get_user_business_data(user_id)
+            return sum(item.get('profit', 0) for item in data)
+        except Exception:
+            return 0
     
     def get_total_expenses(self, user_id):
         """Get total expenses"""
-        data = self.get_user_business_data(user_id)
-        return sum(item.get('expenses', 0) for item in data)
+        try:
+            data = self.get_user_business_data(user_id)
+            return sum(item.get('expenses', 0) for item in data)
+        except Exception:
+            return 0
     
     def get_data_count(self, user_id):
         """Get count of business data entries"""
-        data = self.get_user_business_data(user_id)
-        return len(data)
+        try:
+            data = self.get_user_business_data(user_id)
+            return len(data)
+        except Exception:
+            return 0
+    
+    def update_business_data(self, user_id, data_id, data):
+        """Update a business data entry"""
+        try:
+            response = self.supabase.table('business_data')\
+                .update(data)\
+                .eq('id', data_id)\
+                .eq('user_id', user_id)\
+                .execute()
+            
+            if response.data and len(response.data) > 0:
+                return {'success': True, 'data': response.data[0]}
+            return {'success': False, 'message': 'Failed to update entry'}
+        except Exception as e:
+            return {'success': False, 'message': f'Error updating data: {str(e)}'}
+    
+    def delete_business_data(self, user_id, data_id):
+        """Delete a business data entry"""
+        try:
+            # First verify ownership
+            response = self.supabase.table('business_data')\
+                .select('id')\
+                .eq('id', data_id)\
+                .eq('user_id', user_id)\
+                .execute()
+            
+            if not response.data:
+                return {'success': False, 'message': 'Entry not found or permission denied'}
+            
+            # Delete the entry
+            delete_response = self.supabase.table('business_data')\
+                .delete()\
+                .eq('id', data_id)\
+                .eq('user_id', user_id)\
+                .execute()
+            
+            return {'success': True, 'message': 'Entry deleted'}
+        except Exception as e:
+            return {'success': False, 'message': f'Error deleting data: {str(e)}'}
     
     # ==================== CHAT OPERATIONS ====================
     
