@@ -27,14 +27,11 @@
       <a href="docs.html" class="nav-link">Documentation</a>
     </div>
     <div class="nav-right">
-      <button class="nav-icon-btn" id="notificationBtn" title="Notifications">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-        <span class="notif-dot"></span>
-      </button>
       <button class="theme-toggle" id="themeToggle" title="Toggle theme">
         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" id="themeIcon"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
       </button>
       <div class="nav-avatar-wrap" id="avatarWrap">
+        <span class="nav-username" id="navUsername" style="font-size:14px;color:var(--text-secondary);margin-right:12px;font-weight:500;">User</span>
         <div class="nav-avatar" id="navAvatar">
           <img id="navAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
           <span id="navAvatarInitials">U</span>
@@ -181,13 +178,24 @@
       </div>
       <div class="chart-card">
         <div class="chart-card-header">
-          <span class="chart-card-title">Recent Entries</span>
+          <span class="chart-card-title">Recent Activity</span>
         </div>
-        <div id="recentData">
-          <div class="empty-state" style="padding:30px;">
-            <i class="fas fa-chart-line" style="font-size:28px;"></i>
-            <p>No recent data</p>
-          </div>
+        <div class="chart-card-body" style="padding:0;overflow:auto;max-height:280px;">
+          <table class="data-table" style="width:100%;font-size:12px;">
+            <thead style="position:sticky;top:0;background:var(--bg-surface);z-index:1;">
+              <tr>
+                <th style="padding:10px;text-align:left;border-bottom:1px solid var(--border-subtle);">Date</th>
+                <th style="padding:10px;text-align:left;border-bottom:1px solid var(--border-subtle);">Type</th>
+                <th style="padding:10px;text-align:right;border-bottom:1px solid var(--border-subtle);">Amount</th>
+                <th style="padding:10px;text-align:left;border-bottom:1px solid var(--border-subtle);">Category</th>
+                <th style="padding:10px;text-align:left;border-bottom:1px solid var(--border-subtle);">Description</th>
+                <th style="padding:10px;text-align:center;border-bottom:1px solid var(--border-subtle);">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="recentData">
+              <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">Loading recent activity...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -205,24 +213,36 @@
       <div class="compare-selectors">
         <div class="compare-period">
           <label>Period A</label>
-          <select class="field" id="periodAType" style="height:36px;padding:0 10px;width:100%;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;font-size:13px;outline:none;">
-            <option value="month">Month</option>
-            <option value="quarter">Quarter</option>
-            <option value="year">Year</option>
-            <option value="custom">Custom</option>
+          <select class="field" id="periodAType" onchange="updateComparePeriodInputs('A', this.value)" style="height:36px;padding:0 10px;width:100%;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;font-size:13px;outline:none;">
+            <option value="this-month">This Month</option>
+            <option value="last-month">Last Month</option>
+            <option value="this-quarter">This Quarter</option>
+            <option value="last-quarter">Last Quarter</option>
+            <option value="this-year">This Year</option>
+            <option value="last-year">Last Year</option>
+            <option value="custom">Custom Range</option>
           </select>
-          <div id="periodAInputs" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
+          <div id="periodAInputs" style="margin-top:8px;display:none;flex-direction:column;gap:6px;">
+            <input type="date" id="periodAFrom" placeholder="From" style="height:36px;padding:0 10px;width:100%;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;font-size:13px;">
+            <input type="date" id="periodATo" placeholder="To" style="height:36px;padding:0 10px;width:100%;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;font-size:13px;">
+          </div>
         </div>
         <div class="compare-vs">VS</div>
         <div class="compare-period">
           <label>Period B</label>
-          <select class="field" id="periodBType" style="height:36px;padding:0 10px;width:100%;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;font-size:13px;outline:none;">
-            <option value="month">Month</option>
-            <option value="quarter">Quarter</option>
-            <option value="year">Year</option>
-            <option value="custom">Custom</option>
+          <select class="field" id="periodBType" onchange="updateComparePeriodInputs('B', this.value)" style="height:36px;padding:0 10px;width:100%;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;font-size:13px;outline:none;">
+            <option value="this-month">This Month</option>
+            <option value="last-month" selected>Last Month</option>
+            <option value="this-quarter">This Quarter</option>
+            <option value="last-quarter">Last Quarter</option>
+            <option value="this-year">This Year</option>
+            <option value="last-year">Last Year</option>
+            <option value="custom">Custom Range</option>
           </select>
-          <div id="periodBInputs" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
+          <div id="periodBInputs" style="margin-top:8px;display:none;flex-direction:column;gap:6px;">
+            <input type="date" id="periodBFrom" placeholder="From" style="height:36px;padding:0 10px;width:100%;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;font-size:13px;">
+            <input type="date" id="periodBTo" placeholder="To" style="height:36px;padding:0 10px;width:100%;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;font-size:13px;">
+          </div>
         </div>
       </div>
       <button class="btn-action primary" style="width:100%;height:38px;justify-content:center;margin-bottom:20px;" onclick="runComparison()">

@@ -25,14 +25,11 @@
       <a href="docs.html" class="nav-link">Documentation</a>
     </div>
     <div class="nav-right">
-      <button class="nav-icon-btn" id="notificationBtn" title="Notifications">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-        <span class="notif-dot"></span>
-      </button>
       <button class="theme-toggle" id="themeToggle" title="Toggle theme">
         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" id="themeIcon"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
       </button>
       <div class="nav-avatar-wrap" id="avatarWrap">
+        <span class="nav-username" id="navUsername" style="font-size:14px;color:var(--text-secondary);margin-right:12px;font-weight:500;">User</span>
         <div class="nav-avatar" id="navAvatar">
           <img id="navAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
           <span id="navAvatarInitials">U</span>
@@ -241,6 +238,13 @@
             <div class="profile-section-title" style="color:var(--accent-red);">Danger Zone</div>
           </div>
           <div class="profile-section-body">
+            <div class="danger-zone" style="margin-bottom:20px;">
+              <h3>Logout</h3>
+              <p>Sign out of your DataXpert account on this device.</p>
+              <button class="btn-danger" onclick="if(typeof logout==='function')logout();" style="background:var(--accent-red);border-color:var(--accent-red);">
+                <i class="fas fa-sign-out-alt" style="margin-right:8px;"></i>Logout
+              </button>
+            </div>
             <div class="danger-zone">
               <h3>Delete Account</h3>
               <p>Permanently delete your account and all data. This action cannot be undone.</p>

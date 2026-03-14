@@ -16,6 +16,10 @@
         if (nameEl)  nameEl.textContent  = user.name  || 'User';
         if (emailEl) emailEl.textContent = user.email || '';
 
+        // Username next to avatar
+        const usernameEl = document.getElementById('navUsername');
+        if (usernameEl) usernameEl.textContent = user.name || 'User';
+
         // Initials
         const name     = user.name || 'U';
         const initials = name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'U';

@@ -261,6 +261,17 @@ function renderSalesChart(labels, values) {
 
     if (window.salesChartInstance) { window.salesChartInstance.destroy(); window.salesChartInstance = null; }
 
+    // Handle empty data
+    if (!labels || !values || labels.length === 0 || values.length === 0) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#64748b';
+        ctx.font = '13px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data available', canvas.width / 2, canvas.height / 2);
+        return;
+    }
+
     const ctx = canvas.getContext('2d');
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.offsetHeight || 280);
     gradient.addColorStop(0, 'rgba(99,102,241,0.35)');
@@ -322,6 +333,17 @@ function renderProfitExpenseChart(profitData, expenseData, labels) {
     if (!canvas || typeof Chart === 'undefined') return;
 
     if (window.profitExpenseChartInstance) { window.profitExpenseChartInstance.destroy(); window.profitExpenseChartInstance = null; }
+
+    // Handle empty data
+    if (!labels || !profitData || !expenseData || labels.length === 0) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#64748b';
+        ctx.font = '13px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data available', canvas.width / 2, canvas.height / 2);
+        return;
+    }
 
     window.profitExpenseChartInstance = new Chart(canvas.getContext('2d'), {
         type: 'bar',
@@ -389,6 +411,17 @@ function renderCategoryChart(categories, values) {
     if (!canvas || typeof Chart === 'undefined') return;
 
     if (window.categoryChartInstance) { window.categoryChartInstance.destroy(); window.categoryChartInstance = null; }
+
+    // Handle empty data
+    if (!categories || !values || categories.length === 0 || values.length === 0) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#64748b';
+        ctx.font = '13px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data available', canvas.width / 2, canvas.height / 2);
+        return;
+    }
 
     const palette = ['#6366f1','#22c55e','#f59e0b','#ef4444','#06b6d4','#a855f7','#ec4899','#14b8a6','#f97316','#3b82f6'];
     const bgColors = categories.map((_, i) => palette[i % palette.length]);
@@ -459,77 +492,6 @@ function renderCategoryChart(categories, values) {
 // =============================================================
 // TIME FILTER SYSTEM
 // =============================================================
-function filterDataByRange(data, filter) {
-    if (!data || !Array.isArray(data)) return [];
-    if (filter === 'all') return data;
-
-    const now = new Date();
-    let cutoff;
-
-    if (filter === 'week')     cutoff = new Date(now - 7   * 86400000);
-    else if (filter === 'month')    cutoff = new Date(now - 30  * 86400000);
-    else if (filter === '3months')  cutoff = new Date(now - 90  * 86400000);
-    else if (filter === '6months')  cutoff = new Date(now - 180 * 86400000);
-    else if (filter === 'year')     cutoff = new Date(now - 365 * 86400000);
-    else if (filter === 'custom') {
-        const fromEl = document.getElementById('customFrom');
-        const toEl   = document.getElementById('customTo');
-        const from   = fromEl && fromEl.value ? new Date(fromEl.value) : null;
-        const to     = toEl   && toEl.value   ? new Date(toEl.value + 'T23:59:59') : null;
-        return data.filter(row => {
-            const d = new Date(row.record_date || row.date || row.Date || row.created_at || '');
-            if (isNaN(d.getTime())) return false;
-            if (from && d < from) return false;
-            if (to   && d > to)   return false;
-            return true;
-        });
-    } else {
-        return data;
-    }
-
-    return data.filter(row => {
-        const d = new Date(row.record_date || row.date || row.Date || row.created_at || '');
-        return !isNaN(d.getTime()) && d >= cutoff;
-    });
-}
-
-function applyFilter(filter) {
-    activeFilter = filter;
-
-    const pillMap = {
-        filterAll:      'all',
-        filterYear:     'year',
-        filter6months:  '6months',
-        filter3months:  '3months',
-        filterMonth:    'month',
-        filterWeek:     'week',
-        filterCustom:   'custom'
-    };
-
-    Object.entries(pillMap).forEach(([id, val]) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.classList.toggle('active', val === filter);
-    });
-
-    const customRow = document.getElementById('customRangeRow');
-    if (customRow) customRow.style.display = filter === 'custom' ? 'flex' : 'none';
-
-    const badge     = document.getElementById('activeFilterBadge');
-    const badgeText = document.getElementById('activeFilterText');
-    const labels    = { all: null, year: 'Last Year', '6months': 'Last 6 Months', '3months': 'Last 3 Months', month: 'Last 30 Days', week: 'Last 7 Days', custom: 'Custom Range' };
-
-    if (badge)     badge.style.display = filter === 'all' ? 'none' : 'inline-flex';
-    if (badgeText && labels[filter]) badgeText.textContent = labels[filter];
-
-    if (dashboardData) {
-        const allRows  = dashboardData.recent_data || dashboardData.recentData || [];
-        const filtered = filterDataByRange(allRows, filter);
-        renderRecentData(filtered);
-        rebuildChartsFromFilter(filtered);
-    }
-}
-
 function rebuildChartsFromFilter(rows) {
     if (!rows || rows.length === 0) {
         renderSalesChart([], []);
@@ -599,8 +561,15 @@ function renderRecentData(rows) {
         return;
     }
 
+    // Sort by date descending (most recent first)
+    const sortedRows = [...rows].sort((a, b) => {
+        const dateA = new Date(a.record_date || a.date || a.Date || a.created_at || 0);
+        const dateB = new Date(b.record_date || b.date || b.Date || b.created_at || 0);
+        return dateB - dateA; // descending order
+    });
+
     let html = '';
-    rows.slice(0, 10).forEach(row => {
+    sortedRows.slice(0, 10).forEach(row => {
         const id          = row.id   || row._id || '';
         const dateStr     = row.record_date || row.date || row.Date || row.created_at || '';
         const category    = row.category    || row.Category    || '—';
@@ -798,80 +767,125 @@ function openComparePanel()  { const p = document.getElementById('comparePanel')
 function closeComparePanel() { const p = document.getElementById('comparePanel'); if (p) p.classList.remove('open'); }
 
 function setupComparePanel() {
-    const closeBtn = document.getElementById('closePanelBtn');
+    const closeBtn = document.getElementById('closeCompare');
     if (closeBtn) closeBtn.addEventListener('click', closeComparePanel);
-
-    ['A', 'B'].forEach(period => {
-        const sel = document.getElementById(`period${period}Type`);
-        if (sel) sel.addEventListener('change', function() { updatePeriodDates(period, this.value); });
-    });
-
-    const runBtn = document.getElementById('runCompareBtn');
-    if (runBtn) runBtn.addEventListener('click', runComparison);
 }
 
-function updatePeriodDates(period, type) {
-    const startEl = document.getElementById(`period${period}Start`);
-    const endEl   = document.getElementById(`period${period}End`);
-    if (!startEl || !endEl) return;
+function updateComparePeriodInputs(period, type) {
+    const inputsDiv = document.getElementById(`period${period}Inputs`);
+    const fromInput = document.getElementById(`period${period}From`);
+    const toInput = document.getElementById(`period${period}To`);
+
+    if (!inputsDiv || !fromInput || !toInput) return;
+
+    if (type === 'custom') {
+        inputsDiv.style.display = 'flex';
+        return;
+    }
+
+    inputsDiv.style.display = 'none';
 
     const now = new Date();
-    let start = '', end = toISODate(now);
+    let from, to;
 
-    if (type === 'this-week')       { start = toISODate(new Date(now - 7*86400000)); }
-    else if (type === 'last-week')  { start = toISODate(new Date(now - 14*86400000)); end = toISODate(new Date(now - 7*86400000)); }
-    else if (type === 'this-month') { start = toISODate(new Date(now - 30*86400000)); }
-    else if (type === 'last-month') {
-        const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const lmEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-        start = toISODate(lm); end = toISODate(lmEnd);
+    if (type === 'this-month') {
+        from = new Date(now.getFullYear(), now.getMonth(), 1);
+        to = now;
+    } else if (type === 'last-month') {
+        from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        to = new Date(now.getFullYear(), now.getMonth(), 0);
+    } else if (type === 'this-quarter') {
+        const quarter = Math.floor(now.getMonth() / 3);
+        from = new Date(now.getFullYear(), quarter * 3, 1);
+        to = now;
+    } else if (type === 'last-quarter') {
+        const quarter = Math.floor(now.getMonth() / 3);
+        from = new Date(now.getFullYear(), (quarter - 1) * 3, 1);
+        to = new Date(now.getFullYear(), quarter * 3, 0);
+    } else if (type === 'this-year') {
+        from = new Date(now.getFullYear(), 0, 1);
+        to = now;
+    } else if (type === 'last-year') {
+        from = new Date(now.getFullYear() - 1, 0, 1);
+        to = new Date(now.getFullYear() - 1, 11, 31);
     }
-    else if (type === 'this-quarter') { start = toISODate(new Date(now - 90*86400000)); }
-    else if (type === 'last-quarter') { start = toISODate(new Date(now - 180*86400000)); end = toISODate(new Date(now - 90*86400000)); }
-    else if (type === 'this-year')    { start = toISODate(new Date(now - 365*86400000)); }
-    else if (type === 'last-year')    { start = toISODate(new Date(now.getFullYear() - 1, 0, 1)); end = toISODate(new Date(now.getFullYear() - 1, 11, 31)); }
 
-    startEl.value = start;
-    endEl.value   = end;
+    if (from && to) {
+        fromInput.value = toISODate(from);
+        toInput.value = toISODate(to);
+    }
 }
 
 async function runComparison() {
-    const aFrom = document.getElementById('periodAStart')?.value;
-    const aTo   = document.getElementById('periodAEnd')?.value;
-    const bFrom = document.getElementById('periodBStart')?.value;
-    const bTo   = document.getElementById('periodBEnd')?.value;
+    const periodAType = document.getElementById('periodAType')?.value;
+    const periodBType = document.getElementById('periodBType')?.value;
     const resultsEl = document.getElementById('compareResults');
+
+    let aFrom, aTo, bFrom, bTo;
+
+    // Get Period A dates
+    if (periodAType === 'custom') {
+        aFrom = document.getElementById('periodAFrom')?.value;
+        aTo = document.getElementById('periodATo')?.value;
+    } else {
+        updateComparePeriodInputs('A', periodAType);
+        aFrom = document.getElementById('periodAFrom')?.value;
+        aTo = document.getElementById('periodATo')?.value;
+    }
+
+    // Get Period B dates
+    if (periodBType === 'custom') {
+        bFrom = document.getElementById('periodBFrom')?.value;
+        bTo = document.getElementById('periodBTo')?.value;
+    } else {
+        updateComparePeriodInputs('B', periodBType);
+        bFrom = document.getElementById('periodBFrom')?.value;
+        bTo = document.getElementById('periodBTo')?.value;
+    }
 
     if (!aFrom || !aTo || !bFrom || !bTo) {
         if (typeof showToast === 'function') showToast('Please set dates for both periods.', 'warning');
         return;
     }
 
-    const runBtn = document.getElementById('runCompareBtn');
+    const runBtn = document.querySelector('#comparePanel .btn-action.primary');
     if (runBtn) { runBtn.disabled = true; runBtn.textContent = 'Comparing...'; }
-    if (resultsEl) resultsEl.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted,#64748b)">Loading comparison...</div>';
+    if (resultsEl) {
+        resultsEl.style.display = 'block';
+        resultsEl.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted,#64748b)">Loading comparison...</div>';
+    }
 
     try {
-        // Delegate to comparison-analysis.js if available
-        if (typeof runPeriodComparison === 'function') {
-            await runPeriodComparison({ from: aFrom, to: aTo }, { from: bFrom, to: bTo });
-            return;
-        }
-
         const allRows = (dashboardData && (dashboardData.recent_data || dashboardData.recentData)) || [];
         const periodA = filterByDateRange(allRows, aFrom, aTo);
         const periodB = filterByDateRange(allRows, bFrom, bTo);
-        const aStats  = computePeriodStats(periodA);
-        const bStats  = computePeriodStats(periodB);
+        const aStats = computePeriodStats(periodA);
+        const bStats = computePeriodStats(periodB);
 
-        if (resultsEl) resultsEl.innerHTML = buildCompareResultsHtml(aStats, bStats, `${aFrom} – ${aTo}`, `${bFrom} – ${bTo}`);
+        if (resultsEl) {
+            const periodALabel = periodAType === 'custom' ? `${aFrom} – ${aTo}` : formatPeriodLabel(periodAType);
+            const periodBLabel = periodBType === 'custom' ? `${bFrom} – ${bTo}` : formatPeriodLabel(periodBType);
+            resultsEl.innerHTML = buildCompareResultsHtml(aStats, bStats, periodALabel, periodBLabel);
+        }
 
     } catch (err) {
         console.error('Comparison error:', err);
         if (resultsEl) resultsEl.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--accent-red,#ef4444)">Comparison failed.</div>';
     } finally {
-        if (runBtn) { runBtn.disabled = false; runBtn.textContent = 'Run Comparison'; }
+        if (runBtn) { runBtn.disabled = false; runBtn.textContent = 'Compare →'; }
     }
+}
+
+function formatPeriodLabel(type) {
+    const labels = {
+        'this-month': 'This Month',
+        'last-month': 'Last Month',
+        'this-quarter': 'This Quarter',
+        'last-quarter': 'Last Quarter',
+        'this-year': 'This Year',
+        'last-year': 'Last Year'
+    };
+    return labels[type] || type;
 }
 
 function filterByDateRange(rows, from, to) {
@@ -931,6 +945,151 @@ function buildCompareResultsHtml(a, b, labelA, labelB) {
 
     html += '</div>';
     return html;
+}
+
+// =============================================================
+// TIME FILTER BUTTONS (with metrics recalculation)
+// =============================================================
+function applyTimeFilter(filter, button) {
+    activeFilter = filter;
+
+    // Update button states
+    document.querySelectorAll('.filter-pill').forEach(btn => btn.classList.remove('active'));
+    if (button) button.classList.add('active');
+
+    // Show/hide custom date range
+    const customRow = document.getElementById('customRangeRow');
+    const filterInfo = document.getElementById('filterInfoRow');
+    if (customRow) customRow.style.display = filter === 'custom' ? 'flex' : 'none';
+
+    // Update filter info display
+    if (filterInfo) {
+        const labels = {
+            all: '',
+            year: 'Showing data from last 12 months',
+            '6months': 'Showing data from last 6 months',
+            '3months': 'Showing data from last 3 months',
+            month: 'Showing data from last 30 days',
+            week: 'Showing data from last 7 days',
+            custom: 'Select date range below'
+        };
+        filterInfo.textContent = labels[filter] || '';
+        filterInfo.style.display = labels[filter] ? 'block' : 'none';
+    }
+
+    // Apply filter if not custom (custom requires date selection)
+    if (filter !== 'custom') {
+        applyFilterToData(filter);
+    }
+}
+
+function applyCustomRange() {
+    const fromEl = document.getElementById('customFrom');
+    const toEl = document.getElementById('customTo');
+
+    if (!fromEl || !toEl || !fromEl.value || !toEl.value) {
+        if (typeof showToast === 'function') showToast('Please select both From and To dates', 'warning');
+        return;
+    }
+
+    const filterInfo = document.getElementById('filterInfoRow');
+    if (filterInfo) {
+        filterInfo.textContent = `Showing data from ${fromEl.value} to ${toEl.value}`;
+        filterInfo.style.display = 'block';
+    }
+
+    applyFilterToData('custom', fromEl.value, toEl.value);
+}
+
+function applyFilterToData(filter, customFrom, customTo) {
+    if (!dashboardData) return;
+
+    const allRows = dashboardData.recent_data || dashboardData.recentData || [];
+    const filtered = filterDataByRange(allRows, filter, customFrom, customTo);
+
+    // Recalculate metrics from filtered data
+    const metrics = calculateMetricsFromRows(filtered);
+    updateMetricsDisplay(metrics);
+
+    // Rebuild charts from filtered data
+    rebuildChartsFromFilter(filtered);
+
+    // Update recent data table
+    renderRecentData(filtered);
+}
+
+function filterDataByRange(data, filter, customFrom, customTo) {
+    if (!data || !Array.isArray(data)) return [];
+    if (filter === 'all') return data;
+
+    const now = new Date();
+    let cutoff;
+
+    if (filter === 'custom' && customFrom && customTo) {
+        const fromDate = new Date(customFrom);
+        const toDate = new Date(customTo + 'T23:59:59');
+        return data.filter(row => {
+            const d = new Date(row.record_date || row.date || row.Date || row.created_at || '');
+            return !isNaN(d.getTime()) && d >= fromDate && d <= toDate;
+        });
+    }
+
+    if (filter === 'week')          cutoff = new Date(now - 7   * 86400000);
+    else if (filter === 'month')    cutoff = new Date(now - 30  * 86400000);
+    else if (filter === '3months')  cutoff = new Date(now - 90  * 86400000);
+    else if (filter === '6months')  cutoff = new Date(now - 180 * 86400000);
+    else if (filter === 'year')     cutoff = new Date(now - 365 * 86400000);
+    else return data;
+
+    return data.filter(row => {
+        const d = new Date(row.record_date || row.date || row.Date || row.created_at || '');
+        return !isNaN(d.getTime()) && d >= cutoff;
+    });
+}
+
+function calculateMetricsFromRows(rows) {
+    let totalSales = 0, totalProfit = 0, totalExpenses = 0;
+
+    rows.forEach(row => {
+        const sales = parseFloat(row.sales || 0);
+        const expenses = parseFloat(row.expenses || 0);
+        const profit = parseFloat(row.profit || 0);
+
+        totalSales += sales;
+        totalExpenses += expenses;
+        totalProfit += profit;
+    });
+
+    return {
+        totalSales,
+        totalProfit,
+        totalExpenses,
+        dataCount: rows.length
+    };
+}
+
+function updateMetricsDisplay(metrics) {
+    const salesEl = document.getElementById('totalSales');
+    const profitEl = document.getElementById('totalProfit');
+    const expensesEl = document.getElementById('totalExpenses');
+    const countEl = document.getElementById('dataCount');
+
+    if (salesEl) {
+        salesEl.style.fontVariantNumeric = 'tabular-nums';
+        countUp(salesEl, metrics.totalSales, '\u20b9', '');
+    }
+    if (profitEl) {
+        profitEl.style.fontVariantNumeric = 'tabular-nums';
+        countUp(profitEl, metrics.totalProfit, '\u20b9', '');
+    }
+    if (expensesEl) {
+        expensesEl.style.fontVariantNumeric = 'tabular-nums';
+        countUp(expensesEl, metrics.totalExpenses, '\u20b9', '');
+    }
+    if (countEl) {
+        countEl.style.fontVariantNumeric = 'tabular-nums';
+        countUp(countEl, metrics.dataCount, '', '');
+    }
 }
 
 // =============================================================
@@ -1042,6 +1201,31 @@ function setupModals() {
             });
         }
     });
+
+    // Add Data button
+    const addDataBtn = document.getElementById('addDataBtn');
+    if (addDataBtn) {
+        addDataBtn.addEventListener('click', () => {
+            resetAddDataForm();
+            openModalById('addDataModal');
+        });
+    }
+
+    // Upload button
+    const uploadBtn = document.getElementById('uploadDataBtn');
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', () => {
+            openModalById('uploadDataModal');
+        });
+    }
+
+    // Clear Data button
+    const clearBtn = document.getElementById('clearDataBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            openModalById('clearDataModal');
+        });
+    }
 
     const refreshBtn = document.getElementById('refreshBtn');
     if (refreshBtn) {
