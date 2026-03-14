@@ -892,7 +892,7 @@ function filterByDateRange(rows, from, to) {
     const fromDate = from ? new Date(from) : null;
     const toDate   = to   ? new Date(to + 'T23:59:59') : null;
     return rows.filter(row => {
-        const d = new Date(row.date || row.Date || row.created_at || '');
+        const d = new Date(row.record_date || row.date || row.Date || row.created_at || '');
         if (isNaN(d.getTime())) return false;
         if (fromDate && d < fromDate) return false;
         if (toDate   && d > toDate)   return false;
@@ -903,13 +903,40 @@ function filterByDateRange(rows, from, to) {
 function computePeriodStats(rows) {
     let sales = 0, expenses = 0, profit = 0;
     rows.forEach(row => {
+        // Use new format (sales/expenses/profit) first
+        const salesVal = parseFloat(row.sales || 0);
+        const expensesVal = parseFloat(row.expenses || 0);
+        const profitVal = parseFloat(row.profit || 0);
+
+        // Fallback to legacy format (type+amount)
         const amount = parseFloat(row.amount || row.Amount || 0);
-        const type   = (row.type || row.Type || row.data_type || '').toLowerCase();
-        if (['sale','sales','income','revenue'].includes(type)) sales    += amount;
-        else if (['expense','expenses','cost'].includes(type))  expenses += amount;
-        else if (type === 'profit')                             profit   += amount;
+        const type = (row.type || row.Type || row.data_type || '').toLowerCase();
+
+        if (salesVal > 0) {
+            sales += salesVal;
+        } else if (['sale','sales','income','revenue'].includes(type)) {
+            sales += amount;
+        }
+
+        if (expensesVal > 0) {
+            expenses += expensesVal;
+        } else if (['expense','expenses','cost'].includes(type)) {
+            expenses += amount;
+        }
+
+        if (profitVal > 0) {
+            profit += profitVal;
+        } else if (type === 'profit') {
+            profit += amount;
+        }
     });
-    return { sales, expenses, profit: profit || (sales - expenses), count: rows.length };
+
+    // If profit wasn't explicitly set, calculate from sales - expenses
+    if (profit === 0 && (sales > 0 || expenses > 0)) {
+        profit = sales - expenses;
+    }
+
+    return { sales, expenses, profit, count: rows.length };
 }
 
 function buildCompareResultsHtml(a, b, labelA, labelB) {

@@ -88,12 +88,23 @@
     // ── Avatar Dropdown ───────────────────────────────────────
     function setupDropdown() {
         const wrap = document.getElementById('avatarWrap');
-        if (!wrap) return;
+        const avatar = document.getElementById('navAvatar');
+        if (!wrap || !avatar) return;
 
-        wrap.addEventListener('click', (e) => {
+        // Click on avatar goes directly to profile page
+        avatar.addEventListener('click', (e) => {
             e.stopPropagation();
-            wrap.classList.toggle('open');
+            window.location.href = 'profile.html';
         });
+
+        // Click on username opens dropdown
+        const username = document.getElementById('navUsername');
+        if (username) {
+            username.addEventListener('click', (e) => {
+                e.stopPropagation();
+                wrap.classList.toggle('open');
+            });
+        }
 
         document.addEventListener('click', () => wrap.classList.remove('open'));
     }

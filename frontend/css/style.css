@@ -1979,3 +1979,24 @@ body.app-page {
   background: #fff;
 }
 
+
+/* Username next to avatar */
+.nav-username {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-right: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.nav-username:hover {
+  color: var(--text-primary);
+}
+
+/* Hide username on mobile */
+@media (max-width: 768px) {
+  .nav-username {
+    display: none;
+  }
+}
