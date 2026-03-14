@@ -1984,7 +1984,7 @@ body.app-page {
 .nav-username {
   font-size: 14px;
   color: var(--text-secondary);
-  margin-right: 12px;
+  margin-left: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: color 0.2s;
