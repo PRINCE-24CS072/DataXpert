@@ -3,13 +3,13 @@
 .dashboard-page {
     display: flex;
     min-height: 100vh;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e3e7f1 100%);
+    background: var(--page-bg);
 }
 
 /* Sidebar */
 .sidebar {
     width: 280px;
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--sidebar-bg);
     backdrop-filter: blur(20px);
     box-shadow: 4px 0 24px rgba(0, 0, 0, 0.06);
     display: flex;
@@ -20,13 +20,13 @@
     bottom: 0;
     z-index: 100;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-right: 1px solid rgba(226, 232, 240, 0.8);
+    border-right: 1px solid var(--border-color);
 }
 
 .sidebar-header {
     padding: 2rem 1.5rem;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(37, 99, 235, 0.05) 100%);
+    border-bottom: 1px solid var(--surface-border);
+    background: var(--bg-secondary);
 }
 
 .sidebar-nav {
@@ -64,13 +64,13 @@
 }
 
 .nav-item:hover {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.08) 100%);
+    background: var(--hover-bg);
     color: var(--primary-color);
     transform: translateX(4px);
 }
 
 .nav-item.active {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%);
+    background: var(--hover-bg);
     color: var(--primary-color);
     font-weight: 600;
 }
@@ -90,8 +90,8 @@
 
 .sidebar-footer {
     padding: 1.5rem;
-    border-top: 1px solid rgba(226, 232, 240, 0.6);
-    background: rgba(248, 250, 252, 0.5);
+    border-top: 1px solid var(--surface-border);
+    background: var(--bg-secondary);
 }
 
 /* Main Content */
@@ -105,7 +105,7 @@
 
 /* Topbar */
 .topbar {
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--topbar-bg);
     backdrop-filter: blur(20px);
     padding: 1.5rem 2.5rem;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
@@ -115,7 +115,7 @@
     position: sticky;
     top: 0;
     z-index: 50;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+    border-bottom: 1px solid var(--surface-border);
 }
 
 .topbar-left {
@@ -195,12 +195,12 @@
 }
 
 .stat-card-dash {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--card-bg);
     backdrop-filter: blur(20px);
     padding: 2rem;
     border-radius: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--border-color);
     display: flex;
     gap: 1.5rem;
     align-items: center;
@@ -307,12 +307,12 @@
 }
 
 .chart-card {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--card-bg);
     backdrop-filter: blur(20px);
     padding: 2rem;
     border-radius: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--border-color);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
@@ -347,7 +347,7 @@
     align-items: center;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid rgba(226, 232, 240, 0.6);
+    border-bottom: 2px solid var(--surface-border);
 }
 
 .chart-header h3 {
@@ -456,7 +456,7 @@
 }
 
 .team-card {
-    background: white;
+    background: var(--card-bg);
     padding: 1.5rem;
     border-radius: 12px;
     box-shadow: var(--shadow-sm);

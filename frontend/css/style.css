@@ -27,6 +27,11 @@
     --input-bg: #ffffff;
     --skeleton-base: #e2e8f0;
     --skeleton-shine: #f1f5f9;
+    --surface-bg: rgba(248, 250, 252, 0.5);
+    --surface-border: rgba(226, 232, 240, 0.6);
+    --hover-bg: rgba(59, 130, 246, 0.08);
+    --hover-bg-alt: rgba(248, 250, 252, 0.9);
+    --page-bg: linear-gradient(135deg, #f5f7fa 0%, #e3e7f1 100%);
 }
 
 /* Dark Mode Variables */
@@ -51,6 +56,11 @@
     --input-bg: #0f172a;
     --skeleton-base: #334155;
     --skeleton-shine: #475569;
+    --surface-bg: rgba(30, 41, 59, 0.6);
+    --surface-border: rgba(51, 65, 85, 0.6);
+    --hover-bg: rgba(59, 130, 246, 0.12);
+    --hover-bg-alt: rgba(15, 23, 42, 0.9);
+    --page-bg: linear-gradient(135deg, #0f172a 0%, #1a1f2e 100%);
 }
 
 /* Skeleton Loader Styles */
@@ -270,7 +280,7 @@ body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     line-height: 1.6;
     color: var(--text-primary);
-    background: linear-gradient(135deg, #f5f7fa 0%, #e3e7f1 100%);
+    background: var(--page-bg);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -288,9 +298,9 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    background: rgba(255, 255, 255, 0.85);
+    background: var(--topbar-bg);
     backdrop-filter: blur(20px) saturate(180%);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid var(--border-color);
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
     z-index: 1000;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -298,7 +308,7 @@ body {
 
 .navbar.scrolled {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--topbar-bg);
 }
 
 .navbar .container {

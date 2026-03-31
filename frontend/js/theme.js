@@ -3,7 +3,7 @@ const THEME_KEY = 'dataxpert_theme';
 
 // Initialize theme on page load
 function initTheme() {
-    const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
+    const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
     setTheme(savedTheme);
     
     // Update toggle button if exists
@@ -19,7 +19,7 @@ function setTheme(theme) {
 
 // Toggle theme
 function toggleTheme() {
-    const currentTheme = localStorage.getItem(THEME_KEY) || 'light';
+    const currentTheme = localStorage.getItem(THEME_KEY) || 'dark';
     const newTheme = currentTheme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
 }

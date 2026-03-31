@@ -12,12 +12,12 @@
 
 /* Suggestions */
 .suggestions {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--card-bg);
     backdrop-filter: blur(20px);
     padding: 2rem;
     border-radius: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--border-color);
     margin-bottom: 2rem;
     animation: slideDown 0.5s ease-out;
 }
@@ -56,8 +56,8 @@
 
 .chip {
     padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
-    border: 2px solid rgba(37, 99, 235, 0.2);
+    background: var(--hover-bg);
+    border: 2px solid var(--primary-light);
     border-radius: 25px;
     font-size: 0.95rem;
     font-weight: 600;
@@ -94,11 +94,11 @@
 /* Chat Container */
 .chat-container {
     flex: 1;
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--card-bg);
     backdrop-filter: blur(20px);
     border-radius: 24px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--border-color);
     padding: 2.5rem;
     margin-bottom: 2rem;
     overflow-y: auto;
@@ -112,7 +112,7 @@
 }
 
 .chat-container::-webkit-scrollbar-track {
-    background: rgba(226, 232, 240, 0.3);
+    background: var(--surface-bg);
     border-radius: 10px;
 }
 
@@ -233,8 +233,8 @@
 }
 
 .assistant-message .message-content {
-    background: rgba(248, 250, 252, 0.9);
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    background: var(--surface-bg);
+    border: 1px solid var(--border-color);
     border-bottom-left-radius: 4px;
     color: var(--text-primary);
 }
@@ -283,11 +283,11 @@
 
 /* Analysis Results */
 .analysis-results {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--card-bg);
     backdrop-filter: blur(20px);
     border-radius: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--border-color);
     margin-bottom: 2rem;
     overflow: hidden;
     animation: slideUp 0.5s ease-out;
@@ -376,11 +376,11 @@
 
 /* Input Area */
 .input-area {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--card-bg);
     backdrop-filter: blur(20px);
     border-radius: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--border-color);
     padding: 1.5rem;
     transition: all 0.3s ease;
 }
@@ -399,7 +399,7 @@
 .input-wrapper textarea {
     flex: 1;
     padding: 1.2rem 1.5rem;
-    border: 2px solid rgba(226, 232, 240, 0.6);
+    border: 2px solid var(--border-color);
     border-radius: 16px;
     font-size: 1rem;
     font-family: inherit;
@@ -407,13 +407,14 @@
     min-height: 56px;
     max-height: 180px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: rgba(248, 250, 252, 0.5);
+    background: var(--input-bg);
+    color: var(--text-primary);
 }
 
 .input-wrapper textarea:focus {
     outline: none;
     border-color: var(--primary-color);
-    background: white;
+    background: var(--card-bg);
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
 
