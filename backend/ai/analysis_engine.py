@@ -433,8 +433,170 @@ class AnalysisEngine:
         }
     
     def analyze_comparison(self, df, entities):
-        """Compare different periods or categories"""
-        return self.general_analysis(df)
+        """Compare different periods or categories."""
+        try:
+            if df.empty:
+                return {
+                    'summary': 'No data available for comparison.',
+                    'insights': [],
+                    'recommendations': ['Upload business data first'],
+                    'anomaly_score': 0.0,
+                    'insight_level': 'low'
+                }
+
+            entities = entities or {}
+            comparison_mode = entities.get('comparison_mode', 'time')
+            period_days = entities.get('period_days')
+
+            working_df = df.copy()
+            date_column = None
+            for candidate in ['record_date', 'date', 'created_at', 'timestamp']:
+                if candidate in working_df.columns:
+                    date_column = candidate
+                    break
+
+            if comparison_mode == 'category' and 'category' in working_df.columns:
+                return self._compare_categories(working_df)
+
+            if date_column:
+                working_df[date_column] = pd.to_datetime(working_df[date_column], errors='coerce')
+                working_df = working_df.dropna(subset=[date_column]).sort_values(date_column)
+
+            if len(working_df) < 2:
+                return self.general_analysis(df)
+
+            if date_column and period_days:
+                window_size = max(int(period_days), 1)
+                current_df = working_df.tail(window_size)
+                previous_df = working_df.iloc[max(len(working_df) - (window_size * 2), 0):max(len(working_df) - window_size, 0)]
+                if previous_df.empty:
+                    previous_df = working_df.head(window_size)
+            else:
+                midpoint = max(len(working_df) // 2, 1)
+                current_df = working_df.iloc[midpoint:]
+                previous_df = working_df.iloc[:midpoint]
+                if current_df.empty or previous_df.empty:
+                    return self.general_analysis(df)
+
+            current_metrics = self._build_comparison_metrics(current_df)
+            previous_metrics = self._build_comparison_metrics(previous_df)
+            changes = self._build_comparison_changes(current_metrics, previous_metrics)
+
+            insights = []
+            recommendations = []
+
+            metric_labels = {
+                'sales': 'sales',
+                'expenses': 'expenses',
+                'profit': 'profit',
+                'records': 'transactions'
+            }
+
+            for key, label in metric_labels.items():
+                current_value = current_metrics.get(key, 0.0)
+                previous_value = previous_metrics.get(key, 0.0)
+                change_value = changes.get(key, 0.0)
+                direction = 'increased' if change_value >= 0 else 'decreased'
+                insights.append(f"{label.title()} {direction} by {abs(change_value):.1f}% compared with the previous period")
+
+                if key in ('sales', 'profit') and change_value < 0:
+                    recommendations.append(f"Review the drivers behind the drop in {label}")
+                elif key == 'expenses' and change_value > 15:
+                    recommendations.append('Expenses are rising quickly. Look for cost optimization opportunities')
+
+            if current_metrics.get('profit', 0.0) < 0:
+                recommendations.append('Current period is loss-making. Review pricing and cost structure')
+
+            summary = (
+                f"Comparison complete: sales {'up' if changes.get('sales', 0.0) >= 0 else 'down'} "
+                f"{abs(changes.get('sales', 0.0)):.1f}%, profit {'up' if changes.get('profit', 0.0) >= 0 else 'down'} "
+                f"{abs(changes.get('profit', 0.0)):.1f}%"
+            )
+
+            anomaly_score = min(max(abs(v) for v in changes.values()) / 10 if changes else 0.0, 10.0)
+
+            return {
+                'summary': summary,
+                'insights': insights,
+                'recommendations': recommendations if recommendations else ['Keep monitoring the same period-to-period comparison trend'],
+                'data': {
+                    'current': current_metrics,
+                    'previous': previous_metrics,
+                    'changes': changes
+                },
+                'anomaly_score': float(anomaly_score),
+                'insight_level': 'high' if len(insights) >= 3 else 'medium'
+            }
+        except Exception as e:
+            print(f"Comparison analysis error: {e}")
+            return self.general_analysis(df)
+
+    def _build_comparison_metrics(self, frame):
+        """Summarize a frame for comparison."""
+        metrics = {
+            'sales': 0.0,
+            'expenses': 0.0,
+            'profit': 0.0,
+            'records': float(len(frame))
+        }
+
+        for column in ['sales', 'expenses', 'profit']:
+            if column in frame.columns:
+                metrics[column] = float(pd.to_numeric(frame[column], errors='coerce').fillna(0).sum())
+
+        if metrics['sales'] == 0.0 and 'amount' in frame.columns:
+            metrics['sales'] = float(pd.to_numeric(frame['amount'], errors='coerce').fillna(0).sum())
+
+        return metrics
+
+    def _build_comparison_changes(self, current_metrics, previous_metrics):
+        """Calculate percentage changes between two metric sets."""
+        changes = {}
+
+        for key in ['sales', 'expenses', 'profit', 'records']:
+            current_value = current_metrics.get(key, 0.0)
+            previous_value = previous_metrics.get(key, 0.0)
+
+            if previous_value == 0:
+                changes[key] = 100.0 if current_value > 0 else 0.0
+            else:
+                changes[key] = float(round(((current_value - previous_value) / previous_value) * 100, 1))
+
+        return changes
+
+    def _compare_categories(self, frame):
+        """Compare business performance by category."""
+        if 'category' not in frame.columns:
+            return self.general_analysis(frame)
+
+        metrics_column = None
+        for candidate in ['sales', 'profit', 'expenses', 'amount']:
+            if candidate in frame.columns:
+                metrics_column = candidate
+                break
+
+        if not metrics_column:
+            return self.general_analysis(frame)
+
+        category_totals = frame.groupby('category')[metrics_column].sum().sort_values(ascending=False)
+        top_category = category_totals.index[0]
+        top_value = float(category_totals.iloc[0])
+        insights = [
+            f"Top category: {top_category} with {metrics_column} of ₹{top_value:,.2f}",
+            f"Compared {len(category_totals)} categories"
+        ]
+
+        return {
+            'summary': f"Category comparison complete for {len(category_totals)} categories.",
+            'insights': insights,
+            'recommendations': ['Focus on the strongest category and review underperforming segments'],
+            'data': {
+                'categories': category_totals.to_dict(),
+                'metric': metrics_column
+            },
+            'anomaly_score': 0.0,
+            'insight_level': 'medium'
+        }
     
     def forecast_data(self, df, entities):
         """Forecast future values using ML models"""

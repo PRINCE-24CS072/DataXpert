@@ -36,6 +36,178 @@ nlp_processor = NLPProcessor()
 anomaly_detector = AnomalyDetector()
 data_processor = DataProcessor()
 
+
+def _parse_date_value(value):
+    """Parse a date-like value into a date object."""
+    if value is None:
+        return None
+
+    if isinstance(value, datetime):
+        return value.date()
+
+    text = str(value).strip()
+    if not text:
+        return None
+
+    try:
+        return datetime.fromisoformat(text.replace('Z', '+00:00')).date()
+    except ValueError:
+        try:
+            return datetime.strptime(text[:10], '%Y-%m-%d').date()
+        except ValueError:
+            return None
+
+
+def _get_record_date(record):
+    return record.get('record_date') or record.get('date')
+
+
+def _safe_float(value):
+    try:
+        if value is None or value == '':
+            return 0.0
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _filter_records_by_date(records, start_date, end_date):
+    """Filter business records to a date range inclusive."""
+    if not start_date and not end_date:
+        return list(records)
+
+    filtered_records = []
+    for record in records:
+        record_date = _parse_date_value(_get_record_date(record))
+        if record_date is None:
+            continue
+
+        if start_date and record_date < start_date:
+            continue
+        if end_date and record_date > end_date:
+            continue
+        filtered_records.append(record)
+
+    return filtered_records
+
+
+def _build_metrics(records):
+    """Build basic comparison metrics from a set of business records."""
+    sales_total = 0.0
+    expenses_total = 0.0
+    profit_total = 0.0
+    revenue_total = 0.0
+
+    for record in records:
+        sales_value = _safe_float(record.get('sales'))
+        amount_value = _safe_float(record.get('amount'))
+        expenses_value = _safe_float(record.get('expenses'))
+        profit_value = _safe_float(record.get('profit'))
+
+        sales_total += sales_value if sales_value else amount_value
+        revenue_total += sales_value if sales_value else amount_value
+        expenses_total += expenses_value
+        profit_total += profit_value
+
+    transaction_count = len(records)
+    average_transaction = revenue_total / transaction_count if transaction_count else 0.0
+
+    return {
+        'totalSales': float(sales_total),
+        'totalExpenses': float(expenses_total),
+        'totalRevenue': float(revenue_total),
+        'totalProfit': float(profit_total),
+        'transactionCount': int(transaction_count),
+        'averageTransaction': float(average_transaction)
+    }
+
+
+def _calculate_change(current, previous):
+    if previous == 0:
+        if current > 0:
+            return 100.0
+        if current < 0:
+            return -100.0
+        return 0.0
+    return float(round(((current - previous) / previous) * 100, 1))
+
+
+def _build_comparison_ranges(period_type, custom_start=None, custom_end=None):
+    """Build current and previous date ranges for comparison."""
+    if period_type == 'custom' and custom_start and custom_end:
+        current_start = _parse_date_value(custom_start)
+        current_end = _parse_date_value(custom_end)
+        if not current_start or not current_end:
+            return None
+
+        if current_start > current_end:
+            current_start, current_end = current_end, current_start
+
+        window_days = (current_end - current_start).days + 1
+        previous_end = current_start - timedelta(days=1)
+        previous_start = previous_end - timedelta(days=window_days - 1)
+        return {
+            'current': (current_start, current_end),
+            'previous': (previous_start, previous_end),
+            'label': f'{current_start.isoformat()} to {current_end.isoformat()}',
+            'period_days': window_days
+        }
+
+    period_days_map = {
+        'week': 7,
+        'month': 30,
+        'quarter': 90,
+        'year': 365
+    }
+    period_days = period_days_map.get(period_type, 30)
+
+    current_end = datetime.utcnow().date()
+    current_start = current_end - timedelta(days=period_days - 1)
+    previous_end = current_start - timedelta(days=1)
+    previous_start = previous_end - timedelta(days=period_days - 1)
+
+    return {
+        'current': (current_start, current_end),
+        'previous': (previous_start, previous_end),
+        'label': period_type,
+        'period_days': period_days
+    }
+
+
+def _build_comparison_report(period_type, current_range, previous_range, current_records, previous_records):
+    """Build a comparison report for the selected date ranges."""
+    current_metrics = _build_metrics(current_records)
+    previous_metrics = _build_metrics(previous_records)
+
+    sales_change = _calculate_change(current_metrics['totalSales'], previous_metrics['totalSales'])
+    expense_change = _calculate_change(current_metrics['totalExpenses'], previous_metrics['totalExpenses'])
+    revenue_change = _calculate_change(current_metrics['totalRevenue'], previous_metrics['totalRevenue'])
+    profit_change = _calculate_change(current_metrics['totalProfit'], previous_metrics['totalProfit'])
+    transaction_change = _calculate_change(current_metrics['transactionCount'], previous_metrics['transactionCount'])
+
+    return {
+        'period': period_type,
+        'currentPeriod': {
+            'start': current_range[0].isoformat(),
+            'end': current_range[1].isoformat(),
+            'metrics': current_metrics,
+            'recordCount': len(current_records)
+        },
+        'previousPeriod': {
+            'start': previous_range[0].isoformat(),
+            'end': previous_range[1].isoformat(),
+            'metrics': previous_metrics,
+            'recordCount': len(previous_records)
+        },
+        'changes': {
+            'sales': sales_change,
+            'expenses': expense_change,
+            'revenue': revenue_change,
+            'profit': profit_change,
+            'transactions': transaction_change
+        }
+    }
+
 # JWT token decorator
 def token_required(f):
     @wraps(f)
@@ -152,6 +324,48 @@ def login():
             
     except Exception as e:
         return jsonify({'message': f'Login error: {str(e)}', 'success': False}), 500
+
+@app.route('/api/auth/forgot-password', methods=['POST'])
+def forgot_password():
+    """Generate a password reset token for the requested email."""
+    try:
+        data = request.get_json(silent=True) or {}
+        email = data.get('email', '').strip()
+
+        if not email:
+            return jsonify({'message': 'Email is required', 'success': False}), 400
+
+        result = auth_service.request_password_reset(email)
+        status_code = 200 if result.get('success') else 400
+        return jsonify(result), status_code
+    except Exception as e:
+        return jsonify({'message': f'Forgot password error: {str(e)}', 'success': False}), 500
+
+@app.route('/api/auth/reset-password', methods=['POST'])
+def reset_password():
+    """Reset a password using a valid reset token."""
+    try:
+        data = request.get_json(silent=True) or {}
+        reset_token = data.get('token', '').strip()
+        new_password = data.get('new_password', '')
+        confirm_password = data.get('confirm_password', '')
+
+        if not reset_token:
+            return jsonify({'message': 'Reset token is required', 'success': False}), 400
+
+        if not new_password or not confirm_password:
+            return jsonify({'message': 'New password and confirmation are required', 'success': False}), 400
+
+        if new_password != confirm_password:
+            return jsonify({'message': 'Passwords do not match', 'success': False}), 400
+
+        if len(new_password) < 6:
+            return jsonify({'message': 'New password must be at least 6 characters long', 'success': False}), 400
+
+        result = auth_service.reset_password(reset_token, new_password)
+        return jsonify(result), 200 if result.get('success') else 400
+    except Exception as e:
+        return jsonify({'message': f'Reset password error: {str(e)}', 'success': False}), 500
 
 @app.route('/api/auth/google', methods=['POST'])
 def google_auth():
@@ -412,12 +626,73 @@ def get_business_data(current_user):
     """Get all business data for user"""
     try:
         data = db_client.get_user_business_data(current_user['id'])
+
+        from_date = _parse_date_value(request.args.get('from_date'))
+        to_date = _parse_date_value(request.args.get('to_date'))
+
+        if from_date or to_date:
+            data = _filter_records_by_date(data, from_date, to_date)
+
         return jsonify({
             'success': True,
             'data': data
         }), 200
     except Exception as e:
         return jsonify({'message': f'Error fetching data: {str(e)}', 'success': False}), 500
+
+
+@app.route('/api/business-data/compare', methods=['POST'])
+@token_required
+def compare_business_data(current_user):
+    """Compare the user's business data across two time windows using AI insights."""
+    try:
+        payload = request.get_json(silent=True) or {}
+        period_type = payload.get('period_type', 'month')
+        custom_start = payload.get('custom_start')
+        custom_end = payload.get('custom_end')
+
+        ranges = _build_comparison_ranges(period_type, custom_start, custom_end)
+        if not ranges:
+            return jsonify({
+                'success': False,
+                'message': 'Invalid comparison range'
+            }), 400
+
+        business_data = db_client.get_user_business_data(current_user['id'])
+        if not business_data:
+            return jsonify({
+                'success': False,
+                'message': 'No data available for comparison'
+            }), 400
+
+        current_records = _filter_records_by_date(business_data, ranges['current'][0], ranges['current'][1])
+        previous_records = _filter_records_by_date(business_data, ranges['previous'][0], ranges['previous'][1])
+
+        report = _build_comparison_report(
+            period_type,
+            ranges['current'],
+            ranges['previous'],
+            current_records,
+            previous_records
+        )
+
+        ai_analysis = analysis_engine.analyze(
+            'comparison',
+            {
+                'period_type': period_type,
+                'period_days': ranges['period_days'],
+                'comparison_mode': 'time'
+            },
+            business_data
+        )
+
+        return jsonify({
+            'success': True,
+            'report': report,
+            'ai_analysis': ai_analysis
+        }), 200
+    except Exception as e:
+        return jsonify({'message': f'Comparison error: {str(e)}', 'success': False}), 500
 
 @app.route('/api/business/data', methods=['POST'])
 @token_required

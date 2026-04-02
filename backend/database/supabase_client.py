@@ -49,6 +49,25 @@ class SupabaseClient:
             return response.data[0] if response.data else None
         except Exception as e:
             return None
+
+    def get_user_by_reset_token(self, reset_token_hash):
+        """Get user by password reset token hash"""
+        try:
+            response = self.supabase.table('users').select('*').eq('reset_password_token', reset_token_hash).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            return None
+
+    def clear_password_reset_token(self, user_id):
+        """Clear password reset token fields for a user"""
+        try:
+            response = self.supabase.table('users').update({
+                'reset_password_token': None,
+                'reset_password_expires': None
+            }).eq('id', user_id).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            return None
     
     def update_user_google_id(self, user_id, google_id):
         """Update user's Google ID"""

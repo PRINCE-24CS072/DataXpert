@@ -157,6 +157,16 @@ function exportToExcel(data, filename = 'export.xlsx') {
     XLSX.writeFile(workbook, filename);
 }
 
+// Export to JSON
+function exportToJSON(data, filename = 'export.json') {
+    if (!data || !data.length) {
+        throw new Error('No data to export');
+    }
+
+    const jsonContent = JSON.stringify(data, null, 2);
+    downloadFile(jsonContent, filename, 'application/json');
+}
+
 // Export to PDF
 async function exportToPDF(elementId, filename = 'report.pdf') {
     if (typeof html2pdf === 'undefined') {
@@ -385,6 +395,9 @@ function createExportModal() {
                 <button class="btn btn-secondary btn-full" onclick="exportData('excel')">
                     <i class="fas fa-file-excel"></i> Export as Excel
                 </button>
+                <button class="btn btn-secondary btn-full" onclick="exportData('json')">
+                    <i class="fas fa-file-code"></i> Export as JSON
+                </button>
                 <button class="btn btn-secondary btn-full" onclick="exportData('pdf')">
                     <i class="fas fa-file-pdf"></i> Export as PDF
                 </button>
@@ -430,6 +443,10 @@ async function exportData(format) {
             case 'excel':
                 exportToExcel(result.data, `dataxpert-export-${timestamp}.xlsx`);
                 showMessage('Excel exported successfully!', 'success');
+                break;
+            case 'json':
+                exportToJSON(result.data, `dataxpert-export-${timestamp}.json`);
+                showMessage('JSON exported successfully!', 'success');
                 break;
             case 'pdf':
                 await exportToPDF('dashboardContainer', `dataxpert-report-${timestamp}.pdf`);

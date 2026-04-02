@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS users (
     profile_image TEXT,
     role VARCHAR(50) DEFAULT 'user',
     profile_completed BOOLEAN DEFAULT FALSE,
+    reset_password_token TEXT,
+    reset_password_expires TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW()
 );
 

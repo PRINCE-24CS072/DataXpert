@@ -369,7 +369,7 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
             
             try {
-                const response = await fetch(API_ENDPOINTS.BASE + '/auth/forgot-password', {
+                const response = await fetch(API_ENDPOINTS.FORGOT_PASSWORD, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
@@ -378,8 +378,16 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    showMessage('Password reset link sent to your email!', 'success');
                     document.getElementById('forgotPasswordModal').style.display = 'none';
+
+                    if (data.reset_token) {
+                        const resetUrl = `reset-password.html?token=${encodeURIComponent(data.reset_token)}&email=${encodeURIComponent(email)}`;
+                        showMessage('Reset link ready. Opening password reset page.', 'success');
+                        window.location.href = resetUrl;
+                        return;
+                    }
+
+                    showMessage(data.message || 'If the account exists, a reset link has been generated.', 'success');
                 } else {
                     showMessage(data.message || 'Failed to send reset link', 'error');
                 }

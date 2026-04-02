@@ -24,6 +24,8 @@ const API_ENDPOINTS = {
     GOOGLE_AUTH: `${API_BASE_URL}/auth/google`,
     VERIFY: `${API_BASE_URL}/auth/verify`,
     COMPLETE_PROFILE: `${API_BASE_URL}/auth/complete-profile`,
+    FORGOT_PASSWORD: `${API_BASE_URL}/auth/forgot-password`,
+    RESET_PASSWORD: `${API_BASE_URL}/auth/reset-password`,
     
     // User
     USER_PROFILE: `${API_BASE_URL}/user/profile`,
@@ -41,6 +43,7 @@ const API_ENDPOINTS = {
     BUSINESS_SUMMARY: `${API_BASE_URL}/business/summary`,
     BUSINESS_DATA_UPLOAD: `${API_BASE_URL}/business-data/upload-smart`,
     BUSINESS_DATA_ANALYZE: `${API_BASE_URL}/business-data/analyze-file`,
+    BUSINESS_DATA_COMPARE: `${API_BASE_URL}/business-data/compare`,
     BUSINESS_DATA_CLEAR: `${API_BASE_URL}/business-data/clear`,
     BUSINESS_DATA_CHART: `${API_BASE_URL}/business-data/generate-chart`,
     

@@ -363,24 +363,40 @@
             e.preventDefault();
             const email = document.getElementById('resetEmail').value;
             const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
             
             try {
-                const response = await fetch(`${API_BASE_URL}/forgot-password`, {
+                const response = await fetch(API_ENDPOINTS.FORGOT_PASSWORD, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
                 });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    closeForgotPasswordModal();
+
+                    if (result.reset_token) {
+                        const resetUrl = `reset-password.html?token=${encodeURIComponent(result.reset_token)}&email=${encodeURIComponent(email)}`;
+                        showMessage('Reset link ready. Opening password reset page.', 'success');
+                        window.location.href = resetUrl;
+                        return;
+                    }
+
+                    showMessage(result.message || 'If your email exists, you will receive a reset link', 'success');
+                } else {
+                    showMessage(result.message || 'Failed to send reset link', 'error');
+                }
                 
-                showMessage('If your email exists, you will receive a reset link', 'success');
-                closeForgotPasswordModal();
             } catch (err) {
                 showMessage('Error sending reset link', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             }
-            
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Reset Link';
         });
 
         // Search modal

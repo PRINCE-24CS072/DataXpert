@@ -1,6 +1,8 @@
 import os
 import hashlib
+import secrets
 import uuid
+from datetime import datetime, timedelta, timezone
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from database.supabase_client import SupabaseClient
@@ -307,3 +309,76 @@ class AuthService:
                 
         except Exception as e:
             return {'message': f'Change password error: {str(e)}', 'success': False}
+
+    def request_password_reset(self, email):
+        """Create a password reset token for the given email."""
+        try:
+            user = self.db_client.get_user_by_email(email)
+
+            if not user:
+                return {
+                    'message': 'If an account exists for this email, a reset link has been generated.',
+                    'success': True
+                }
+
+            reset_token = secrets.token_urlsafe(32)
+            reset_token_hash = hashlib.sha256(reset_token.encode()).hexdigest()
+            reset_expires_at = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
+
+            result = self.db_client.update_user_fields(user['id'], {
+                'reset_password_token': reset_token_hash,
+                'reset_password_expires': reset_expires_at
+            })
+
+            if not result:
+                return {
+                    'message': 'Failed to generate password reset link',
+                    'success': False
+                }
+
+            return {
+                'message': 'Password reset link generated successfully',
+                'success': True,
+                'reset_token': reset_token
+            }
+        except Exception as e:
+            return {'message': f'Forgot password error: {str(e)}', 'success': False}
+
+    def reset_password(self, reset_token, new_password):
+        """Reset a password using a valid reset token."""
+        try:
+            if not reset_token or not new_password:
+                return {'message': 'Reset token and new password are required', 'success': False}
+
+            reset_token_hash = hashlib.sha256(reset_token.encode()).hexdigest()
+            user = self.db_client.get_user_by_reset_token(reset_token_hash)
+
+            if not user:
+                return {'message': 'Invalid or expired reset token', 'success': False}
+
+            expires_at = user.get('reset_password_expires')
+            if expires_at:
+                try:
+                    expires_at_value = datetime.fromisoformat(str(expires_at).replace('Z', '+00:00'))
+                    current_time = datetime.now(timezone.utc)
+                    if expires_at_value.tzinfo is None:
+                        expires_at_value = expires_at_value.replace(tzinfo=timezone.utc)
+                    if expires_at_value < current_time:
+                        self.db_client.clear_password_reset_token(user['id'])
+                        return {'message': 'Reset token has expired', 'success': False}
+                except ValueError:
+                    pass
+
+            hashed_password = self.hash_password(new_password)
+            result = self.db_client.update_user_fields(user['id'], {
+                'password': hashed_password,
+                'reset_password_token': None,
+                'reset_password_expires': None
+            })
+
+            if not result:
+                return {'message': 'Failed to reset password', 'success': False}
+
+            return {'message': 'Password reset successfully', 'success': True}
+        except Exception as e:
+            return {'message': f'Reset password error: {str(e)}', 'success': False}
