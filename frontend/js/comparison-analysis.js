@@ -95,6 +95,11 @@ function createComparisonModal() {
     `;
 
     document.body.appendChild(modal);
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closeComparisonModal();
+        }
+    });
     toggleComparisonCustomRange();
 }
 
@@ -249,6 +254,10 @@ async function runComparison() {
 
         const result = await response.json();
 
+        if (!response.ok) {
+            throw new Error(result.message || 'Unable to generate comparison');
+        }
+
         if (!result.success) {
             throw new Error(result.message || 'Unable to generate comparison');
         }
@@ -364,7 +373,15 @@ function openComparisonModal() {
         createComparisonModal();
     }
 
-    document.getElementById('comparisonModal').style.display = 'block';
+    const modal = document.getElementById('comparisonModal');
+    modal.style.display = 'block';
+    setTimeout(() => {
+        const content = modal.querySelector('.modal-content');
+        if (content) {
+            content.classList.add('show');
+        }
+    }, 10);
+
     document.getElementById('comparisonResults').style.display = 'none';
     document.getElementById('comparisonLoading').style.display = 'none';
     document.getElementById('exportComparisonBtn').style.display = 'none';
@@ -373,5 +390,16 @@ function openComparisonModal() {
 
 function closeComparisonModal() {
     const modal = document.getElementById('comparisonModal');
-    if (modal) modal.style.display = 'none';
+    if (!modal) {
+        return;
+    }
+
+    const content = modal.querySelector('.modal-content');
+    if (content) {
+        content.classList.remove('show');
+    }
+
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
 }

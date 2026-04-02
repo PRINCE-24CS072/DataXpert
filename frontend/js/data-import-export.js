@@ -362,7 +362,14 @@ function openImportModal() {
     if (!document.getElementById('importModal')) {
         createImportModal();
     }
-    document.getElementById('importModal').style.display = 'block';
+    const modal = document.getElementById('importModal');
+    modal.style.display = 'block';
+    setTimeout(() => {
+        const content = modal.querySelector('.modal-content');
+        if (content) {
+            content.classList.add('show');
+        }
+    }, 10);
     pendingImportData = null;
     document.getElementById('importPreview').style.display = 'none';
     document.getElementById('importFileInput').value = '';
@@ -371,7 +378,18 @@ function openImportModal() {
 // Close import modal
 function closeImportModal() {
     const modal = document.getElementById('importModal');
-    if (modal) modal.style.display = 'none';
+    if (!modal) {
+        return;
+    }
+
+    const content = modal.querySelector('.modal-content');
+    if (content) {
+        content.classList.remove('show');
+    }
+
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
 }
 
 // =====================
@@ -405,18 +423,42 @@ function createExportModal() {
         </div>
     `;
     document.body.appendChild(modal);
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closeExportModal();
+        }
+    });
 }
 
 function openExportModal() {
     if (!document.getElementById('exportModal')) {
         createExportModal();
     }
-    document.getElementById('exportModal').style.display = 'block';
+
+    const modal = document.getElementById('exportModal');
+    modal.style.display = 'block';
+    setTimeout(() => {
+        const content = modal.querySelector('.modal-content');
+        if (content) {
+            content.classList.add('show');
+        }
+    }, 10);
 }
 
 function closeExportModal() {
     const modal = document.getElementById('exportModal');
-    if (modal) modal.style.display = 'none';
+    if (!modal) {
+        return;
+    }
+
+    const content = modal.querySelector('.modal-content');
+    if (content) {
+        content.classList.remove('show');
+    }
+
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
 }
 
 // Export data handler
