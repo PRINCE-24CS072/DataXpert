@@ -14,6 +14,60 @@ let dashboardData = null;
 let lastUpdatedTimestamp = null;
 let lastUpdatedInterval = null;
 
+// ---- GLOBAL ACTIVE FILTER (REQ 6) ----
+window.activeFilter = { mode: null, from: null, to: null };
+
+// ---- SESSION STORAGE CACHE HELPERS (REQ 8/11) ----
+const DX_CACHE_TTL = 300000; // 5 minutes
+function _cacheKey(endpoint, params) {
+    return 'dx_cache_' + endpoint + '_' + (params || 'default');
+}
+function _cacheSet(key, data) {
+    try { sessionStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() })); } catch(e) {}
+}
+function _cacheGet(key) {
+    try {
+        const raw = sessionStorage.getItem(key);
+        if (!raw) return null;
+        const obj = JSON.parse(raw);
+        if (Date.now() - obj.timestamp < DX_CACHE_TTL) return obj.data;
+        sessionStorage.removeItem(key);
+        return null;
+    } catch(e) { return null; }
+}
+function _cacheInvalidate(prefix) {
+    try {
+        Object.keys(sessionStorage).filter(k => k.startsWith('dx_cache_' + (prefix || ''))).forEach(k => sessionStorage.removeItem(k));
+    } catch(e) {}
+}
+
+// ---- CACHE STATUS INDICATOR ----
+function setCacheStatus(state) {
+    const el = document.getElementById('cacheStatus');
+    if (!el) return;
+    el.dataset.state = state;
+    el.textContent = state === 'cached' ? 'Cached' : 'Live';
+}
+
+// ---- EXPORT BUTTON LABEL (REQ 10) ----
+function updateExportBtnLabel() {
+    const el = document.getElementById('exportBtnLabel');
+    if (!el) return;
+    const af = window.activeFilter;
+    if (!af || !af.mode || af.mode === 'all' || af.mode === null) {
+        el.textContent = 'Export All';
+    } else {
+        const modeLabels = { today: 'Today', week: 'This Week', month: 'This Month', year: 'This Year', custom: 'Custom', date: 'Date', month_filter: 'Month', year_filter: 'Year' };
+        el.textContent = 'Export Filtered (' + (modeLabels[af.mode] || af.mode) + ')';
+    }
+}
+
+// ---- DISPATCH filterChanged EVENT (REQ 6) ----
+function dispatchFilterChanged() {
+    document.dispatchEvent(new CustomEvent('filterChanged', { detail: window.activeFilter }));
+    updateExportBtnLabel();
+}
+
 // ---- CHART DEFAULTS (applied after DOMContentLoaded) ----
 function applyChartDefaults() {
     if (typeof Chart === 'undefined') return;
@@ -118,22 +172,36 @@ function startLastUpdatedTimer() {
 // =============================================================
 // LOAD DASHBOARD DATA
 // =============================================================
-async function loadDashboardData() {
-    // Check cache first — avoid unnecessary network call
-    if (typeof DataCache !== 'undefined' && DataCache.isValid()) {
+async function loadDashboardData(forceRefresh) {
+    // REQ 5: Check sessionStorage cache first
+    const cacheKey = _cacheKey('dashboard', 'main');
+    if (!forceRefresh) {
+        const cached = _cacheGet(cacheKey);
+        if (cached) {
+            dashboardData = cached;
+            renderDashboard(cached);
+            startLastUpdatedTimer();
+            setCacheStatus('cached');
+            return;
+        }
+    }
+
+    // Also check DataCache (legacy)
+    if (!forceRefresh && typeof DataCache !== 'undefined' && DataCache.isValid()) {
         const cached = DataCache.get();
         if (cached) {
             dashboardData = cached;
             renderDashboard(cached);
             startLastUpdatedTimer();
+            setCacheStatus('cached');
             return;
         }
     }
 
     showSkeletons();
+    setCacheStatus('live');
 
     try {
-        // Fetch stats AND charts in parallel — both are required for full dashboard
         const [statsResp, chartsResp] = await Promise.all([
             fetch(API_ENDPOINTS.DASHBOARD_STATS, { method: 'GET', headers: getAuthHeaders() }),
             fetch(API_ENDPOINTS.DASHBOARD_CHARTS, { method: 'GET', headers: getAuthHeaders() })
@@ -149,16 +217,14 @@ async function loadDashboardData() {
         const statsResult = await statsResp.json();
         if (statsResult.success === false) throw new Error(statsResult.message || 'Load failed');
 
-        // Charts endpoint is best-effort — don't fail if it errors
         let chartsData = {};
         try {
             if (chartsResp.ok) {
                 const chartsResult = await chartsResp.json();
                 if (chartsResult.success) chartsData = chartsResult.charts || chartsResult.chart_data || {};
             }
-        } catch (_) { /* charts are optional */ }
+        } catch (_) {}
 
-        // Flatten recent_data out of stats so renderDashboard can access it at root level
         const statsObj = statsResult.stats || {};
         const result = {
             ...statsResult,
@@ -168,10 +234,12 @@ async function loadDashboardData() {
         };
 
         dashboardData = result;
+        _cacheSet(cacheKey, result);
         if (typeof DataCache !== 'undefined') DataCache.set(result);
 
         renderDashboard(result);
         startLastUpdatedTimer();
+        setCacheStatus('live');
 
     } catch (err) {
         hideSkeletons();
@@ -971,39 +1039,107 @@ function computePeriodStats(rows) {
 }
 
 function buildCompareResultsHtml(a, b, labelA, labelB) {
-    const pct = (a, b) => {
-        if (b === 0) return a > 0 ? '+100%' : '—';
-        const p = ((a - b) / Math.abs(b) * 100).toFixed(1);
+    const pct = (av, bv) => {
+        if (bv === 0) return av > 0 ? '+100%' : '—';
+        const p = ((av - bv) / Math.abs(bv) * 100).toFixed(1);
         return (parseFloat(p) > 0 ? '+' : '') + p + '%';
     };
-    const clr = (a, b) => a >= b ? 'var(--accent-green,#22c55e)' : 'var(--accent-red,#ef4444)';
+    const clr = (av, bv) => av >= bv ? 'var(--accent-green,#22c55e)' : 'var(--accent-red,#ef4444)';
+    const arrow = (av, bv) => av > bv ? '▲' : av < bv ? '▼' : '—';
     const fmt = n => '\u20b9' + Number(n).toLocaleString('en-IN');
 
+    const metrics = [
+        { label: 'Sales',    ka: a.sales,    kb: b.sales,    isCount: false },
+        { label: 'Expenses', ka: a.expenses, kb: b.expenses, isCount: false },
+        { label: 'Profit',   ka: a.profit,   kb: b.profit,   isCount: false },
+        { label: 'Entries',  ka: a.count,    kb: b.count,    isCount: true  }
+    ];
+
     let html = `<div style="padding:1rem">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 80px;gap:1rem;margin-bottom:1rem;align-items:center;">
             <div></div>
-            <div style="text-align:center;font-weight:600">${escapeHtml(labelA)}</div>
-            <div style="text-align:center;font-weight:600">${escapeHtml(labelB)}</div>
+            <div style="text-align:center;font-weight:600;font-size:13px;">${escapeHtml(labelA)}</div>
+            <div style="text-align:center;font-weight:600;font-size:13px;">${escapeHtml(labelB)}</div>
+            <div style="text-align:center;font-size:11px;color:var(--text-muted);">Change</div>
         </div>`;
 
-    [
-        { label: 'Sales',     ka: a.sales,    kb: b.sales    },
-        { label: 'Expenses',  ka: a.expenses, kb: b.expenses },
-        { label: 'Profit',    ka: a.profit,   kb: b.profit   },
-        { label: 'Entries',   ka: a.count,    kb: b.count,  isCount: true }
-    ].forEach(r => {
+    metrics.forEach(r => {
         const diff = pct(r.ka, r.kb);
-        const c    = clr(r.ka, r.kb);
-        html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;padding:.75rem 0;border-top:1px solid rgba(148,163,184,0.1)">
+        const c = clr(r.ka, r.kb);
+        const ar = arrow(r.ka, r.kb);
+        html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr 80px;gap:1rem;padding:.75rem 0;border-top:1px solid rgba(148,163,184,0.1);align-items:center;">
             <div style="color:var(--text-muted,#64748b);font-size:.875rem">${r.label}</div>
-            <div style="text-align:center;font-variant-numeric:tabular-nums">${r.isCount ? r.ka : fmt(r.ka)}</div>
-            <div style="text-align:center;font-variant-numeric:tabular-nums">${r.isCount ? r.kb : fmt(r.kb)} <span style="font-size:.75rem;color:${c}">${diff}</span></div>
+            <div style="text-align:center;font-variant-numeric:tabular-nums;font-weight:500;">${r.isCount ? r.ka : fmt(r.ka)}</div>
+            <div style="text-align:center;font-variant-numeric:tabular-nums;font-weight:500;">${r.isCount ? r.kb : fmt(r.kb)}</div>
+            <div style="text-align:center;font-size:.8rem;font-weight:600;color:${c};">${ar} ${diff}</div>
         </div>`;
     });
 
-    html += '</div>';
+    // REQ 4: Side-by-side comparison bar chart
+    html += `</div>
+    <div style="padding:0 1rem 1rem;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Comparison Chart</div>
+        <canvas id="compareChart" style="max-height:180px;"></canvas>
+    </div>`;
+
+    // Render chart after DOM update
+    setTimeout(() => _renderCompareChart(a, b, labelA, labelB), 50);
     return html;
 }
+
+// REQ 4: Render side-by-side comparison bar chart
+function _renderCompareChart(a, b, labelA, labelB) {
+    const canvas = document.getElementById('compareChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+    if (window._compareChartInstance) { window._compareChartInstance.destroy(); window._compareChartInstance = null; }
+
+    window._compareChartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: ['Sales', 'Expenses', 'Profit'],
+            datasets: [
+                {
+                    label: labelA,
+                    data: [a.sales, a.expenses, a.profit],
+                    backgroundColor: 'rgba(99,102,241,0.75)',
+                    borderColor: 'rgba(99,102,241,1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: labelB,
+                    data: [b.sales, b.expenses, b.profit],
+                    backgroundColor: 'rgba(34,197,94,0.65)',
+                    borderColor: 'rgba(34,197,94,1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: true, position: 'top', labels: { color: '#94a3b8', boxWidth: 12, padding: 14, font: { size: 11 } } },
+                tooltip: {
+                    backgroundColor: 'rgba(15,23,42,0.95)',
+                    borderColor: 'rgba(148,163,184,0.18)',
+                    borderWidth: 1,
+                    titleColor: '#e2e8f0',
+                    bodyColor: '#94a3b8',
+                    padding: 10,
+                    callbacks: { label: ctx => ` ${ctx.dataset.label}: \u20b9${Number(ctx.parsed.y).toLocaleString('en-IN')}` }
+                }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 11 } } },
+                y: { grid: { color: 'rgba(148,163,184,0.08)' }, ticks: { color: '#64748b', font: { size: 11 }, callback: v => `\u20b9${Number(v).toLocaleString('en-IN')}` } }
+            }
+        }
+    });
+}
+
 
 // =============================================================
 // TIME FILTER BUTTONS (with metrics recalculation)
@@ -1039,6 +1175,10 @@ function applyTimeFilter(filter, button) {
     if (filter !== 'custom') {
         applyFilterToData(filter);
     }
+
+    // REQ 6: update window.activeFilter and dispatch event
+    window.activeFilter = { mode: filter, from: null, to: null };
+    dispatchFilterChanged();
 }
 
 function applyCustomRange() {
@@ -1057,6 +1197,129 @@ function applyCustomRange() {
     }
 
     applyFilterToData('custom', fromEl.value, toEl.value);
+    window.activeFilter = { mode: 'custom', from: fromEl.value, to: toEl.value };
+    dispatchFilterChanged();
+}
+
+// REQ 3: New granular filter bar with Date / Month / Year modes
+function setupFilterBar() {
+    const bar = document.getElementById('filterBar');
+    if (!bar) return;
+
+    bar.querySelectorAll('.filter-pill[data-mode]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            bar.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const mode = btn.dataset.mode;
+
+            // Toggle custom inputs
+            const customInputs = document.getElementById('filterCustomInputs');
+            if (customInputs) customInputs.classList.toggle('open', mode === 'custom');
+
+            // Toggle date/month/year-specific granular inputs
+            const granularInputs = document.getElementById('filterGranularInputs');
+            if (granularInputs) {
+                if (['date', 'month_filter', 'year_filter'].includes(mode)) {
+                    granularInputs.classList.add('open');
+                    _updateGranularPicker(mode);
+                } else {
+                    granularInputs.classList.remove('open');
+                }
+            }
+
+            if (!['custom', 'date', 'month_filter', 'year_filter'].includes(mode)) {
+                window.activeFilter = { mode, from: null, to: null };
+                const now = new Date();
+                if (mode === 'today') {
+                    const today = toISODate(now);
+                    applyFilterToData('custom', today, today);
+                } else if (mode === 'week') {
+                    applyFilterToData('week');
+                } else if (mode === 'month') {
+                    applyFilterToData('month');
+                } else if (mode === 'year') {
+                    applyFilterToData('year');
+                } else {
+                    applyFilterToData('all');
+                }
+                dispatchFilterChanged();
+            }
+        });
+    });
+}
+
+// REQ 3: Update granular date picker based on mode
+function _updateGranularPicker(mode) {
+    const container = document.getElementById('filterGranularInputs');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (mode === 'date') {
+        container.innerHTML = `
+            <label style="font-size:12px;color:var(--text-muted);">Select Date</label>
+            <input type="date" id="granularDate" style="height:32px;padding:0 10px;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;font-size:13px;">
+            <button class="btn-apply-filter" onclick="applyGranularFilter('date')">Apply</button>
+        `;
+    } else if (mode === 'month_filter') {
+        const now = new Date();
+        container.innerHTML = `
+            <label style="font-size:12px;color:var(--text-muted);">Select Month</label>
+            <input type="month" id="granularMonth" value="${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}" style="height:32px;padding:0 10px;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;font-size:13px;">
+            <button class="btn-apply-filter" onclick="applyGranularFilter('month_filter')">Apply</button>
+        `;
+    } else if (mode === 'year_filter') {
+        const now = new Date();
+        const years = [];
+        for (let y = now.getFullYear(); y >= now.getFullYear() - 5; y--) years.push(y);
+        container.innerHTML = `
+            <label style="font-size:12px;color:var(--text-muted);">Select Year</label>
+            <select id="granularYear" style="height:32px;padding:0 10px;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-primary);font-family:inherit;font-size:13px;outline:none;">${years.map(y => `<option value="${y}">${y}</option>`).join('')}</select>
+            <button class="btn-apply-filter" onclick="applyGranularFilter('year_filter')">Apply</button>
+        `;
+    }
+}
+
+// REQ 3: Apply granular filter (date / month / year)
+function applyGranularFilter(mode) {
+    const now = new Date();
+    let from, to;
+
+    if (mode === 'date') {
+        const val = document.getElementById('granularDate')?.value;
+        if (!val) { if (typeof showToast === 'function') showToast('Please select a date', 'warning'); return; }
+        from = val; to = val;
+        window.activeFilter = { mode: 'date', from, to };
+        applyFilterToData('custom', from, to);
+    } else if (mode === 'month_filter') {
+        const val = document.getElementById('granularMonth')?.value; // 'YYYY-MM'
+        if (!val) { if (typeof showToast === 'function') showToast('Please select a month', 'warning'); return; }
+        const [y, m] = val.split('-').map(Number);
+        from = toISODate(new Date(y, m - 1, 1));
+        to = toISODate(new Date(y, m, 0)); // last day of month
+        window.activeFilter = { mode: 'month_filter', from, to };
+        applyFilterToData('custom', from, to);
+    } else if (mode === 'year_filter') {
+        const y = parseInt(document.getElementById('granularYear')?.value);
+        if (!y) { if (typeof showToast === 'function') showToast('Please select a year', 'warning'); return; }
+        from = `${y}-01-01`; to = `${y}-12-31`;
+        window.activeFilter = { mode: 'year_filter', from, to };
+        applyFilterToData('custom', from, to);
+    }
+
+    dispatchFilterChanged();
+}
+
+// REQ 6: Apply custom filter from new filter bar
+function applyCustomFilter() {
+    const fromEl = document.getElementById('filter-from');
+    const toEl = document.getElementById('filter-to');
+    if (!fromEl || !toEl || !fromEl.value || !toEl.value) {
+        if (typeof showToast === 'function') showToast('Please select both From and To dates', 'warning');
+        return;
+    }
+    window.activeFilter = { mode: 'custom', from: fromEl.value, to: toEl.value };
+    applyFilterToData('custom', fromEl.value, toEl.value);
+    dispatchFilterChanged();
 }
 
 function applyFilterToData(filter, customFrom, customTo) {
@@ -1291,7 +1554,8 @@ function setupModals() {
             const icon = refreshBtn.querySelector('svg');
             if (icon) icon.style.animation = 'spinning 1s linear infinite';
             if (typeof DataCache !== 'undefined') DataCache.invalidate();
-            loadDashboardData().then(() => { if (icon) icon.style.animation = ''; }).catch(() => { if (icon) icon.style.animation = ''; });
+            _cacheInvalidate('dashboard');
+            loadDashboardData(true).then(() => { if (icon) icon.style.animation = ''; }).catch(() => { if (icon) icon.style.animation = ''; });
             if (typeof showToast === 'function') showToast('Refreshing dashboard...', 'info');
         });
     }
@@ -1302,6 +1566,58 @@ function setupModals() {
 // =============================================================
 // INITIALIZATION
 // =============================================================
+// REQ 7: Sales chart time range control
+function setupSalesChartRangeControl() {
+    const ctrl = document.getElementById('salesChartRangeControl');
+    if (!ctrl) return;
+    ctrl.querySelectorAll('.chart-range-pill[data-range]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            ctrl.querySelectorAll('.chart-range-pill').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const range = btn.dataset.range;
+            if (!dashboardData) return;
+            const allRows = dashboardData.recent_data || dashboardData.recentData || [];
+            const now = new Date();
+            let filtered;
+            if (range === 'all') {
+                filtered = allRows;
+            } else if (range === '7d') {
+                const cut = new Date(now - 7 * 86400000);
+                filtered = allRows.filter(r => new Date(r.record_date || r.date || '') >= cut);
+            } else if (range === '1m') {
+                const cut = new Date(now - 30 * 86400000);
+                filtered = allRows.filter(r => new Date(r.record_date || r.date || '') >= cut);
+            } else if (range === '3m') {
+                const cut = new Date(now - 90 * 86400000);
+                filtered = allRows.filter(r => new Date(r.record_date || r.date || '') >= cut);
+            } else if (range === '6m') {
+                const cut = new Date(now - 180 * 86400000);
+                filtered = allRows.filter(r => new Date(r.record_date || r.date || '') >= cut);
+            } else if (range === '1y') {
+                const cut = new Date(now - 365 * 86400000);
+                filtered = allRows.filter(r => new Date(r.record_date || r.date || '') >= cut);
+            } else {
+                filtered = allRows;
+            }
+            // Rebuild only sales chart
+            const monthMap = {};
+            filtered.forEach(row => {
+                const d = new Date(row.record_date || row.date || row.Date || '');
+                if (isNaN(d.getTime())) return;
+                const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+                const label = d.toLocaleString('en-IN', { month: 'short', year: '2-digit' });
+                if (!monthMap[key]) monthMap[key] = { label, value: 0 };
+                monthMap[key].value += parseFloat(row.sales || 0);
+            });
+            const sortedKeys = Object.keys(monthMap).sort();
+            renderSalesChart(sortedKeys.map(k => monthMap[k].label), sortedKeys.map(k => monthMap[k].value));
+            if (window.salesChartInstance) {
+                window.salesChartInstance.update({ duration: 300 });
+            }
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof isAuthenticated === 'function' && !isAuthenticated()) {
         window.location.href = 'index.html';
@@ -1311,8 +1627,11 @@ document.addEventListener('DOMContentLoaded', () => {
     applyChartDefaults();
     loadDashboardData();
     setupFilterPills();
+    setupFilterBar();
+    setupSalesChartRangeControl();
     setupUploadZone();
     setupComparePanel();
     setupAddDataForm();
     setupModals();
+    updateExportBtnLabel();
 });

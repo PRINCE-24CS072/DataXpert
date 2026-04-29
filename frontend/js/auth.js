@@ -97,46 +97,82 @@ async function handleGoogleCallback(response) {
             window.location.href = 'dashboard.html';
         } else {
             if (data.need_signup) {
-                showInlineAuthError('loginError', 'No account found. Please sign up first.');
+                // REQ 12: Show inline error — do NOT auto-redirect or blur
+                showInlineAuthError('loginError', 'No account found with this Google account. Please sign up first.');
+                // After 1.5s offer to switch tab (no immediate redirect)
                 setTimeout(() => {
                     if (typeof switchAuthTab === 'function') switchAuthTab('signup');
-                }, 1500);
+                }, 1800);
             } else if (data.already_exists) {
-                showInlineAuthError('signupError', 'Account already exists. Please login.');
+                showInlineAuthError('signupError', 'An account already exists with this Google account. Please login.');
                 setTimeout(() => {
                     if (typeof switchAuthTab === 'function') switchAuthTab('login');
-                }, 1500);
+                }, 1800);
             } else {
-                showInlineAuthError('loginError', data.message || 'Authentication failed');
+                showInlineAuthError('loginError', data.message || 'Authentication failed. Please try again.');
             }
         }
     } catch(e) {
         console.error('Google auth error:', e);
-        showInlineAuthError('loginError', 'Connection error. Please try again.');
+        showInlineAuthError('loginError', 'Connection error. Please check your internet.');
     }
 }
 
 // ---- INLINE ERROR (STRICT: NO BLUR, NO OVERLAY) ----
 function showInlineAuthError(elementId, message) {
-    // Show inline error inside form card - NEVER fullscreen overlay
+    // REQ 2: Show field-level error with icon + shake the card (not full blur)
     const el = document.getElementById(elementId);
     if (el) {
         el.textContent = message;
         el.classList.add('visible');
-        // Shake animation on parent form
-        const form = el.closest('form');
+    }
+
+    // Also update field-error elements if they exist (below specific inputs)
+    // Map error container IDs to input groups
+    const fieldErrorMap = {
+        loginError: 'loginPassword',
+        signupError: 'signupPassword'
+    };
+    const targetInputId = fieldErrorMap[elementId];
+    if (targetInputId) {
+        // Remove old field-error if present
+        const existing = document.getElementById(elementId + '_field');
+        if (existing) existing.remove();
+        const input = document.getElementById(targetInputId);
+        if (input && input.parentElement) {
+            const fieldErr = document.createElement('p');
+            fieldErr.className = 'field-error';
+            fieldErr.id = elementId + '_field';
+            fieldErr.innerHTML = `<svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#EF4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${message}`;
+            input.parentElement.insertAdjacentElement('afterend', fieldErr);
+            setTimeout(() => { fieldErr.remove(); }, 4000);
+        }
+    }
+
+    // REQ 2: Shake the auth-card (not the form — card level for full shake)
+    const card = document.querySelector('.auth-card');
+    if (card) {
+        card.classList.remove('shake-card');
+        void card.offsetWidth;
+        card.classList.add('shake-card');
+        setTimeout(() => card.classList.remove('shake-card'), 400);
+    } else {
+        // Fallback: shake form
+        const form = el ? (el.closest('form') || el.closest('.auth-form')) : null;
         if (form) {
             form.classList.remove('shake');
-            void form.offsetWidth; // reflow
+            void form.offsetWidth;
             form.classList.add('shake');
+            setTimeout(() => form.classList.remove('shake'), 400);
         }
-        // Auto-dismiss
-        setTimeout(() => {
-            el.classList.remove('visible');
-            el.textContent = '';
-        }, 4000);
     }
-    // Also show toast but NOT as the primary error (secondary feedback)
+
+    // Auto-dismiss after 4 seconds
+    setTimeout(() => {
+        if (el) { el.classList.remove('visible'); el.textContent = ''; }
+    }, 4000);
+
+    // Also show toast as secondary feedback
     if (typeof showToast === 'function') {
         showToast(message, 'error');
     }
@@ -183,6 +219,10 @@ async function handleLogin(event) {
         showInlineAuthError('loginError', 'Please fill in all fields.');
         return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showInlineAuthError('loginError', 'Please enter a valid email address.');
+        return;
+    }
 
     const submitBtn = event.target.querySelector('button[type="submit"]');
     const orig = submitBtn.innerHTML;
@@ -211,12 +251,16 @@ async function handleLogin(event) {
             submitBtn.innerHTML = '<i class="fas fa-check"></i> Success!';
             setTimeout(() => { window.location.href = 'dashboard.html'; }, 400);
         } else {
-            // STRICT: NO BLUR, NO OVERLAY - inline only
+            // REQ 6/12: STRICT — NO BLUR, NO OVERLAY — inline error only
             let errorMsg;
             if (data.need_signup || response.status === 404) {
+                // REQ 12: User tried to login but has no account — show clear message
                 errorMsg = 'No account found with this email. Please sign up first.';
-            } else if (response.status === 401 || (data.message && data.message.toLowerCase().includes('password'))) {
+            } else if (response.status === 401 || data.code === 'INVALID_PASSWORD' ||
+                       (data.message && data.message.toLowerCase().includes('password'))) {
                 errorMsg = 'Incorrect password. Please try again.';
+            } else if (response.status === 403) {
+                errorMsg = 'Your account is suspended. Please contact support.';
             } else {
                 errorMsg = data.message || 'Login failed. Please check your credentials.';
             }

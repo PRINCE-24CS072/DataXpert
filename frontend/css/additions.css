@@ -1,0 +1,669 @@
+/* ============================================================
+   DataXpert — additions.css
+   New styles for Requirements 1-10
+   ============================================================ */
+
+/* ── CSS Variables additions ── */
+:root {
+  --accent-blue-new: #4F8EF7;
+  --accent-purple-new: #7B5CF7;
+  --accent-green-new: #22C78A;
+  --accent-amber-new: #F59E0B;
+  --accent-red-new: #EF4444;
+  --cache-bg: #1C1F28;
+}
+
+/* ============================================================
+   REQ 2 — LOGIN ERROR: field-error inline + shake fix
+   ============================================================ */
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #EF4444;
+  margin-top: 6px;
+}
+
+@keyframes shakeCard {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-8px); }
+  40%  { transform: translateX(8px); }
+  60%  { transform: translateX(-6px); }
+  80%  { transform: translateX(6px); }
+  100% { transform: translateX(0); }
+}
+
+.shake-card {
+  animation: shakeCard 400ms ease;
+}
+
+/* Override old shake to use new keyframe spec */
+@keyframes shake {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-8px); }
+  40%  { transform: translateX(8px); }
+  60%  { transform: translateX(-6px); }
+  80%  { transform: translateX(6px); }
+  100% { transform: translateX(0); }
+}
+
+.shake {
+  animation: shake 400ms ease;
+}
+
+/* ============================================================
+   REQ 3 — GOOGLE AUTH CHIP (profile page)
+   ============================================================ */
+.google-auth-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 0.5px solid rgba(255, 255, 255, 0.10);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: #6B7280;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* ============================================================
+   REQ 4 — PROFILE FORM: email readonly + spinner + toast
+   ============================================================ */
+.input-readonly-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-readonly-wrap input {
+  padding-right: 36px;
+  opacity: 0.6;
+  cursor: not-allowed;
+  width: 100%;
+}
+
+.input-lock-icon {
+  position: absolute;
+  right: 10px;
+  color: var(--text-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+@keyframes spin-svg {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  animation: spin-svg 0.7s linear infinite;
+  vertical-align: middle;
+}
+
+/* Profile success toast (bottom-right, slide from right) */
+.profile-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #1C1F28;
+  border-left: 3px solid #22C78A;
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-size: 13px;
+  color: #22C78A;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translateX(120%);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  pointer-events: none;
+  min-width: 240px;
+}
+
+.profile-toast.visible {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.profile-toast.toast-error {
+  border-left-color: #EF4444;
+  color: #EF4444;
+}
+
+.profile-toast.fade-out {
+  opacity: 0;
+  transform: translateX(120%);
+}
+
+/* ============================================================
+   REQ 5 — CACHE STATUS INDICATOR
+   ============================================================ */
+.cache-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-family: 'DM Mono', monospace;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  color: #22C78A;
+  margin-left: 10px;
+  user-select: none;
+  vertical-align: middle;
+}
+
+.cache-status[data-state="cached"] {
+  color: #F59E0B;
+}
+
+.cache-status[data-state="live"] {
+  color: #22C78A;
+}
+
+/* Pulsing dot for live state */
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+.cache-status[data-state="live"]::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22C78A;
+  display: inline-block;
+  animation: livePulse 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.cache-status[data-state="cached"]::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #F59E0B;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   REQ 6 — STICKY DATE FILTER BAR
+   ============================================================ */
+.filter-bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: #0D0F16;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+  padding: 10px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.filter-bar .filter-pill {
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  border: 0.5px solid rgba(255, 255, 255, 0.10);
+  background: transparent;
+  color: #6B7280;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.filter-bar .filter-pill:hover {
+  color: var(--text-secondary);
+  border-color: rgba(255,255,255,0.2);
+}
+
+.filter-bar .filter-pill.active {
+  background: #4F8EF7;
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Custom range reveal */
+.filter-custom-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 200ms ease, opacity 200ms ease;
+  flex-wrap: wrap;
+}
+
+.filter-custom-inputs.open {
+  max-height: 60px;
+  opacity: 1;
+}
+
+.filter-custom-inputs input[type="date"] {
+  height: 32px;
+  padding: 0 10px;
+  background: var(--bg-elevated);
+  border: 0.5px solid rgba(255,255,255,0.10);
+  border-radius: 7px;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  outline: none;
+}
+
+.filter-custom-inputs span {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.filter-custom-inputs .btn-apply-filter {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #4F8EF7;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: background 150ms;
+}
+
+.filter-custom-inputs .btn-apply-filter:hover {
+  background: #3a7de8;
+}
+
+/* ============================================================
+   REQ 7 — SALES CHART TIME RANGE CONTROL
+   ============================================================ */
+.chart-range-control {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.chart-range-pill {
+  height: 28px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 150ms ease;
+  border: 0.5px solid rgba(255,255,255,0.10);
+  background: transparent;
+  color: #6B7280;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  display: inline-flex;
+  align-items: center;
+}
+
+.chart-range-pill:hover {
+  color: var(--text-secondary);
+  border-color: rgba(255,255,255,0.2);
+}
+
+.chart-range-pill.active {
+  background: #4F8EF7;
+  color: white;
+  border-color: transparent;
+}
+
+/* ============================================================
+   REQ 8 — UPLOAD ERROR MISMATCH TABLE
+   ============================================================ */
+.upload-error-panel {
+  background: #12141A;
+  border-left: 3px solid #EF4444;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-top: 16px;
+  animation: fadeSlideUp 0.25s ease;
+}
+
+.upload-error-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #EF4444;
+  margin-bottom: 14px;
+}
+
+.mismatch-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-bottom: 14px;
+}
+
+.mismatch-table th {
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.mismatch-table td {
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-family: 'DM Mono', monospace;
+}
+
+.mismatch-table tr.row-missing {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.mismatch-table tr.row-extra {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.mismatch-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'DM Mono', monospace;
+}
+
+.mismatch-badge.missing {
+  background: rgba(239,68,68,0.15);
+  color: #EF4444;
+}
+
+.mismatch-badge.unexpected {
+  background: rgba(245,158,11,0.15);
+  color: #F59E0B;
+}
+
+.mismatch-badge.ok {
+  background: rgba(34,199,138,0.15);
+  color: #22C78A;
+}
+
+/* ============================================================
+   REQ 9 — COMPARE: two date-range pickers side by side
+   ============================================================ */
+.compare-date-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.compare-period-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.compare-period-group label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.compare-period-group.period-a label { color: #4F8EF7; }
+.compare-period-group.period-b label { color: #7B5CF7; }
+
+.compare-period-group input[type="date"] {
+  height: 36px;
+  padding: 0 10px;
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
+  color: var(--text-primary);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.compare-period-group.period-a input[type="date"]:focus { border-color: #4F8EF7; }
+.compare-period-group.period-b input[type="date"]:focus { border-color: #7B5CF7; }
+
+.compare-vs-sep {
+  font-size: 14px;
+  color: #2D3142;
+  font-weight: 600;
+  padding-top: 24px;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+/* Compare summary strip */
+.compare-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'DM Mono', monospace;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.compare-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+
+.compare-summary-diff.positive { color: #22C78A; }
+.compare-summary-diff.negative { color: #EF4444; }
+
+/* ============================================================
+   REQ 10 — EXPORT BUTTON LABEL UPDATE
+   ============================================================ */
+.export-filter-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'DM Mono', monospace;
+  margin-top: 4px;
+  display: block;
+}
+
+.export-filter-description {
+  font-size: 12px;
+  color: var(--accent-blue);
+  font-family: 'DM Mono', monospace;
+  padding: 8px 12px;
+  background: rgba(37,99,235,0.06);
+  border-radius: 6px;
+  border: 0.5px solid rgba(37,99,235,0.15);
+  margin-bottom: 12px;
+}
+
+/* ============================================================
+   STATUS PILLS (sale/expense) — ensure they exist
+   ============================================================ */
+.status-sale    { background: rgba(37,99,235,0.12);  color: #93C5FD; }
+.status-expense { background: rgba(220,38,38,0.12);   color: #FCA5A5; }
+.status-profit  { background: rgba(5,150,105,0.12);   color: #34D399; }
+
+/* ── Upload error pill variants (existing enhanced) ── */
+.col-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.col-pill-found    { background: rgba(5,150,105,0.15);  color: #34D399; }
+.col-pill-missing  { background: rgba(220,38,68,0.15);   color: #FCA5A5; }
+.col-pill-extra    { background: rgba(217,119,6,0.15);   color: #FCD34D; }
+
+.upload-error-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #FCA5A5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.error-icon {
+  width: 18px;
+  height: 18px;
+  background: rgba(220,38,38,0.2);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.upload-error-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.upload-error-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.upload-error-list li {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: 'DM Mono', monospace;
+  padding: 3px 8px;
+  background: rgba(220,38,38,0.05);
+  border-radius: 4px;
+}
+
+/* ── spinning animation alias ── */
+@keyframes spinning {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   REQ 3 — GRANULAR FILTER BAR (Date/Month/Year pickers)
+   ============================================================ */
+.filter-bar {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.filter-bar::-webkit-scrollbar { display: none; }
+
+/* Granular inputs container (reuses filter-custom-inputs) */
+#filterGranularInputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 200ms ease, opacity 200ms ease;
+  flex-wrap: wrap;
+  width: 100%;
+}
+#filterGranularInputs.open {
+  max-height: 60px;
+  opacity: 1;
+}
+#filterGranularInputs label {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   REQ 1 — PROFILE UPDATE INLINE FEEDBACK
+   ============================================================ */
+.profile-update-msg {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 12px;
+  display: none;
+  animation: fadeSlideUp 0.2s ease;
+}
+.profile-update-msg.success {
+  background: rgba(34,197,94,0.12);
+  color: var(--accent-green, #22c55e);
+  border: 1px solid rgba(34,197,94,0.3);
+}
+.profile-update-msg.error {
+  background: rgba(239,68,68,0.12);
+  color: var(--accent-red, #ef4444);
+  border: 1px solid rgba(239,68,68,0.3);
+}
+
+/* ============================================================
+   REQ 4 — COMPARE: delta indicators with arrows
+   ============================================================ */
+.compare-delta-positive {
+  color: var(--accent-green, #22c55e);
+  font-weight: 600;
+}
+.compare-delta-negative {
+  color: var(--accent-red, #ef4444);
+  font-weight: 600;
+}
+.compare-delta-neutral {
+  color: var(--text-muted, #64748b);
+}
+
+/* ============================================================
+   REQ 5 — MISMATCH TABLE: row error (Row#, Field, Expected, Received)
+   ============================================================ */
+.mismatch-table td:first-child {
+  color: var(--accent-amber, #f59e0b);
+  font-family: 'DM Mono', monospace;
+  font-weight: 600;
+}
+.mismatch-table thead th:nth-child(3) { color: var(--accent-green, #22c55e); }
+.mismatch-table thead th:nth-child(4) { color: var(--accent-red, #ef4444); }
+
+/* Upload error box animation */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+

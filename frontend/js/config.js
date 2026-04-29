@@ -40,10 +40,24 @@ const clearAuth = ()       => { localStorage.removeItem(STORAGE_KEYS.TOKEN); loc
 const isLoggedIn = ()      => !!getToken();
 const requireAuth = ()     => { if (!isLoggedIn()) { window.location.href = 'index.html'; return false; } return true; };
 
+// ── Auth Provider Detection ────────────────────────────────
+/**
+ * Returns true if the current user authenticated via Google OAuth.
+ * Checks both auth_provider field and google_id (must be non-null string).
+ */
+function isGoogleUser() {
+    const user = getUser();
+    if (!user) return false;
+    return user.auth_provider === 'google' ||
+           (user.google_id !== null && user.google_id !== undefined && user.google_id !== '');
+}
+
 // ── Backward-Compat Aliases ───────────────────────────────
 const isAuthenticated = isLoggedIn;
 const logout = () => {
     if (typeof DataCache !== 'undefined') DataCache.invalidate();
+    // Also clear sessionStorage dashboard cache
+    try { sessionStorage.removeItem('dashboard_data'); } catch(e) {}
     clearAuth();
     window.location.href = 'index.html';
 };
@@ -79,8 +93,6 @@ const API_ENDPOINTS = {
 };
 
 // ── Unified apiRequest Helper ─────────────────────────────
-// Usage: const data = await apiRequest(API_ENDPOINTS.DASHBOARD_STATS);
-//        const data = await apiRequest(url, { method:'POST', body: JSON.stringify({...}) });
 async function apiRequest(url, options = {}) {
     const token = getToken();
     const headers = Object.assign(
@@ -103,10 +115,15 @@ async function apiRequest(url, options = {}) {
 }
 
 // ── DataCache ─────────────────────────────────────────────
+// Uses sessionStorage key 'dashboard_data' per spec (REQ 8)
+// TTL: 5 minutes
+const DASHBOARD_CACHE_KEY = 'dashboard_data';
+const DASHBOARD_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 const DataCache = {
     data: null,
     lastFetched: null,
-    TTL: 5 * 60 * 1000, // 5 minutes
+    TTL: DASHBOARD_CACHE_TTL,
 
     isValid() {
         return this.data !== null &&
@@ -118,6 +135,13 @@ const DataCache = {
         this.data = data;
         this.lastFetched = Date.now();
         try {
+            // Primary cache key per spec
+            sessionStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({
+                data: data,
+                lastFetched: this.lastFetched,
+                expiry: this.lastFetched + this.TTL
+            }));
+            // Legacy key for backward compat
             sessionStorage.setItem('dx_cache', JSON.stringify({
                 data: data,
                 lastFetched: this.lastFetched
@@ -127,6 +151,21 @@ const DataCache = {
 
     get() {
         if (this.data && this.isValid()) return this.data;
+        // Check primary key first
+        try {
+            const stored = sessionStorage.getItem(DASHBOARD_CACHE_KEY);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (parsed.expiry && Date.now() < parsed.expiry) {
+                    this.data = parsed.data;
+                    this.lastFetched = parsed.lastFetched;
+                    return this.data;
+                }
+                // Expired — remove
+                sessionStorage.removeItem(DASHBOARD_CACHE_KEY);
+            }
+        } catch(e) { /* parse error */ }
+        // Fallback to legacy key
         try {
             const stored = sessionStorage.getItem('dx_cache');
             if (stored) {
@@ -142,6 +181,9 @@ const DataCache = {
     invalidate() {
         this.data = null;
         this.lastFetched = null;
-        try { sessionStorage.removeItem('dx_cache'); } catch(e) {}
+        try {
+            sessionStorage.removeItem(DASHBOARD_CACHE_KEY);
+            sessionStorage.removeItem('dx_cache');
+        } catch(e) {}
     }
 };

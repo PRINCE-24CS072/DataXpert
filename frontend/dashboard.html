@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/additions.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
@@ -73,10 +74,12 @@
     <!-- Page Header -->
     <div class="page-header">
       <div>
-        <h1 class="page-title">Dashboard</h1>
+        <h1 class="page-title">Dashboard
+          <span class="cache-status" id="cacheStatus" data-state="live">Live</span>
+        </h1>
         <div class="page-subtitle" id="lastUpdatedText">Loading data...</div>
       </div>
-      <button class="btn-action" id="refreshBtn" title="Refresh data" onclick="refreshDashboard()">
+      <button class="btn-action" id="refreshBtn" title="Refresh data">
         <svg width="14" height="14" id="refreshIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>
         Refresh
       </button>
@@ -92,9 +95,9 @@
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         Upload
       </button>
-      <button class="btn-action" onclick="openExportModal()">
+      <button class="btn-action" id="exportBtn" onclick="openExportModal()">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Export
+        <span id="exportBtnLabel">Export All</span>
       </button>
       <button class="btn-action" id="compareBtn" onclick="openComparePanel()">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
@@ -130,9 +133,28 @@
       </div>
     </div>
 
-    <!-- Time Filter Bar -->
-    <div class="filter-pills" id="timeFilterBar">
-      <span style="font-size:12px;color:var(--text-muted);margin-right:4px;">Range:</span>
+    <!-- Sticky Date Filter Bar (REQ 3/6) -->
+    <div class="filter-bar" id="filterBar">
+      <button class="filter-pill active" data-mode="all" id="fpAll">All Time</button>
+      <button class="filter-pill" data-mode="today" id="fpToday">Today</button>
+      <button class="filter-pill" data-mode="week" id="fpWeek">This Week</button>
+      <button class="filter-pill" data-mode="month" id="fpMonth">This Month</button>
+      <button class="filter-pill" data-mode="year" id="fpYear">This Year</button>
+      <button class="filter-pill" data-mode="date" id="fpDate">By Date</button>
+      <button class="filter-pill" data-mode="month_filter" id="fpMonthFilter">By Month</button>
+      <button class="filter-pill" data-mode="year_filter" id="fpYearFilter">By Year</button>
+      <button class="filter-pill" data-mode="custom" id="fpCustom">Custom &#9662;</button>
+      <!-- Granular inputs (date/month/year pickers) -->
+      <div class="filter-custom-inputs" id="filterGranularInputs" style="flex-wrap:wrap;gap:8px;align-items:center;"></div>
+      <div class="filter-custom-inputs" id="filterCustomInputs">
+        <input type="date" id="filter-from" title="From date">
+        <span>to</span>
+        <input type="date" id="filter-to" title="To date">
+        <button class="btn-apply-filter" onclick="applyCustomFilter()">Apply</button>
+      </div>
+    </div>
+    <!-- Legacy filter pills (hidden, kept for JS compat) -->
+    <div class="filter-pills" id="timeFilterBar" style="display:none;">
       <button class="filter-pill active" data-filter="all" onclick="applyTimeFilter('all',this)">All</button>
       <button class="filter-pill" data-filter="year" onclick="applyTimeFilter('year',this)">This Year</button>
       <button class="filter-pill" data-filter="6months" onclick="applyTimeFilter('6months',this)">6 Months</button>
@@ -141,8 +163,7 @@
       <button class="filter-pill" data-filter="week" onclick="applyTimeFilter('week',this)">This Week</button>
       <button class="filter-pill" data-filter="custom" onclick="applyTimeFilter('custom',this)">Custom &#9662;</button>
     </div>
-    <!-- Custom date range (hidden until Custom clicked) -->
-    <div class="filter-custom-range" id="customRangeRow">
+    <div class="filter-custom-range" id="customRangeRow" style="display:none;">
       <input type="date" id="customFrom" title="From">
       <span style="color:var(--text-muted);font-size:13px;">to</span>
       <input type="date" id="customTo" title="To">
@@ -155,6 +176,15 @@
       <div class="chart-card">
         <div class="chart-card-header">
           <span class="chart-card-title">Sales Overview</span>
+          <!-- REQ 7: Chart time range control -->
+          <div class="chart-range-control" id="salesChartRangeControl">
+            <button class="chart-range-pill" data-range="7d">7D</button>
+            <button class="chart-range-pill active" data-range="1m">1M</button>
+            <button class="chart-range-pill" data-range="3m">3M</button>
+            <button class="chart-range-pill" data-range="6m">6M</button>
+            <button class="chart-range-pill" data-range="1y">1Y</button>
+            <button class="chart-range-pill" data-range="all">All</button>
+          </div>
         </div>
         <div class="chart-card-body">
           <canvas id="salesChart" style="max-height:220px;"></canvas>
@@ -250,10 +280,6 @@
       </button>
       <div id="compareResults" style="display:none;">
         <div class="compare-metrics-grid" id="compareMetricsGrid"></div>
-        <div class="compare-chart-panel">
-          <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.06em;">Comparison Chart</div>
-          <canvas id="compareChart" style="max-height:180px;"></canvas>
-        </div>
         <div class="compare-insights">
           <h3>Key Insights</h3>
           <ul id="compareInsightsList"></ul>
