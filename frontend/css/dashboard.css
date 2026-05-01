@@ -198,16 +198,39 @@
     background: var(--card-bg);
     backdrop-filter: blur(20px);
     padding: 1.5rem;
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+    box-shadow: none;
     border: 1px solid var(--border-color);
+    border-left: 4px solid var(--primary-color);
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
     align-items: flex-start;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
+}
+
+/* Colored left borders for different card types */
+.stat-card-sales {
+    border-left-color: #3b82f6;
+}
+
+.stat-card-profit {
+    border-left-color: #22c55e;
+}
+
+.stat-card-expenses {
+    border-left-color: #ef4444;
+}
+
+.stat-card-data {
+    border-left-color: #a855f7;
+}
+
+.stat-card-dash:hover {
+    background: var(--hover-bg);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
 .stat-card-dash::before {
@@ -215,26 +238,22 @@
     position: absolute;
     top: 0;
     left: 0;
-    width: 4px;
+    width: 0;
     height: 0;
-    background: var(--gradient-primary);
-    transition: height 0.3s ease;
-}
-
-.stat-card-dash:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+    background: none;
+    transition: none;
 }
 
 .stat-card-dash:hover::before {
-    height: 100%;
+    width: 0;
+    height: 0;
 }
 
 .stat-icon {
+    display: none;
     width: 48px;
     height: 48px;
     border-radius: 12px;
-    display: flex;
     align-items: center;
     justify-content: center;
     color: white;
@@ -245,7 +264,7 @@
 }
 
 .stat-card-dash:hover .stat-icon {
-    transform: scale(1.08);
+    transform: none;
 }
 
 /* Minimalist Icon Colors */
@@ -393,68 +412,79 @@
     border-radius: 12px;
     border: 1px solid var(--border-color);
     box-shadow: none;
+    will-change: auto;
 }
 
 .btn-small {
     padding: 0.55rem 1.2rem;
     font-size: 0.9rem;
     border-radius: 10px;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     border: none;
     font-weight: 500;
+    cursor: pointer;
+    outline: none;
+}
+
+.btn-small:active {
+    transform: none;
 }
 
 /* Minimalist buttons - Subtle colors */
 .btn-minimal {
     background: var(--surface-bg);
     color: var(--text-secondary);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border-color) !important;
     box-shadow: none !important;
+    transition: all 0.15s ease;
 }
 
 .btn-minimal:hover {
     background: var(--hover-bg-alt);
     color: var(--text-primary);
-    transform: translateY(-1px);
-    border-color: var(--primary-color);
+    border-color: var(--primary-color) !important;
+}
+
+.btn-minimal:active {
+    transform: none;
 }
 
 /* Export button - Minimal cyan */
 .btn-export {
     background: rgba(6, 182, 212, 0.08);
     color: #0891b2;
-    border: 1px solid rgba(6, 182, 212, 0.2);
+    border: 1px solid rgba(6, 182, 212, 0.2) !important;
 }
 
 .btn-export:hover {
     background: rgba(6, 182, 212, 0.15);
-    border-color: #0891b2;
+    border-color: #0891b2 !important;
 }
 
 /* Compare button - Minimal orange */
 .btn-compare {
     background: rgba(245, 158, 11, 0.08);
     color: #d97706;
-    border: 1px solid rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.2) !important;
 }
 
 .btn-compare:hover {
     background: rgba(245, 158, 11, 0.15);
-    border-color: #d97706;
+    border-color: #d97706 !important;
 }
 
 /* Danger button styling */
 .btn-danger {
     background: rgba(239, 68, 68, 0.08);
     color: #dc2626;
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
     box-shadow: none !important;
 }
 
 .btn-danger:hover {
     background: rgba(239, 68, 68, 0.15);
-    border-color: #dc2626;
-    transform: translateY(-1px);
+    border-color: #dc2626 !important;
+    transform: none;
 }
 
 /* Secondary buttons - subtle */
@@ -469,7 +499,7 @@
     background: var(--hover-bg-alt) !important;
     color: var(--text-primary) !important;
     border-color: var(--primary-color) !important;
-    transform: translateY(-1px);
+    transform: none;
 }
 
 /* Success button - Minimalist green */
@@ -484,7 +514,7 @@
     background: rgba(16, 185, 129, 0.1) !important;
     color: #059669 !important;
     border-color: #10b981 !important;
-    transform: translateY(-1px);
+    transform: none;
 }
 
 /* Recent Data */

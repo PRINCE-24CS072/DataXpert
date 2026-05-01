@@ -89,33 +89,40 @@ function dismissProfileBanner() {
     }
 }
 
-// Load dashboard data
+// Load dashboard data - Optimized for speed
 async function loadDashboardData() {
     try {
-        // Load stats
-        const statsResponse = await fetch(API_ENDPOINTS.DASHBOARD_STATS, {
-            headers: getAuthHeaders()
-        });
-        const statsData = await statsResponse.json();
+        // Fetch both stats and charts in parallel for faster loading
+        const [statsResponse, chartsResponse] = await Promise.all([
+            fetch(API_ENDPOINTS.DASHBOARD_STATS, {
+                headers: getAuthHeaders()
+            }),
+            fetch(API_ENDPOINTS.DASHBOARD_CHARTS, {
+                headers: getAuthHeaders()
+            })
+        ]);
 
-        if (statsData.success) {
-            updateStats(statsData.stats);
-            updateRecentData(statsData.stats.recent_data);
+        // Process stats immediately
+        if (statsResponse.ok) {
+            const statsData = await statsResponse.json();
+            if (statsData.success) {
+                updateStats(statsData.stats);
+                updateRecentData(statsData.stats.recent_data || []);
+            }
         }
 
-        // Load charts in parallel
-        const chartsResponse = await fetch(API_ENDPOINTS.DASHBOARD_CHARTS, {
-            headers: getAuthHeaders()
-        });
-        const chartsData = await chartsResponse.json();
-
-        if (chartsData.success) {
-            renderCharts(chartsData.charts);
+        // Process charts
+        if (chartsResponse.ok) {
+            const chartsData = await chartsResponse.json();
+            if (chartsData.success) {
+                renderCharts(chartsData.charts || {});
+            }
         }
 
     } catch (error) {
         console.error('Error loading dashboard:', error);
-        showMessage('Error loading dashboard data', 'error');
+        // Show error but don't break the dashboard
+        console.warn('Dashboard data loading failed, showing empty state');
     }
 }
 
@@ -204,94 +211,170 @@ function updateRecentData(recentData) {
 
 // Render charts
 function renderCharts(chartsData) {
+    // Ensure chartsData is valid
+    if (!chartsData) {
+        chartsData = {};
+    }
+
     // Sales Chart
-    const salesCtx = document.getElementById('salesChart').getContext('2d');
-    if (charts.sales) charts.sales.destroy();
-    
-    if (chartsData.sales && chartsData.sales.labels && chartsData.sales.labels.length > 0 && 
-        chartsData.sales.datasets && chartsData.sales.datasets[0] && chartsData.sales.datasets[0].data.some(v => v > 0)) {
-        charts.sales = new Chart(salesCtx, {
-            type: 'line',
-            data: chartsData.sales,
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: { beginAtZero: true }
-                }
+    const salesCtx = document.getElementById('salesChart');
+    if (salesCtx) {
+        if (charts.sales) charts.sales.destroy();
+        
+        if (chartsData.sales && chartsData.sales.labels && chartsData.sales.labels.length > 0 && 
+            chartsData.sales.datasets && chartsData.sales.datasets[0] && chartsData.sales.datasets[0].data.some(v => v > 0)) {
+            try {
+                charts.sales = new Chart(salesCtx, {
+                    type: 'line',
+                    data: chartsData.sales,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error rendering sales chart:', error);
+                showEmptyChartState(salesCtx, 'No sales data yet');
             }
-        });
-    } else {
-        // Show empty state message
-        showEmptyChartState(salesCtx, 'No sales data yet');
+        } else {
+            showEmptyChartState(salesCtx, 'No sales data yet');
+        }
     }
 
     // Profit vs Expense Chart
-    const profitExpenseCtx = document.getElementById('profitExpenseChart').getContext('2d');
-    if (charts.profitExpense) charts.profitExpense.destroy();
-    
-    if (chartsData.profitExpense && chartsData.profitExpense.labels && chartsData.profitExpense.labels.length > 0 &&
-        chartsData.profitExpense.datasets && chartsData.profitExpense.datasets.some(ds => ds.data && ds.data.some(v => v !== 0))) {
-        charts.profitExpense = new Chart(profitExpenseCtx, {
-            type: 'bar',
-            data: chartsData.profitExpense,
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { display: true, position: 'top' }
-                },
-                scales: {
-                    y: { beginAtZero: true }
-                }
+    const profitExpenseCtx = document.getElementById('profitExpenseChart');
+    if (profitExpenseCtx) {
+        if (charts.profitExpense) charts.profitExpense.destroy();
+        
+        if (chartsData.profitExpense && chartsData.profitExpense.labels && chartsData.profitExpense.labels.length > 0 &&
+            chartsData.profitExpense.datasets && chartsData.profitExpense.datasets.some(ds => ds.data && ds.data.some(v => v !== 0))) {
+            try {
+                charts.profitExpense = new Chart(profitExpenseCtx, {
+                    type: 'bar',
+                    data: chartsData.profitExpense,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: true, position: 'top' }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error rendering profit/expense chart:', error);
+                showEmptyChartState(profitExpenseCtx, 'No profit/expense data yet');
             }
-        });
-    } else {
-        showEmptyChartState(profitExpenseCtx, 'No profit/expense data yet');
+        } else {
+            showEmptyChartState(profitExpenseCtx, 'No profit/expense data yet');
+        }
     }
 
     // Category Chart
-    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-    if (charts.category) charts.category.destroy();
-    
-    if (chartsData.category && chartsData.category.labels && chartsData.category.labels.length > 0 &&
-        chartsData.category.datasets && chartsData.category.datasets[0] && chartsData.category.datasets[0].data.some(v => v > 0)) {
-        charts.category = new Chart(categoryCtx, {
-            type: 'doughnut',
-            data: chartsData.category,
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { display: true, position: 'bottom' }
-                }
+    const categoryCtx = document.getElementById('categoryChart');
+    if (categoryCtx) {
+        if (charts.category) charts.category.destroy();
+        
+        if (chartsData.category && chartsData.category.labels && chartsData.category.labels.length > 0 &&
+            chartsData.category.datasets && chartsData.category.datasets[0] && chartsData.category.datasets[0].data.some(v => v > 0)) {
+            try {
+                charts.category = new Chart(categoryCtx, {
+                    type: 'doughnut',
+                    data: chartsData.category,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: true, position: 'bottom' }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error rendering category chart:', error);
+                showEmptyChartState(categoryCtx, 'No category data yet');
             }
-        });
-    } else {
-        showEmptyChartState(categoryCtx, 'No category data yet');
+        } else {
+            showEmptyChartState(categoryCtx, 'No category data yet');
+        }
     }
 }
 
 // Show empty state message in chart canvas
-function showEmptyChartState(ctx, message) {
-    const canvas = ctx.canvas;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+function showEmptyChartState(canvasElement, message) {
+    if (!canvasElement) return;
+    
+    const ctx = canvasElement.getContext('2d');
+    if (!ctx) return;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    
+    // Draw empty state message
     ctx.fillStyle = '#9CA3AF';
     ctx.font = '14px Inter, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(message, canvas.width / 2, canvas.height / 2);
-    ctx.fillText('Upload data to see visualizations', canvas.width / 2, canvas.height / 2 + 25);
+    ctx.textBaseline = 'middle';
+    ctx.fillText(message, canvasElement.width / 2, canvasElement.height / 2 - 12);
+    ctx.fillText('Upload data to see visualizations', canvasElement.width / 2, canvasElement.height / 2 + 12);
 }
 
 // Setup event listeners
 function setupEventListeners() {
-    // Add data button
+    // Add data button - Simple and direct
     const addDataBtn = document.getElementById('addDataBtn');
     if (addDataBtn) {
-        addDataBtn.addEventListener('click', () => openModal('addDataModal'));
+        addDataBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const modal = document.getElementById('addDataModal');
+            if (modal) {
+                modal.style.display = 'block';
+                const content = modal.querySelector('.modal-content');
+                if (content) {
+                    setTimeout(() => {
+                        content.classList.add('show');
+                    }, 10);
+                }
+            }
+        });
+    }
+
+    // Upload data button - Simple and direct
+    const uploadBtn = document.getElementById('uploadDataBtn');
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            resetUploadState();
+            const modal = document.getElementById('uploadDataModal');
+            if (modal) {
+                modal.style.display = 'block';
+                const content = modal.querySelector('.modal-content');
+                if (content) {
+                    setTimeout(() => {
+                        content.classList.add('show');
+                    }, 10);
+                }
+            }
+        });
+    }
+
+    // Clear data button - Simple and direct
+    const clearDataBtn = document.getElementById('clearDataBtn');
+    if (clearDataBtn) {
+        clearDataBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            openClearDataModal();
+        });
     }
 
     // Add data form
@@ -304,21 +387,36 @@ function setupEventListeners() {
         const expensesInput = document.getElementById('expenses');
         const profitInput = document.getElementById('profit');
         
-        function calculateProfit() {
-            const sales = parseFloat(salesInput.value) || 0;
-            const expenses = parseFloat(expensesInput.value) || 0;
-            profitInput.value = (sales - expenses).toFixed(2);
+        if (salesInput && expensesInput && profitInput) {
+            function calculateProfit() {
+                const sales = parseFloat(salesInput.value) || 0;
+                const expenses = parseFloat(expensesInput.value) || 0;
+                profitInput.value = (sales - expenses).toFixed(2);
+            }
+            
+            salesInput.addEventListener('input', calculateProfit);
+            expensesInput.addEventListener('input', calculateProfit);
         }
-        
-        salesInput.addEventListener('input', calculateProfit);
-        expensesInput.addEventListener('input', calculateProfit);
     }
 
     // Close buttons
     document.querySelectorAll('.close').forEach(button => {
-        button.addEventListener('click', () => {
-            const modalId = button.getAttribute('data-modal');
-            closeModal(modalId);
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const modalId = this.getAttribute('data-modal');
+            if (modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    const content = modal.querySelector('.modal-content');
+                    if (content) {
+                        content.classList.remove('show');
+                    }
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                    }, 300);
+                }
+            }
         });
     });
 
@@ -326,7 +424,9 @@ function setupEventListeners() {
     const menuToggle = document.getElementById('menuToggle');
     const sidebar = document.querySelector('.sidebar');
     if (menuToggle && sidebar) {
-        menuToggle.addEventListener('click', () => {
+        menuToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             sidebar.classList.toggle('active');
         });
     }
@@ -387,22 +487,32 @@ function formatDate(dateString) {
 
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = 'block';
+    if (!modal) {
+        console.warn(`Modal ${modalId} not found`);
+        return;
+    }
+    modal.style.display = 'block';
+    modal.style.backdropFilter = 'blur(4px)';
+    const content = modal.querySelector('.modal-content');
+    if (content) {
         setTimeout(() => {
-            modal.querySelector('.modal-content').classList.add('show');
+            content.classList.add('show');
         }, 10);
     }
 }
 
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.querySelector('.modal-content').classList.remove('show');
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 300);
+    if (!modal) return;
+    
+    const content = modal.querySelector('.modal-content');
+    if (content) {
+        content.classList.remove('show');
     }
+    setTimeout(() => {
+        modal.style.display = 'none';
+        modal.style.backdropFilter = 'none';
+    }, 300);
 }
 
 // ==================== HISTORY LINK ====================
