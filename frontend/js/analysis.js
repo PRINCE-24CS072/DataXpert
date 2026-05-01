@@ -1,6 +1,8 @@
 // AI Analysis JavaScript
 
 let currentChart = null;
+let currentFilterMode = 'all-sales'; // Track current filter mode
+let currentFilterType = null; // Track selected filter type
 
 // Check authentication on page load
 document.addEventListener('DOMContentLoaded', async () => {
@@ -30,6 +32,9 @@ function loadUserInfo() {
 
 // Setup event listeners
 function setupEventListeners() {
+    // Analysis Window Toggle Buttons
+    setupAnalysisWindowControls();
+
     // Chat form
     const chatForm = document.getElementById('chatForm');
     if (chatForm) {
@@ -77,6 +82,183 @@ function setupEventListeners() {
         menuToggle.addEventListener('click', () => {
             sidebar.classList.toggle('active');
         });
+    }
+}
+
+// Setup Analysis Window Controls
+function setupAnalysisWindowControls() {
+    // Toggle buttons
+    const allSalesBtn = document.getElementById('allSalesBtn');
+    const customRangeBtn = document.getElementById('customRangeBtn');
+    const filterPanel = document.getElementById('filterPanel');
+
+    if (allSalesBtn) {
+        allSalesBtn.addEventListener('click', () => {
+            currentFilterMode = 'all-sales';
+            allSalesBtn.classList.add('active');
+            customRangeBtn.classList.remove('active');
+            filterPanel.style.display = 'none';
+            resetFilters();
+        });
+    }
+
+    if (customRangeBtn) {
+        customRangeBtn.addEventListener('click', () => {
+            currentFilterMode = 'custom-range';
+            customRangeBtn.classList.add('active');
+            allSalesBtn.classList.remove('active');
+            filterPanel.style.display = 'block';
+        });
+    }
+
+    // Filter type buttons
+    document.querySelectorAll('.filter-type-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const filterType = this.getAttribute('data-filter-type');
+            selectFilterType(filterType);
+        });
+    });
+
+    // Apply filter button
+    const applyFilterBtn = document.getElementById('applyFilterBtn');
+    if (applyFilterBtn) {
+        applyFilterBtn.addEventListener('click', handleApplyFilter);
+    }
+}
+
+// Select filter type
+function selectFilterType(filterType) {
+    currentFilterType = filterType;
+    
+    // Update active button
+    document.querySelectorAll('.filter-type-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`.filter-type-btn[data-filter-type="${filterType}"]`).classList.add('active');
+    
+    // Hide all input groups
+    document.getElementById('yearInputGroup').style.display = 'none';
+    document.getElementById('monthInputGroup').style.display = 'none';
+    document.getElementById('dateInputGroup').style.display = 'none';
+    document.getElementById('dateRangeInputGroup').style.display = 'none';
+    
+    // Show selected input group
+    switch(filterType) {
+        case 'year':
+            document.getElementById('yearInputGroup').style.display = 'flex';
+            break;
+        case 'month':
+            document.getElementById('monthInputGroup').style.display = 'flex';
+            break;
+        case 'date':
+            document.getElementById('dateInputGroup').style.display = 'flex';
+            break;
+        case 'date-range':
+            document.getElementById('dateRangeInputGroup').style.display = 'flex';
+            break;
+    }
+}
+
+// Handle Apply Filter
+function handleApplyFilter() {
+    if (!currentFilterType) {
+        alert('Please select a filter type');
+        return;
+    }
+
+    let filterData = { type: currentFilterType };
+
+    switch(currentFilterType) {
+        case 'year':
+            const year = document.getElementById('yearInput').value;
+            if (!year) {
+                alert('Please select a year');
+                return;
+            }
+            filterData.value = year;
+            break;
+        case 'month':
+            const month = document.getElementById('monthInput').value;
+            if (!month) {
+                alert('Please select a month');
+                return;
+            }
+            filterData.value = month;
+            break;
+        case 'date':
+            const date = document.getElementById('dateInput').value;
+            if (!date) {
+                alert('Please select a date');
+                return;
+            }
+            filterData.value = formatDateToDDMMYYYY(date);
+            break;
+        case 'date-range':
+            const fromDate = document.getElementById('dateFromInput').value;
+            const toDate = document.getElementById('dateToInput').value;
+            if (!fromDate || !toDate) {
+                alert('Please select both From and To dates');
+                return;
+            }
+            filterData.from = formatDateToDDMMYYYY(fromDate);
+            filterData.to = formatDateToDDMMYYYY(toDate);
+            break;
+    }
+
+    // Send filter to chat/analysis
+    console.log('Filter applied:', filterData);
+    
+    // Display filter summary in chat
+    const summaryText = generateFilterSummary(filterData);
+    addMessageToChat(`Applied filter: ${summaryText}`, 'system');
+}
+
+// Reset all filters
+function resetFilters() {
+    document.getElementById('yearInput').value = '';
+    document.getElementById('monthInput').value = '';
+    document.getElementById('dateInput').value = '';
+    document.getElementById('dateFromInput').value = '';
+    document.getElementById('dateToInput').value = '';
+    currentFilterType = null;
+    
+    // Remove active class from filter type buttons
+    document.querySelectorAll('.filter-type-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Hide all input groups
+    document.getElementById('yearInputGroup').style.display = 'none';
+    document.getElementById('monthInputGroup').style.display = 'none';
+    document.getElementById('dateInputGroup').style.display = 'none';
+    document.getElementById('dateRangeInputGroup').style.display = 'none';
+}
+
+// Format date to DD-MM-YYYY
+function formatDateToDDMMYYYY(dateStr) {
+    const date = new Date(dateStr);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+}
+
+// Generate filter summary text
+function generateFilterSummary(filterData) {
+    const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    switch(filterData.type) {
+        case 'year':
+            return `Year ${filterData.value}`;
+        case 'month':
+            return `${monthNames[parseInt(filterData.value)]}`;
+        case 'date':
+            return `Date ${filterData.value}`;
+        case 'date-range':
+            return `From ${filterData.from} to ${filterData.to}`;
+        default:
+            return 'Unknown filter';
     }
 }
 
@@ -167,6 +349,15 @@ function addMessageToChat(message, role) {
             </div>
             <div class="message-content">
                 <p style="color: #ef4444;">${escapeHtml(message)}</p>
+            </div>
+        `;
+    } else if (role === 'system') {
+        messageDiv.innerHTML = `
+            <div class="message-avatar">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="message-content">
+                <p>${escapeHtml(message)}</p>
             </div>
         `;
     }

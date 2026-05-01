@@ -85,6 +85,83 @@
 
         <!-- Analysis Container -->
         <div class="analysis-container">
+            <!-- Analysis Window Header -->
+            <div class="analysis-window-header">
+                <h2 class="analysis-window-title">Analysis Window</h2>
+                <div class="analysis-controls">
+                    <div class="toggle-buttons">
+                        <button class="toggle-btn active" id="allSalesBtn" data-mode="all-sales">
+                            <i class="fas fa-chart-line"></i> All Sales
+                        </button>
+                        <button class="toggle-btn" id="customRangeBtn" data-mode="custom-range">
+                            <i class="fas fa-calendar-alt"></i> Custom Range
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Panel (Hidden by default) -->
+            <div class="filter-panel" id="filterPanel" style="display: none;">
+                <div class="filter-content">
+                    <div class="filter-type-selector">
+                        <label>Filter by:</label>
+                        <div class="filter-type-buttons">
+                            <button class="filter-type-btn" data-filter-type="year">Year</button>
+                            <button class="filter-type-btn" data-filter-type="month">Month</button>
+                            <button class="filter-type-btn" data-filter-type="date">Date</button>
+                            <button class="filter-type-btn" data-filter-type="date-range">Date Range</button>
+                        </div>
+                    </div>
+
+                    <!-- Filter Inputs -->
+                    <div class="filter-inputs">
+                        <div class="filter-input-group" id="yearInputGroup" style="display: none;">
+                            <label for="yearInput">Year:</label>
+                            <input type="number" id="yearInput" placeholder="e.g., 2024" min="2000" max="2100">
+                        </div>
+
+                        <div class="filter-input-group" id="monthInputGroup" style="display: none;">
+                            <label for="monthInput">Month:</label>
+                            <select id="monthInput">
+                                <option value="">Select Month</option>
+                                <option value="01">January</option>
+                                <option value="02">February</option>
+                                <option value="03">March</option>
+                                <option value="04">April</option>
+                                <option value="05">May</option>
+                                <option value="06">June</option>
+                                <option value="07">July</option>
+                                <option value="08">August</option>
+                                <option value="09">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-input-group" id="dateInputGroup" style="display: none;">
+                            <label for="dateInput">Date:</label>
+                            <input type="date" id="dateInput">
+                        </div>
+
+                        <div class="filter-input-group" id="dateRangeInputGroup" style="display: none;">
+                            <div>
+                                <label for="dateFromInput">From Date:</label>
+                                <input type="date" id="dateFromInput">
+                            </div>
+                            <div>
+                                <label for="dateToInput">To Date:</label>
+                                <input type="date" id="dateToInput">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary apply-filter-btn" id="applyFilterBtn">
+                        <i class="fas fa-check"></i> Apply Filter
+                    </button>
+                </div>
+            </div>
+
             <!-- Suggestions -->
             <div class="suggestions">
                 <h3>💡 Try asking:</h3>
