@@ -684,24 +684,52 @@ class AnalysisEngine:
         
         return min(float(anomaly_score), 10.0)
     
-    def generate_response(self, analysis, anomalies):
-        """Generate natural language response"""
-        text = analysis['summary']
+    def format_response_claude_style(self, analysis, anomalies):
+        """Format response in Claude's conversational style"""
+        parts = []
         
+        # Opening context
+        summary = analysis.get('summary', '')
+        if summary:
+            parts.append(summary)
+        
+        # Insights with narrative flow
         if analysis.get('insights'):
-            text += "\n\n📊 Key Insights:\n"
-            for insight in analysis['insights']:
-                text += f"• {insight}\n"
+            insights_text = "\n\nLooking at your data, I've identified several important patterns:\n\n"
+            for i, insight in enumerate(analysis['insights'], 1):
+                # Convert bullets to narrative with transitional phrases
+                insight_clean = insight.lstrip('• ').strip()
+                transition = ["First, ", "Additionally, ", "Importantly, ", "Also, ", "Notably, "]
+                prefix = transition[i % len(transition)]
+                insights_text += f"{prefix}{insight_clean}\n"
+            parts.append(insights_text)
         
-        if anomalies.get('detected'):
-            text += "\n\n⚠️ Anomalies Detected:\n"
+        # Anomalies with context
+        if anomalies.get('detected') and anomalies.get('anomalies'):
+            anomaly_text = "\n\nI've noticed some unusual patterns that might warrant your attention:\n\n"
             for anomaly in anomalies['anomalies']:
-                text += f"• {anomaly}\n"
+                anomaly_clean = anomaly.lstrip('• ').strip()
+                anomaly_text += f"• {anomaly_clean}\n"
+            parts.append(anomaly_text)
         
+        # Recommendations with reasoning
         if analysis.get('recommendations'):
-            text += "\n\n💡 Recommendations:\n"
-            for rec in analysis['recommendations']:
-                text += f"• {rec}\n"
+            rec_text = "\n\nBased on these findings, here are some actions you might consider:\n\n"
+            for i, rec in enumerate(analysis['recommendations'], 1):
+                rec_clean = rec.lstrip('• ').strip()
+                rec_text += f"{i}. {rec_clean}\n"
+            parts.append(rec_text)
+        
+        # Closing thought
+        if parts:
+            parts.append("\nWould you like me to dive deeper into any of these areas or explore other aspects of your data?")
+        
+        return "\n".join(parts)
+    
+    def generate_response(self, analysis, anomalies):
+        """Generate natural language response in Claude's conversational style"""
+        # Format text with Claude-style narrative
+        text = self.format_response_claude_style(analysis, anomalies)
         
         return {
             'text': text,
