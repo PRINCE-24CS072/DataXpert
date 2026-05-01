@@ -197,14 +197,15 @@
 .stat-card-dash {
     background: var(--card-bg);
     backdrop-filter: blur(20px);
-    padding: 2rem;
-    border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    padding: 1.75rem;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     border: 1px solid var(--border-color);
     display: flex;
+    flex-direction: column;
     gap: 1.5rem;
-    align-items: center;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    align-items: flex-start;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
 }
@@ -214,68 +215,86 @@
     position: absolute;
     top: 0;
     left: 0;
-    right: 0;
-    height: 4px;
+    width: 4px;
+    height: 0;
     background: var(--gradient-primary);
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.4s ease;
+    transition: height 0.3s ease;
 }
 
 .stat-card-dash:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 16px 48px rgba(37, 99, 235, 0.2);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
 }
 
 .stat-card-dash:hover::before {
-    transform: scaleX(1);
+    height: 100%;
 }
 
 .stat-icon {
-    width: 70px;
-    height: 70px;
-    border-radius: 18px;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.8rem;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    font-size: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease;
+    background: var(--surface-bg);
 }
 
 .stat-card-dash:hover .stat-icon {
-    transform: scale(1.1) rotate(5deg);
+    transform: scale(1.08);
+}
+
+/* Minimalist Icon Colors */
+.stat-icon-sales {
+    background: rgba(59, 130, 246, 0.12);
+    color: #3b82f6;
+}
+
+.stat-icon-profit {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+}
+
+.stat-icon-expenses {
+    background: rgba(249, 115, 22, 0.12);
+    color: #f97316;
+}
+
+.stat-icon-data {
+    background: rgba(168, 85, 247, 0.12);
+    color: #a855f7;
 }
 
 .stat-details {
     flex: 1;
     display: flex;
     flex-direction: column;
+    width: 100%;
 }
 
 .stat-label {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-    font-weight: 500;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
 }
 
 .stat-value {
-    font-size: 2.2rem;
-    font-weight: 800;
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 0.5rem;
-    letter-spacing: -1px;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.5px;
 }
 
 .stat-change {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 600;
     padding: 0.3rem 0.8rem;
     border-radius: 20px;
@@ -363,10 +382,109 @@
     color: var(--primary-color);
 }
 
+/* Action Buttons Bar - Minimalist Design */
+.action-buttons-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: none;
+}
+
 .btn-small {
-    padding: 0.5rem 1rem;
+    padding: 0.55rem 1.2rem;
     font-size: 0.9rem;
     border-radius: 10px;
+    transition: all 0.2s ease;
+    border: none;
+    font-weight: 500;
+}
+
+/* Minimalist buttons - Subtle colors */
+.btn-minimal {
+    background: var(--surface-bg);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    box-shadow: none !important;
+}
+
+.btn-minimal:hover {
+    background: var(--hover-bg-alt);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+    border-color: var(--primary-color);
+}
+
+/* Export button - Minimal cyan */
+.btn-export {
+    background: rgba(6, 182, 212, 0.08);
+    color: #0891b2;
+    border: 1px solid rgba(6, 182, 212, 0.2);
+}
+
+.btn-export:hover {
+    background: rgba(6, 182, 212, 0.15);
+    border-color: #0891b2;
+}
+
+/* Compare button - Minimal orange */
+.btn-compare {
+    background: rgba(245, 158, 11, 0.08);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.btn-compare:hover {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: #d97706;
+}
+
+/* Danger button styling */
+.btn-danger {
+    background: rgba(239, 68, 68, 0.08);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    box-shadow: none !important;
+}
+
+.btn-danger:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #dc2626;
+    transform: translateY(-1px);
+}
+
+/* Secondary buttons - subtle */
+.btn-secondary {
+    background: var(--surface-bg) !important;
+    color: var(--text-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: none !important;
+}
+
+.btn-secondary:hover {
+    background: var(--hover-bg-alt) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--primary-color) !important;
+    transform: translateY(-1px);
+}
+
+/* Success button - Minimalist green */
+.btn-success {
+    background: var(--surface-bg) !important;
+    color: var(--text-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: none !important;
+}
+
+.btn-success:hover {
+    background: rgba(16, 185, 129, 0.1) !important;
+    color: #059669 !important;
+    border-color: #10b981 !important;
+    transform: translateY(-1px);
 }
 
 /* Recent Data */
@@ -511,6 +629,27 @@
 .form-group select:focus {
     outline: none;
     border-color: var(--primary-color);
+}
+
+/* Dark mode styles for stat icons */
+[data-theme="dark"] .stat-icon-sales {
+    background: rgba(59, 130, 246, 0.18);
+    color: #60a5fa;
+}
+
+[data-theme="dark"] .stat-icon-profit {
+    background: rgba(34, 197, 94, 0.18);
+    color: #4ade80;
+}
+
+[data-theme="dark"] .stat-icon-expenses {
+    background: rgba(249, 115, 22, 0.18);
+    color: #fb923c;
+}
+
+[data-theme="dark"] .stat-icon-data {
+    background: rgba(168, 85, 247, 0.18);
+    color: #c084fc;
 }
 
 /* Responsive */

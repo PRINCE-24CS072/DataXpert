@@ -737,6 +737,120 @@ class AnalysisEngine:
             'has_chart': bool(analysis.get('data'))
         }
     
+    def handle_general_query(self, message, business_data=None):
+        """Handle general questions and conversations - Claude style"""
+        message_lower = message.lower()
+        
+        # Greetings and casual chat
+        greetings = ['hi', 'hello', 'hey', 'sup', 'yo', 'heya', 'greetings']
+        if any(greeting in message_lower for greeting in greetings):
+            responses = [
+                "Hey there! 👋 I'm DataXpert, your AI analytics assistant. How can I help you with your business data today?",
+                "Hello! Great to see you. Whether you want to analyze sales trends, identify anomalies, or make predictions about your business, I'm here to help. What would you like to explore?",
+                "Hey! I'm ready to dig into your data and provide insights. Do you want to analyze sales, profits, trends, or something else?",
+            ]
+            return responses[hash(message) % len(responses)]
+        
+        # Help requests
+        if any(word in message_lower for word in ['help', 'what can you do', 'capabilities', 'features']):
+            return """I can help you with several types of analysis:
+
+**Data Analysis:**
+• Sales analysis - understand revenue trends and performance
+• Profit & Loss analysis - examine margins and financial health
+• Expense tracking - monitor spending patterns
+• Customer insights - analyze customer behavior
+
+**Advanced Features:**
+• Trend analysis - identify patterns over time
+• Forecasting - predict future values using historical data
+• Anomaly detection - spot unusual patterns automatically
+• Comparison analysis - compare different periods or metrics
+
+**What you can ask me:**
+"Show me sales trends" | "Predict next month's revenue" | "What are the anomalies in my data?" | "Compare Q1 vs Q2"
+
+Just upload your business data first, and we can get started! What interests you most?"""
+        
+        # How to use / getting started
+        if any(word in message_lower for word in ['how to', 'getting started', 'start', 'begin', 'guide']):
+            return """Getting started with DataXpert is easy:
+
+1. **Upload Your Data** - Go to the Dashboard tab and upload a CSV or Excel file with your business metrics
+2. **Ask Questions** - Once uploaded, just ask me questions about your data in natural language
+3. **Get Insights** - I'll analyze your data and provide actionable insights
+
+**Examples of what you can ask:**
+• "What's the trend in my sales?"
+• "Are there any unusual patterns in my data?"
+• "Forecast my revenue for next month"
+• "Which products are most profitable?"
+
+Try asking me something specific about your data, and I'll provide detailed analysis with recommendations!"""
+        
+        # Default helpful response
+        return f"""I'd be happy to help! I noticed you asked: "{message}"
+
+To get the most out of me, I recommend:
+
+1. **Upload your business data** (CSV or Excel) from the Dashboard
+2. **Ask specific questions** about your sales, profits, trends, or forecasts
+3. **Request predictions** based on historical patterns
+
+Here are some examples:
+• "Analyze my sales data"
+• "What's the profit trend?"
+• "Predict next quarter's revenue"
+• "Show me anomalies in my data"
+
+What would you like to explore first?"""
+    
+    def generate_prediction_response(self, analysis, message):
+        """Generate Claude-style prediction response"""
+        if not analysis.get('forecast'):
+            return """I'd like to make a forecast for you, but I need historical data first. 
+
+Once you upload your business data, I can predict:
+- Future sales trends
+- Revenue projections
+- Expense forecasts
+- Profit margins
+
+Would you like to upload your data now?"""
+        
+        forecast = analysis.get('forecast', {})
+        predicted_values = forecast.get('predicted_values', [])
+        confidence = forecast.get('confidence', 0.85)
+        
+        parts = []
+        parts.append(f"Based on the historical patterns in your data, here's my forecast:")
+        
+        if predicted_values:
+            parts.append(f"\n**Predicted Values:**")
+            for i, val in enumerate(predicted_values[:5], 1):
+                parts.append(f"• Period {i}: ${val:,.2f}")
+        
+        parts.append(f"\n**Confidence Level:** {confidence:.1%}")
+        parts.append("\n**Key Considerations:**")
+        parts.append("• This forecast assumes historical trends continue")
+        parts.append("• External factors may impact actual results")
+        parts.append("• Regularly update predictions with new data")
+        
+        parts.append("\nWould you like me to adjust the forecast or provide different metrics?")
+        
+        return "\n".join(parts)
+    
+    def get_claude_style_response(self, intent, analysis, business_data=None, message=""):
+        """Route to appropriate response generator based on intent"""
+        
+        if intent == 'general_query':
+            return self.handle_general_query(message, business_data)
+        elif intent == 'forecast':
+            return self.generate_prediction_response(analysis, message)
+        else:
+            # Regular analysis response
+            return self.format_response_claude_style(analysis, {})
+    
     def prepare_chart_data(self, business_data):
         """Prepare data for charts - handles empty data gracefully"""
         if not business_data:

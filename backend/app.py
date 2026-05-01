@@ -1196,7 +1196,7 @@ def get_activity_data_history(current_user):
 @app.route('/api/ai/chat', methods=['POST'])
 @token_required
 def ai_chat(current_user):
-    """Handle AI chat analysis"""
+    """Handle AI chat analysis - supports general queries, analysis, and predictions"""
     try:
         data = request.get_json()
         message = data.get('message')
@@ -1214,19 +1214,37 @@ def ai_chat(current_user):
         # Get user's business data
         business_data = db_client.get_user_business_data(current_user['id'])
         
-        # Generate analysis based on intent
-        analysis = analysis_engine.analyze(intent, entities, business_data)
-        
-        # Check for anomalies
-        anomalies = anomaly_detector.detect_anomalies(business_data)
-        
-        # Generate response
-        response = analysis_engine.generate_response(analysis, anomalies)
+        # Handle general queries (greetings, help, non-analysis questions)
+        if intent == 'general_query':
+            response_text = analysis_engine.handle_general_query(message, business_data)
+            response = {
+                'text': response_text,
+                'type': 'general',
+                'has_chart': False
+            }
+            analysis = {'insights': [], 'recommendations': []}
+        else:
+            # Perform analysis for data-related queries
+            analysis = analysis_engine.analyze(intent, entities, business_data)
+            
+            # Check for anomalies
+            anomalies = anomaly_detector.detect_anomalies(business_data)
+            
+            # Generate Claude-style response based on intent
+            response_text = analysis_engine.get_claude_style_response(
+                intent, analysis, business_data, message
+            )
+            
+            response = {
+                'text': response_text,
+                'type': 'analysis',
+                'has_chart': bool(analysis.get('data'))
+            }
         
         # Save AI response to chat
         db_client.save_chat_message(current_user['id'], response['text'], 'assistant')
         
-        # Save analysis results
+        # Save analysis results if applicable
         if analysis.get('insights'):
             db_client.save_analysis_results(chat['id'], analysis)
         
